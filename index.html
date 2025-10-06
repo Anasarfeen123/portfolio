@@ -143,19 +143,48 @@
 <body class="text-gray-300">
   <div id="particles" class="fixed inset-0 pointer-events-none"></div>
 
-  <!-- NAV -->
-  <nav class="fixed w-full top-0 z-50 flex justify-between items-center py-6 px-10 border-b border-gray-800">
-    <h1 class="text-2xl font-bold text-blue-500 glow-text cursor-pointer">CodeCrusader</h1>
-    <div class="space-x-8 text-sm mono">
-      <a href="#about" class="hover:text-blue-400 transition duration-300">About</a>
-      <a href="#projects" class="hover:text-blue-400 transition duration-300">Projects</a>
-      <a href="#skills" class="hover:text-blue-400 transition duration-300">Skills</a>
-      <a href="#contact" class="hover:text-blue-400 transition duration-300">Contact</a>
+<!-- Replace the existing NAV section with this updated mobile-friendly version -->
+<nav class="fixed w-full top-0 z-50 bg-[#0a0f1f]/90 backdrop-blur-lg border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <!-- Logo -->
+            <div class="flex-shrink-0 flex items-center">
+                <h1 class="text-xl sm:text-2xl font-bold text-blue-500 glow-text">CodeCrusader</h1>
+            </div>
+
+            <!-- Mobile menu button -->
+            <div class="flex items-center sm:hidden">
+                <button type="button" onclick="toggleMobileMenu()" class="text-gray-400 hover:text-blue-400 focus:outline-none">
+                    <svg class="h-6 w-6" id="menuIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Desktop menu -->
+            <div class="hidden sm:flex sm:items-center sm:space-x-8">
+                <a href="#about" class="text-gray-300 hover:text-blue-400 transition duration-300 text-sm mono">About</a>
+                <a href="#projects" class="text-gray-300 hover:text-blue-400 transition duration-300 text-sm mono">Projects</a>
+                <a href="#skills" class="text-gray-300 hover:text-blue-400 transition duration-300 text-sm mono">Skills</a>
+                <a href="#contact" class="text-gray-300 hover:text-blue-400 transition duration-300 text-sm mono">Contact</a>
+            </div>
+        </div>
     </div>
-  </nav>
+
+    <!-- Mobile menu -->
+    <div class="sm:hidden hidden" id="mobileMenu">
+        <div class="px-2 pt-2 pb-3 space-y-1 bg-[#0a0f1f] border-b border-gray-800">
+            <a href="#about" class="block px-3 py-2 text-gray-300 hover:text-blue-400 transition duration-300 text-sm mono">About</a>
+            <a href="#projects" class="block px-3 py-2 text-gray-300 hover:text-blue-400 transition duration-300 text-sm mono">Projects</a>
+            <a href="#skills" class="block px-3 py-2 text-gray-300 hover:text-blue-400 transition duration-300 text-sm mono">Skills</a>
+            <a href="#contact" class="block px-3 py-2 text-gray-300 hover:text-blue-400 transition duration-300 text-sm mono">Contact</a>
+        </div>
+    </div>
+</nav>
+
 
   <!-- HERO -->
-  <section class="min-h-screen flex flex-col justify-center items-center text-center px-6 relative pt-20">
+ <section class="min-h-screen flex flex-col justify-center items-center text-center px-4 md:px-6 relative pt-24 md:pt-20">
     <div class="mb-8 opacity-0 animate-fadeIn">
       <div class="relative inline-block">
         <div class="w-60 h-60 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-1 profile-glow">
@@ -418,7 +447,6 @@
   </div>
 </section>
 
-
   <!-- CONTACT -->
   <section id="contact" class="px-10 py-32 border-t border-gray-800 text-center max-w-4xl mx-auto">
     <h2 class="text-4xl font-bold mb-6 text-blue-400 glow-text">Join the Crusade</h2>
@@ -446,6 +474,29 @@
       particlesContainer.appendChild(p);
     }
 
+    // Mobile menu toggle
+    function toggleMobileMenu() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuIcon = document.getElementById('menuIcon');
+        
+        if (mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.remove('hidden');
+            // Change to X icon
+            menuIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />`;
+        } else {
+            mobileMenu.classList.add('hidden');
+            // Change back to hamburger icon
+            menuIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />`;
+        }
+    }
+
+    // Close mobile menu when clicking on a link
+    document.querySelectorAll('#mobileMenu a').forEach(link => {
+        link.addEventListener('click', () => {
+            document.getElementById('mobileMenu').classList.add('hidden');
+            document.getElementById('menuIcon').innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />`;
+        });
+    });
     // Initialize Lucide icons
     lucide.createIcons();
   </script>
