@@ -1,0 +1,91 @@
+:root {
+  /* Coffee Theme Palette */
+  --mocha-dark: #3c2a21;
+  --espresso: #1a120b;
+  --latte-light: #f5ebe0;
+  --cream: #d5b4b4;
+  --accent-gold: #e7bc91;
+  --accent-rgb: 231, 188, 145;
+  --accent-color: var(--accent-gold);
+  
+  /* Terminal Palette */
+  --term-bg: rgba(26, 18, 11, 0.95);
+  --term-text-green: #a6e22e;
+  --term-text-amber: #fd971f;
+  --term-text-blue: #66d9ef;
+  
+  /* Fonts */
+  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Fira Code', 'Courier New', monospace;
+  
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+button,
+a,
+[role='button'] {
+  cursor: pointer;
+}
+
+body {
+  background-color: var(--latte-light);
+  color: var(--mocha-dark);
+  font-family: var(--font-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 800;
+  color: var(--espresso);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+}
+
+ul {
+  list-style: none;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--latte-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mocha-dark);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--espresso);
+}
+
+/* Terminal Text Style */
+.mono {
+  font-family: var(--font-mono);
+}
+
+.coffee-gradient {
+  background: linear-gradient(135deg, var(--mocha-dark) 0%, var(--espresso) 100%);
+  color: var(--latte-light);
+}

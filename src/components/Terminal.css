@@ -1,0 +1,137 @@
+.terminal-window {
+  width: 95%;
+  max-width: 1000px;
+  height: 600px;
+  background: var(--term-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(231, 188, 145, 0.2);
+}
+
+.terminal-header {
+  background: #2a1e17;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  border-bottom: 1px solid rgba(231, 188, 145, 0.1);
+}
+
+.terminal-buttons {
+  display: flex;
+  gap: 10px;
+  z-index: 2;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.red { background: #ff5f56; }
+.yellow { background: #ffbd2e; }
+.green { background: #27c93f; }
+
+.terminal-title {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  text-align: center;
+  color: var(--accent-gold);
+  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  opacity: 0.7;
+}
+
+.terminal-body {
+  flex: 1;
+  padding: 25px;
+  overflow-y: auto;
+  color: var(--term-text-green);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  text-shadow: 0 0 14px rgba(166, 226, 46, 0.12);
+}
+
+.terminal-line {
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.history-input {
+  color: var(--term-text-blue);
+  font-weight: bold;
+}
+
+.terminal-output {
+  color: var(--latte-light);
+  opacity: 0.9;
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: baseline;
+  margin-top: 10px;
+  min-width: 0;
+}
+
+.prompt {
+  color: var(--term-text-blue);
+  margin-right: 10px;
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+.terminal-input {
+  background: transparent;
+  border: none;
+  color: var(--term-text-green);
+  outline: none;
+  flex: 1;
+  min-width: 4rem;
+  font-size: 1.1rem;
+  padding: 0;
+  font-family: var(--font-mono);
+  line-height: inherit;
+  caret-color: var(--term-text-green);
+  text-shadow: 0 0 10px rgba(166, 226, 46, 0.32);
+}
+
+.terminal-input::selection {
+  background: rgba(166, 226, 46, 0.24);
+}
+
+/* Custom Scrollbar for Terminal */
+.terminal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-body::-webkit-scrollbar-thumb {
+  background: rgba(231, 188, 145, 0.2);
+  border-radius: 4px;
+}
+
+.terminal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(231, 188, 145, 0.4);
+}
+
+@media (max-width: 768px) {
+  .terminal-window {
+    width: 98%;
+    height: 80vh;
+  }
+  .terminal-body {
+    padding: 15px;
+    font-size: 0.9rem;
+  }
+}

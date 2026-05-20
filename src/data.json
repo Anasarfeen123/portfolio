@@ -1,0 +1,109 @@
+{
+  "personal": {
+    "name": "Anas Arfeen",
+    "email": "codecrusader07@gmail.com",
+    "github": "https://github.com/Anasarfeen123",
+    "linkedin": "https://linkedin.com/in/anas-arfeen-b94870366",
+    "summary": "Computer Science undergraduate at VIT Chennai with a deep-seated passion for artificial intelligence, reinforcement learning, and systems programming. Experienced in building high-performance developer tooling and intelligent systems. Currently serving as AI/ML Co-Lead at the Microsoft Innovations Club, specializing in optimization, scalable problem-solving, and advanced environment design.",
+    "creative_summary": "I'm a builder of worlds—whether they're simulated environments for RL agents or high-fidelity terminal workflows. I thrive at the intersection of low-level systems and high-level intelligence. When I'm not optimizing hyper-parameters, you'll find me ricing my Arch Linux setup or hunting for the perfect double espresso.",
+    "fun_facts": [
+      "I live in the terminal. If it doesn't have a CLI, I probably haven't used it.",
+      "I've spent more time configuring Neovim than I'd like to admit.",
+      "My RL agents sometimes learn to exploit game physics in ways I never intended.",
+      "I believe every problem is just an optimization task waiting to be solved."
+    ],
+    "interests": ["Reinforcement Learning", "Linux Kernel", "Coffee Brewing", "Retro Gaming", "Generative Art"]
+  },
+  "education": [
+    {
+      "institution": "Vellore Institute of Technology (VIT)",
+      "location": "Chennai, India",
+      "degree": "B.Tech in Computer Science Engineering",
+      "duration": "2025 – 2029"
+    }
+  ],
+  "skills": {
+    "languages": ["Python", "C++", "C", "C#", "HTML", "CSS", "JavaScript", "GDScript"],
+    "ai_ml": ["PyTorch", "Stable-Baselines3", "NumPy", "PPO", "SAC", "ResNet50"],
+    "tools": ["Linux (Arch)", "Git", "VS Code", "Neovim", "Pygame"],
+    "competencies": ["Reinforcement Learning", "Systems Programming", "OOP", "DSA", "Performance Optimization", "Low-Level Computing"]
+  },
+  "experience": [
+    {
+      "organization": "Microsoft Innovations Club (MIC)",
+      "role": "AI/ML Co-Lead",
+      "duration": "2026 – Present",
+      "description": [
+        "Orchestrate AI/ML-focused workshops and technical initiatives for the student community.",
+        "Mentor students in modern development workflows, AI tooling, and project-building best practices.",
+        "Direct technical planning and automate tasks to streamline event execution and community engagement."
+      ]
+    },
+    {
+      "organization": "Microsoft Innovations Club (MIC)",
+      "role": "AI/ML Member",
+      "duration": "2025 – 2026",
+      "description": [
+        "Contributed to collaborative technical projects and participated in advanced AI learning sessions."
+      ]
+    },
+    {
+      "organization": "Linux User Group (LUG)",
+      "role": "Technical Member",
+      "duration": "2025 – 2026",
+      "description": [
+        "Advocated for open-source ecosystems and optimized terminal-based developer productivity workflows."
+      ]
+    },
+    {
+      "organization": "Hack Club",
+      "role": "AI/ML Member",
+      "duration": "2025 – 2026",
+      "description": [
+        "Engaged in student-led development initiatives and collaborative coding activities."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "title": "Autonomous Warehouse Rover",
+      "technologies": ["Python", "PyTorch", "Stable-Baselines3"],
+      "description": [
+        "Engineered a reinforcement learning agent utilizing Proximal Policy Optimization (PPO) for autonomous navigation.",
+        "Implemented curriculum learning strategies to train the agent on increasingly complex warehouse layouts.",
+        "Developed a custom environment simulation and rendering system using MVC architecture from the ground up."
+      ]
+    },
+    {
+      "title": "MusicalTerm",
+      "technologies": ["Python"],
+      "description": [
+        "Built a high-fidelity, aesthetic terminal music player designed specifically for users who live in the command line."
+      ]
+    },
+    {
+      "title": "Campus Signal Mapper",
+      "technologies": ["HTML", "JavaScript"],
+      "description": [
+        "Built a crowd-sourced visualization tool to map mobile carrier performance across the VIT Chennai campus.",
+        "Developed an interactive frontend for real-time signal data collection and dynamic heatmap generation."
+      ]
+    },
+    {
+      "title": "Celeb Classifier",
+      "technologies": ["Python", "ResNet50", "Deep Learning"],
+      "description": [
+        "Architected an AI-powered web application using ResNet50 for high-accuracy facial similarity matching.",
+        "Open-sourced the project under GNU GPL v3 to encourage community contributions and transparency."
+      ]
+    },
+    {
+      "title": "Snake - AI Edition",
+      "technologies": ["Python", "Pygame"],
+      "description": [
+        "Reconstructed the classic Snake game featuring an automated bot driven by Greedy and A* search algorithms.",
+        "Optimized pathfinding performance for real-time decision-making in a dynamic environment."
+      ]
+    }
+  ]
+}
