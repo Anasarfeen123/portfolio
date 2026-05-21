@@ -10,12 +10,15 @@ import Experience from './components/Experience'
 import Projects from './components/Projects'
 import Skills from './components/Skills'
 import Footer from './components/Footer'
+import KonamiEgg from './components/KonamiEgg'
+import CustomCursor from './components/CustomCursor'
 
 function App() {
   const [terminalOpen, setTerminalOpen] = useState(false);
 
   return (
     <div className="app">
+      <CustomCursor />
       <Navbar onTerminalToggle={() => setTerminalOpen(!terminalOpen)} />
       
       <motion.main
@@ -23,9 +26,7 @@ function App() {
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
       >
-        <section id="hero">
-          <Hero onTerminalOpen={() => setTerminalOpen(true)} />
-        </section>
+        <Hero onTerminalOpen={() => setTerminalOpen(true)} />
         
         <motion.section 
           id="about"
@@ -59,7 +60,7 @@ function App() {
 
         <motion.section 
           id="projects"
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
@@ -70,7 +71,6 @@ function App() {
       
       <Footer />
       
-      {/* Terminal Overlay */}
       <AnimatePresence>
         {terminalOpen && (
           <motion.div 
@@ -89,12 +89,14 @@ function App() {
         className="terminal-fab" 
         onClick={() => setTerminalOpen(true)}
         aria-label="Open Terminal"
-        whileHover={{ y: -3 }}
+        whileHover={{ y: -3, scale: 1.05 }}
         whileTap={{ scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 420, damping: 24 }}
       >
         <span className="mono">&gt;_</span>
       </motion.button>
+
+      <KonamiEgg />
     </div>
   )
 }

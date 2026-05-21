@@ -1,8 +1,9 @@
 import React from 'react';
+import type { ExperienceItem } from '../types';
 import './Experience.css';
 
 interface ExperienceProps {
-  experience: any[];
+  experience: ExperienceItem[];
 }
 
 const Experience: React.FC<ExperienceProps> = ({ experience }) => {
