@@ -102,8 +102,6 @@ const MINI_RESPONSES: Record<string, string[]> = {
   ],
 };
 
-const HINTS = ['help', 'about', 'stack', 'hire'];
-
 type LineType = 'in' | 'out' | 'err';
 interface TermLine { type: LineType; text: string; }
 
@@ -232,85 +230,6 @@ const PARTICLE_DATA = GLYPHS.flatMap((g, i) => [
   { glyph: GLYPHS[(i + 4) % GLYPHS.length], x: (i * 7.3 + 43) % 92, delay: i * 0.38 + 2, dur: 11 + (i % 3) },
 ]);
 
-// ─── Project Explorer ────────────────────────────────────────
-const ProjectExplorer: React.FC = () => {
-  const [idx, setIdx] = useState(0);
-  const projects = [
-    { 
-      title: 'Autonomous Navigation RL', 
-      desc: 'Trained a rover to navigate complex obstacle courses using PPO and curriculum learning in a simulated warehouse environment.',
-      tech: 'PyTorch · SB3 · Unity',
-      image: 'https://via.placeholder.com/400x220/2a1a0f/e7bc91?text=Autonomous+Rover'
-    },
-    { 
-      title: 'Distributed System Monitor', 
-      desc: 'Low-latency monitoring tool for tracking resource usage across multiple nodes. Optimized for minimal overhead.',
-      tech: 'C++ · Go · Docker',
-      image: 'https://via.placeholder.com/400x220/2a1a0f/e7bc91?text=System+Monitor'
-    },
-    { 
-      title: 'Neural Engine from Scratch', 
-      desc: 'Implemented a mini tensor library and neural network backprop from scratch in Python to understand fundamental calculus.',
-      tech: 'Python · NumPy · Math',
-      image: 'https://via.placeholder.com/400x220/2a1a0f/e7bc91?text=Neural+Engine'
-    }
-  ];
-
-  const p = projects[idx];
-
-  return (
-    <motion.div 
-      className="project-explorer mono"
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.98 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="pe-header">
-        <span className="pe-title-bar">📁 projects_overview.sh</span>
-        <div className="pe-dots">
-          <span className="pe-dot" />
-          <span className="pe-dot" />
-          <span className="pe-dot" />
-        </div>
-      </div>
-      <div className="pe-content">
-        <div className="pe-image-wrap">
-          <motion.img 
-            key={p.image}
-            src={p.image} 
-            alt={p.title} 
-            className="pe-image"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          />
-        </div>
-        <div className="pe-details">
-          <h4 className="pe-name">{p.title}</h4>
-          <p className="pe-desc">{p.desc}</p>
-          <div className="pe-tech-row">
-            <span className="pe-label">STACK:</span>
-            <span className="pe-tech-val">{p.tech}</span>
-          </div>
-        </div>
-      </div>
-      <div className="pe-nav">
-        <button className="pe-nav-btn" onClick={() => setIdx(prev => (prev > 0 ? prev - 1 : projects.length - 1))}>
-          PREV
-        </button>
-        <div className="pe-progress">
-          {projects.map((_, i) => (
-            <span key={i} className={`pe-dot-nav ${i === idx ? 'active' : ''}`} />
-          ))}
-        </div>
-        <button className="pe-nav-btn" onClick={() => setIdx(prev => (prev < projects.length - 1 ? prev + 1 : 0))}>
-          NEXT
-        </button>
-      </div>
-    </motion.div>
-  );
-};
-
 // ─── Stats ───────────────────────────────────────────────────
 const STATS = [
   { v: '5+', l: 'Projects', detail: 'RL, ML, Web, Systems' },
@@ -319,7 +238,16 @@ const STATS = [
 ];
 
 // ─── Floating Coffee Beans ──────────────────────────────────
-const CoffeeBean = ({ delay = 0, x = 0, y = 0, scale = 1, rotate = 0, speed = 0.3 }) => {
+interface CoffeeBeanProps {
+  delay?: number;
+  x?: string | number;
+  y?: string | number;
+  scale?: number;
+  rotate?: number;
+  speed?: number;
+}
+
+const CoffeeBean: React.FC<CoffeeBeanProps> = ({ delay = 0, x = 0, y = 0, scale = 1, rotate = 0, speed = 0.3 }) => {
   const { scrollY } = useScroll();
   const yParallax = useTransform(scrollY, [0, 1000], [0, 1000 * speed]);
 

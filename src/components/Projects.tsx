@@ -77,7 +77,7 @@ const ProjectModal: React.FC<{ project: any; onClose: () => void }> = ({ project
   );
 };
 
-const ProjectCard: React.FC<{ project: any; index: number; onClick: () => void }> = ({ project, index, onClick }) => {
+const ProjectCard: React.FC<{ project: any; index: number; onClick: () => void }> = ({ project, onClick }) => {
   const [hovered, setHovered] = useState(false);
 
   return (

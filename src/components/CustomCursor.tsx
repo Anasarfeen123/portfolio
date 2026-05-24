@@ -53,7 +53,7 @@ const CustomCursor: React.FC = () => {
 
     const handleHover = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const isInteractive = 
+      const isInteractive = !!(
         target.tagName === 'BUTTON' ||
         target.tagName === 'A' ||
         target.closest('button') ||
@@ -61,7 +61,8 @@ const CustomCursor: React.FC = () => {
         target.closest('.project-card') ||
         target.closest('.skill-tag-gamified') ||
         target.closest('.social-link') ||
-        target.classList.contains('interactive');
+        target.classList.contains('interactive')
+      );
       
       setIsHovering(isInteractive);
     };
