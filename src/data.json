@@ -5,14 +5,14 @@
     "github": "https://github.com/Anasarfeen123",
     "linkedin": "https://linkedin.com/in/anas-arfeen-b94870366",
     "summary": "Computer Science undergraduate at VIT Chennai with a deep-seated passion for artificial intelligence, reinforcement learning, and systems programming. Experienced in building high-performance developer tooling and intelligent systems. Currently serving as AI/ML Co-Lead at the Microsoft Innovations Club, specializing in optimization, scalable problem-solving, and advanced environment design.",
-    "creative_summary": "I'm a builder of worlds—whether they're simulated environments for RL agents or high-fidelity terminal workflows. I thrive at the intersection of low-level systems and high-level intelligence. When I'm not optimizing hyper-parameters, you'll find me ricing my Arch Linux setup or hunting for the perfect double espresso.",
+    "creative_summary": "I'm a builder of systems—from autonomous RL agents to high-performance developer workflows. I thrive at the intersection of low-level systems and high-level intelligence. When I'm not optimizing hyper-parameters, you'll find me exploring the latest in Linux kernel development or building tools that simplify complexity.",
     "fun_facts": [
-      "I live in the terminal. If it doesn't have a CLI, I probably haven't used it.",
-      "I've spent more time configuring Neovim than I'd like to admit.",
+      "I love exploring the inner workings of operating systems.",
+      "I'm a firm believer in the power of open-source software.",
       "My RL agents sometimes learn to exploit game physics in ways I never intended.",
       "I believe every problem is just an optimization task waiting to be solved."
     ],
-    "interests": ["Reinforcement Learning", "Linux Kernel", "Coffee Brewing", "Retro Gaming", "Generative Art"]
+    "interests": ["Reinforcement Learning", "Linux Kernel", "Systems Programming", "Retro Gaming", "Generative Art"]
   },
   "education": [
     {
@@ -25,7 +25,7 @@
   "skills": {
     "languages": ["Python", "C++", "C", "C#", "HTML", "CSS", "JavaScript", "GDScript"],
     "ai_ml": ["PyTorch", "Stable-Baselines3", "NumPy", "PPO", "SAC", "ResNet50"],
-    "tools": ["Linux (Arch)", "Git", "VS Code", "Neovim", "Pygame"],
+    "tools": ["Linux", "Git", "VS Code", "Neovim", "Docker"],
     "competencies": ["Reinforcement Learning", "Systems Programming", "OOP", "DSA", "Performance Optimization", "Low-Level Computing"]
   },
   "experience": [

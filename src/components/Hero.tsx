@@ -1,229 +1,641 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Terminal as TerminalIcon, Coffee, Zap, Star } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import './Hero.css';
-import CoffeeLiquid from './CoffeeLiquid';
 
-interface HeroProps {
-  onTerminalOpen?: () => void;
-}
+// ─── Glitch Effect ──────────────────────────────────────────
+const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#@$%&!?';
+const FULL_NAME = 'Anas Arfeen';
 
-const TypewriterSubtitle: React.FC = () => {
-  const lines = [
-    'AI/ML Engineer & Systems Programmer',
-    'Building intelligent RL environments',
-    'Arch Linux enjoyer & coffee addict',
-    'Turning caffeine into clean code',
-  ];
-  const [lineIndex, setLineIndex] = useState(0);
-  const [displayed, setDisplayed] = useState('');
-  const [deleting, setDeleting] = useState(false);
+const GlitchName: React.FC<{ trigger: number }> = ({ trigger }) => {
+  const [display, setDisplay] = useState(FULL_NAME);
+  const [isGlitching, setIsGlitching] = useState(false);
 
   useEffect(() => {
-    const current = lines[lineIndex];
-    let timeout: ReturnType<typeof setTimeout>;
-
-    if (!deleting && displayed.length < current.length) {
-      timeout = setTimeout(() => setDisplayed(current.slice(0, displayed.length + 1)), 45);
-    } else if (!deleting && displayed.length === current.length) {
-      timeout = setTimeout(() => setDeleting(true), 2200);
-    } else if (deleting && displayed.length > 0) {
-      timeout = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 22);
-    } else if (deleting && displayed.length === 0) {
-      setDeleting(false);
-      setLineIndex((prev) => (prev + 1) % lines.length);
+    if (trigger === 0) {
+      setDisplay(FULL_NAME);
+      return;
     }
-    return () => clearTimeout(timeout);
-  }, [displayed, deleting, lineIndex, lines]);
+    setIsGlitching(true);
+    let frames = 0;
+    const maxFrames = 12;
+    const interval = setInterval(() => {
+      setDisplay(
+        FULL_NAME.split('').map((ch: string) => {
+          if (ch === ' ' || Math.random() > 0.25) return ch;
+          return CHARSET[Math.floor(Math.random() * CHARSET.length)];
+        }).join('')
+      );
+      frames++;
+      if (frames >= maxFrames) {
+        clearInterval(interval);
+        setDisplay(FULL_NAME);
+        setIsGlitching(false);
+      }
+    }, 70);
+    return () => clearInterval(interval);
+  }, [trigger]);
 
-  return (
-    <p className="hero-subtitle typewriter">
-      {displayed}
-      <span className="type-cursor">|</span>
-    </p>
-  );
+  return <span className={isGlitching ? 'glitch-active' : ''}>{display}</span>;
 };
 
-const StatusPanel: React.FC<{ onTerminalOpen?: () => void }> = ({ onTerminalOpen }) => {
-  const [statusIndex, setStatusIndex] = useState(0);
-  const statusLines = [
-    { label: 'OS', value: 'Arch Linux x86_64', color: '#66d9ef' },
-    { label: 'Shell', value: 'zsh + oh-my-zsh', color: '#a6e22e' },
-    { label: 'Coffee', value: 'Double Espresso ☕', color: '#e7bc91' },
-    { label: 'Music', value: 'lo-fi hip hop 🎵', color: '#fd971f' },
-    { label: 'Status', value: 'Training agents...', color: '#a6e22e' },
-  ];
+// ─── Personas ───────────────────────────────────────────────
+const PERSONAS = [
+  {
+    icon: '🤖',
+    label: 'AI/ML',
+    subtitle: 'Building autonomous RL agents — from warehouse rovers to game-playing bots — using PyTorch and curriculum learning.',
+    tag: 'PyTorch · PPO · SAC · SB3',
+    accent: '#a6e22e',
+    accentRgb: '166, 226, 46',
+  },
+  {
+    icon: '⚡',
+    label: 'Systems',
+    subtitle: 'Passionate about low-level optimization, systems programming, and building efficient developer tools.',
+    tag: 'C++ · Rust · Linux · Neovim',
+    accent: '#66d9ef',
+    accentRgb: '102, 217, 239',
+  },
+  {
+    icon: '🚀',
+    label: 'Builder',
+    subtitle: 'Turning complex ideas into functional prototypes. Focused on performance, scalability, and clean architecture.',
+    tag: 'React · Node.js · Go · Docker',
+    accent: '#e7bc91',
+    accentRgb: '231, 188, 145',
+  },
+] as const;
+
+// ─── Mini Terminal ───────────────────────────────────────────
+const MINI_RESPONSES: Record<string, string[]> = {
+  help: ['→ Commands: about · stack · hire · ls · whoami'],
+  about: [
+    'CS undergrad @ VIT Chennai (2025–2029)',
+    'AI/ML Co-Lead, Microsoft Innovations Club',
+    'RL researcher & systems programmer',
+  ],
+  stack: [
+    '⎡ Languages : Python · C++ · Rust · Go · C#',
+    '⎢ AI/ML     : PyTorch · SB3 · NumPy · PPO · SAC',
+    '⎣ Tools     : Linux · Neovim · Docker · Git',
+  ],
+  hire: [
+    '🚀 Open to internships & collabs!',
+    '📧 codecrusader07@gmail.com',
+    '🐙 github.com/Anasarfeen123',
+  ],
+  ls: [
+    'about.md   projects/   skills.json',
+    'cv.pdf     contact.txt  .zshrc',
+  ],
+  whoami: ['anas — builder · tinkerer · RL researcher · linux enthusiast'],
+  sudo: ['[sudo] password for anas: ********', 'sudo: Permission denied. Nice try. 😈'],
+  'cat contact.txt': [
+    'Email: codecrusader07@gmail.com',
+    'GitHub: github.com/Anasarfeen123',
+    'LinkedIn: linkedin.com/in/anas-arfeen-b94870366',
+  ],
+  'git push': ['Everything up-to-date.'],
+  'npm install': [
+    'added 847 packages in 0.3s',
+    'Found 0 vulnerabilities. Perfect.',
+  ],
+};
+
+const HINTS = ['help', 'about', 'stack', 'hire'];
+
+type LineType = 'in' | 'out' | 'err';
+interface TermLine { type: LineType; text: string; }
+
+const MiniTerminal: React.FC = () => {
+  const [lines, setLines] = useState<TermLine[]>([
+    { type: 'out', text: 'anas@portfolio ~ bash — interactive terminal' },
+    { type: 'out', text: 'Type "help" to explore. Tab for autocomplete.' },
+  ]);
+  const [input, setInput] = useState('');
+  const [cmdHist, setCmdHist] = useState<string[]>([]);
+  const [hIdx, setHIdx] = useState(-1);
+  const [booted, setBooted] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setStatusIndex((prev) => {
-        if (prev < statusLines.length) return prev + 1;
-        clearInterval(timer);
-        return prev;
-      });
-    }, 350);
-    return () => clearInterval(timer);
-  }, [statusLines.length]);
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [lines]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setBooted(true), 600);
+    return () => clearTimeout(t);
+  }, []);
+
+  const run = useCallback((raw: string) => {
+    const trimmed = raw.trim();
+    if (!trimmed) return;
+    const cmd = trimmed.toLowerCase();
+
+    if (cmd === 'clear') {
+      setLines([{ type: 'out', text: 'Terminal cleared.' }]);
+      setInput('');
+      setCmdHist(prev => [trimmed, ...prev]);
+      setHIdx(-1);
+      return;
+    }
+
+    const newLines: TermLine[] = [...lines, { type: 'in', text: trimmed }];
+    const resp = MINI_RESPONSES[cmd];
+
+    if (resp) {
+      resp.forEach(r => newLines.push({ type: 'out', text: r }));
+    } else {
+      newLines.push({ type: 'err', text: `bash: ${cmd}: command not found` });
+      newLines.push({ type: 'out', text: 'Try "help" for available commands.' });
+    }
+
+    setLines(newLines);
+    setCmdHist(prev => [trimmed, ...prev]);
+    setHIdx(-1);
+    setInput('');
+  }, [lines]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    run(input);
+  };
+
+  const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const i = Math.min(hIdx + 1, cmdHist.length - 1);
+      setHIdx(i);
+      setInput(cmdHist[i] ?? '');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const i = Math.max(hIdx - 1, -1);
+      setHIdx(i);
+      setInput(i === -1 ? '' : cmdHist[i]);
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      const allCmds = Object.keys(MINI_RESPONSES);
+      const match = allCmds.find(s => s.startsWith(input.toLowerCase()) && s !== input.toLowerCase());
+      if (match) setInput(match);
+    }
+  };
 
   return (
     <motion.div
-      className="hero-status-window mono"
-      initial={{ opacity: 0, x: 40, scale: 0.95 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      transition={{ duration: 0.7, delay: 0.3 }}
+      className="mini-term"
+      onClick={() => inputRef.current?.focus()}
+      initial={{ opacity: 0, y: 20, scale: 0.97 }}
+      animate={{ opacity: booted ? 1 : 0, y: booted ? 0 : 20, scale: booted ? 1 : 0.97 }}
+      transition={{ duration: 0.5, delay: 0.4 }}
     >
-      <div className="status-header">
-        <div className="status-dot" style={{ backgroundColor: '#ff5f56' }} />
-        <div className="status-dot" style={{ backgroundColor: '#ffbd2e' }} />
-        <div className="status-dot" style={{ backgroundColor: '#27c93f' }} />
-        <span className="status-title">anas@portfolio — neofetch</span>
+      <div className="mt-header">
+        <span className="mt-dot" style={{ background: '#ff5f56' }} />
+        <span className="mt-dot" style={{ background: '#ffbd2e' }} />
+        <span className="mt-dot" style={{ background: '#27c93f' }} />
+        <span className="mt-title mono">anas@portfolio — bash</span>
       </div>
 
-      <div className="status-body">
-        {statusLines.map((line, i) => (
-          <motion.div
-            key={i}
-            className="status-line"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: i < statusIndex ? 1 : 0, x: i < statusIndex ? 0 : -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <span className="status-label" style={{ color: line.color }}>{line.label}</span>
-            <span className="status-sep">:</span>
-            <span className="status-value">{line.value}</span>
-          </motion.div>
-        ))}
-        {statusIndex < statusLines.length && (
-          <div className="status-line">
-            <span className="status-label" style={{ color: statusLines[statusIndex]?.color }}>
-              {statusLines[statusIndex]?.label}
-            </span>
-            <span className="status-sep">:</span>
-            <span className="typing-cursor-block" />
+      <div className="mt-body mono">
+        {lines.map((l, i) => (
+          <div key={i} className={`mt-line mt-${l.type}`}>
+            {l.type === 'in' && <span className="mt-prompt">❯&nbsp;</span>}
+            <span>{l.text}</span>
           </div>
-        )}
+        ))}
+        <form onSubmit={handleSubmit} className="mt-form">
+          <span className="mt-prompt">❯&nbsp;</span>
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKey}
+            className="mt-input mono"
+            spellCheck={false}
+            autoComplete="off"
+            autoCorrect="off"
+            placeholder="start typing..."
+            aria-label="Terminal input"
+          />
+        </form>
+        <div ref={endRef} />
       </div>
 
-      <div className="status-footer">
-        <Zap size={14} />
-        <Coffee size={14} />
-        <Star size={14} />
-        <span
-          className="term-launch-hint"
-          onClick={onTerminalOpen}
-          style={{ marginLeft: 'auto', cursor: 'pointer', fontSize: '0.7rem', opacity: 0.6 }}
-        >
-          ▶ launch cli
-        </span>
+    </motion.div>
+  );
+};
+
+// ─── Floating Glyphs ─────────────────────────────────────────
+const GLYPHS = ['{}', '=>', '()', '//', '&&', '||', 'RL', 'AI', '0xFF', '#!/', '...', '===', '::'];
+const PARTICLE_DATA = GLYPHS.flatMap((g, i) => [
+  { glyph: g, x: (i * 7.3 + 2) % 92, delay: i * 0.55, dur: 9 + (i % 4) },
+  { glyph: GLYPHS[(i + 4) % GLYPHS.length], x: (i * 7.3 + 43) % 92, delay: i * 0.38 + 2, dur: 11 + (i % 3) },
+]);
+
+// ─── Project Explorer ────────────────────────────────────────
+const ProjectExplorer: React.FC = () => {
+  const [idx, setIdx] = useState(0);
+  const projects = [
+    { 
+      title: 'Autonomous Navigation RL', 
+      desc: 'Trained a rover to navigate complex obstacle courses using PPO and curriculum learning in a simulated warehouse environment.',
+      tech: 'PyTorch · SB3 · Unity',
+      image: 'https://via.placeholder.com/400x220/2a1a0f/e7bc91?text=Autonomous+Rover'
+    },
+    { 
+      title: 'Distributed System Monitor', 
+      desc: 'Low-latency monitoring tool for tracking resource usage across multiple nodes. Optimized for minimal overhead.',
+      tech: 'C++ · Go · Docker',
+      image: 'https://via.placeholder.com/400x220/2a1a0f/e7bc91?text=System+Monitor'
+    },
+    { 
+      title: 'Neural Engine from Scratch', 
+      desc: 'Implemented a mini tensor library and neural network backprop from scratch in Python to understand fundamental calculus.',
+      tech: 'Python · NumPy · Math',
+      image: 'https://via.placeholder.com/400x220/2a1a0f/e7bc91?text=Neural+Engine'
+    }
+  ];
+
+  const p = projects[idx];
+
+  return (
+    <motion.div 
+      className="project-explorer mono"
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.98 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="pe-header">
+        <span className="pe-title-bar">📁 projects_overview.sh</span>
+        <div className="pe-dots">
+          <span className="pe-dot" />
+          <span className="pe-dot" />
+          <span className="pe-dot" />
+        </div>
+      </div>
+      <div className="pe-content">
+        <div className="pe-image-wrap">
+          <motion.img 
+            key={p.image}
+            src={p.image} 
+            alt={p.title} 
+            className="pe-image"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          />
+        </div>
+        <div className="pe-details">
+          <h4 className="pe-name">{p.title}</h4>
+          <p className="pe-desc">{p.desc}</p>
+          <div className="pe-tech-row">
+            <span className="pe-label">STACK:</span>
+            <span className="pe-tech-val">{p.tech}</span>
+          </div>
+        </div>
+      </div>
+      <div className="pe-nav">
+        <button className="pe-nav-btn" onClick={() => setIdx(prev => (prev > 0 ? prev - 1 : projects.length - 1))}>
+          PREV
+        </button>
+        <div className="pe-progress">
+          {projects.map((_, i) => (
+            <span key={i} className={`pe-dot-nav ${i === idx ? 'active' : ''}`} />
+          ))}
+        </div>
+        <button className="pe-nav-btn" onClick={() => setIdx(prev => (prev < projects.length - 1 ? prev + 1 : 0))}>
+          NEXT
+        </button>
       </div>
     </motion.div>
   );
 };
 
-const ScrollIndicator: React.FC = () => (
-  <motion.div
-    className="scroll-indicator"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ delay: 2 }}
-  >
-    <motion.div
-      className="scroll-chevron"
-      animate={{ y: [0, 8, 0] }}
-      transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
-    >
-      ↓
-    </motion.div>
-    <span className="mono" style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '2px' }}>scroll</span>
-  </motion.div>
-);
+// ─── Stats ───────────────────────────────────────────────────
+const STATS = [
+  { v: '5+', l: 'Projects', detail: 'RL, ML, Web, Systems' },
+  { v: '3+', l: 'Leadership', detail: 'MIC AI/ML Co-Lead, LUG' },
+  { v: '500+', l: 'Commits', detail: 'Consistent contributions' },
+];
 
-const Hero: React.FC<HeroProps> = ({ onTerminalOpen }) => {
+// ─── Floating Coffee Beans ──────────────────────────────────
+const CoffeeBean = ({ delay = 0, x = 0, y = 0, scale = 1, rotate = 0, speed = 0.3 }) => {
+  const { scrollY } = useScroll();
+  const yParallax = useTransform(scrollY, [0, 1000], [0, 1000 * speed]);
+
   return (
-    <section id="hero" className="hero">
-      <div className="hero-visual" aria-hidden="true">
-        <CoffeeLiquid />
+    <motion.div
+      className="floating-bean"
+      initial={{ x, y, rotate, opacity: 0 }}
+      style={{ 
+        left: x,
+        top: y,
+        y: yParallax,
+        scale,
+      }}
+      animate={{ 
+        rotate: [rotate, rotate + 45, rotate],
+        opacity: [0, 0.6, 0.4]
+      }}
+      transition={{ 
+        rotate: { duration: 10 + Math.random() * 5, repeat: Infinity, ease: "easeInOut" },
+        opacity: { duration: 2, delay }
+      }}
+    >
+      ☕
+    </motion.div>
+  );
+};
+
+// ─── Hero ─────────────────────────────────────────────────────
+const Hero: React.FC = () => {
+  const [persona, setPersona] = useState(0);
+  const [glitchTrigger, setGlitchTrigger] = useState(0);
+  const [statPop, setStatPop] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+  const cur = PERSONAS[persona];
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const t = setTimeout(() => setGlitchTrigger(1), 350);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleNameClick = useCallback(() => {
+    setGlitchTrigger(s => s + 1);
+  }, []);
+
+  const handleStatClick = (i: number) => {
+    setStatPop(i);
+    setTimeout(() => setStatPop(null), 1200);
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText('codecrusader07@gmail.com').catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <section id="hero" className="hero-ng">
+      {/* Background elements */}
+      <div className="hero-grid-bg" aria-hidden />
+      
+      <div className="hero-beans-bg" aria-hidden>
+        <CoffeeBean x="10%" y="15%" scale={1.2} delay={0} rotate={20} speed={0.2} />
+        <CoffeeBean x="80%" y="10%" scale={0.8} delay={1} rotate={-10} speed={0.4} />
+        <CoffeeBean x="40%" y="60%" scale={1.5} delay={2} rotate={45} speed={0.15} />
+        <CoffeeBean x="90%" y="50%" scale={0.7} delay={3} rotate={180} speed={0.5} />
+        <CoffeeBean x="15%" y="55%" scale={0.9} delay={4} rotate={-30} speed={0.25} />
+        <CoffeeBean x="65%" y="75%" scale={1.1} delay={5} rotate={15} speed={0.35} />
       </div>
 
-      <div className="container hero-content">
-        <motion.div
-          className="hero-text"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <motion.div
-            className="hero-badge mono"
-            animate={{ boxShadow: ['0 0 0px rgba(231,188,145,0)', '0 0 18px rgba(231,188,145,0.4)', '0 0 0px rgba(231,188,145,0)'] }}
-            transition={{ repeat: Infinity, duration: 2.5 }}
+      {/* Floating particles */}
+      <div className="hero-particles" aria-hidden>
+        {PARTICLE_DATA.map((p, i) => (
+          <span
+            key={i}
+            className="glyph-particle mono"
+            style={{
+              left: `${p.x}%`,
+              animationDelay: `${p.delay}s`,
+              animationDuration: `${p.dur}s`,
+            }}
           >
-            <span className="pulse" />
-            Open to new projects
+            {p.glyph}
+          </span>
+        ))}
+      </div>
+
+      <div className="hero-ng-inner container">
+
+        {/* ── LEFT ── */}
+        <motion.div
+          className="hero-left"
+          initial={{ opacity: 0, x: -28 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {/* Available badge */}
+          <motion.div
+            className="avail-badge mono"
+            animate={{
+              boxShadow: [
+                '0 0 0px rgba(39,201,63,0)',
+                '0 0 14px rgba(39,201,63,0.35)',
+                '0 0 0px rgba(39,201,63,0)',
+              ],
+            }}
+            transition={{ repeat: Infinity, duration: 2.8 }}
+          >
+            <span className="avail-dot" />
+            Available for new projects
           </motion.div>
 
-          <div className="hero-name-block">
-            <motion.h1
-              className="hero-title glitch-text"
-              data-text="Anas Arfeen"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              Anas Arfeen
-            </motion.h1>
-            <div className="hero-rank mono">
-              <span className="rank-badge">AI/ML Co-Lead</span>
-              <span className="rank-sep">·</span>
-              <span className="rank-sub">VIT Chennai</span>
-            </div>
+          {/* Name — click to glitch */}
+          <motion.h1
+            className="hero-name-ng"
+            onClick={handleNameClick}
+            title="Click to glitch!"
+            whileHover={{ scale: 1.012, x: 2 }}
+            whileTap={{ scale: 0.995 }}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <GlitchName trigger={glitchTrigger} />
+            <span className="name-cursor" aria-hidden>_</span>
+          </motion.h1>
+
+          {/* Persona tabs */}
+          <motion.div
+            className="persona-row"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {PERSONAS.map((p, i) => (
+              <motion.button
+                key={p.label}
+                className={`persona-btn${i === persona ? ' active' : ''}`}
+                style={i === persona ? {
+                  background: `rgba(${p.accentRgb}, 0.12)`,
+                  borderColor: p.accent,
+                  color: p.accent,
+                } : {}}
+                onClick={() => setPersona(i)}
+                whileHover={{ scale: 1.06, y: -1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span>{p.icon}</span>
+                <span>{p.label}</span>
+              </motion.button>
+            ))}
+          </motion.div>
+
+          {/* Subtitle — animated per persona */}
+          <div className="subtitle-wrap">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={`sub-${persona}`}
+                className="hero-sub-ng"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22 }}
+              >
+                {cur.subtitle}
+              </motion.p>
+            </AnimatePresence>
           </div>
 
-          <TypewriterSubtitle />
+          {/* Tech tag */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`tag-${persona}`}
+              className="hero-tag-ng mono"
+              style={{ color: cur.accent, borderColor: `rgba(${cur.accentRgb}, 0.35)` }}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 8 }}
+              transition={{ duration: 0.2 }}
+            >
+              ▶&nbsp;{cur.tag}
+            </motion.div>
+          </AnimatePresence>
 
-          <div className="hero-stats mono">
-            {[
-              { value: '5+', label: 'Projects' },
-              { value: '3+', label: 'Leadership roles' },
-              { value: '∞', label: 'Coffee cups' },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                className="hero-stat"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 + i * 0.1 }}
-                whileHover={{ scale: 1.08 }}
-              >
-                <span className="stat-value">{stat.value}</span>
-                <span className="stat-label">{stat.label}</span>
-              </motion.div>
+          {/* Stats */}
+          <div className="hero-stats-ng">
+            {STATS.map((s, i) => (
+              <div key={s.l} style={{ position: 'relative' }}>
+                <motion.div
+                  className="stat-ng"
+                  onClick={() => handleStatClick(i)}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + i * 0.1 }}
+                  whileHover={{ scale: 1.1, y: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div className="stat-ng-val mono">{s.v}</div>
+                  <div className="stat-ng-lbl">{s.l}</div>
+                </motion.div>
+                <AnimatePresence>
+                  {statPop === i && (
+                    <motion.div
+                      className="stat-tooltip mono"
+                      initial={{ opacity: 0, y: 4, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      {s.detail}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ))}
           </div>
 
-          <div className="hero-cta">
-            <motion.button
-              onClick={onTerminalOpen}
-              className="btn primary flex-center gap-2"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <TerminalIcon size={16} /> Launch CLI
-            </motion.button>
+          {/* CTA */}
+          <motion.div
+            className="hero-cta-ng"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
             <motion.a
-              href="#projects"
-              className="btn secondary"
-              whileHover={{ scale: 1.04 }}
+              href="/portfolio.pdf"
+              download="Anas_Arfeen_Portfolio.pdf"
+              className="cta-primary"
+              whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}
             >
-              View Work →
+              📄 Download CV (PDF)
             </motion.a>
-          </div>
+            <motion.a
+              href="https://github.com/Anasarfeen123"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cta-secondary"
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              GitHub →
+            </motion.a>
+            <motion.button
+              className="cta-copy mono"
+              onClick={handleCopy}
+              title="Copy email"
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
+            >
+              {copied ? '✓ Copied!' : '@ Email'}
+            </motion.button>
+          </motion.div>
+
+          {/* Hint */}
+          <motion.p
+            className="hero-hint-ng mono"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+          >
+            ↑ click name to glitch ·&nbsp;
+            <a href="https://github.com/Anasarfeen123" target="_blank" rel="noopener noreferrer">GitHub</a>
+            &nbsp;·&nbsp;
+            <a href="https://linkedin.com/in/anas-arfeen-b94870366" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          </motion.p>
         </motion.div>
 
-        <StatusPanel onTerminalOpen={onTerminalOpen} />
+        {/* ── RIGHT ── */}
+        <motion.div
+          className="hero-right"
+          initial={{ opacity: 0, x: 28 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <MiniTerminal />
+
+          {/* System status strip */}
+          <motion.div
+            className="status-strip mono"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+          >
+            {[
+              { label: 'OS', value: 'Linux' },
+              { label: 'Shell', value: 'zsh' },
+              { label: 'Editor', value: 'Neovim' },
+              { label: 'Status', value: 'Productive' },
+            ].map((item, i) => (
+              <div key={item.label} className="strip-item">
+                <span className="strip-label">{item.label}</span>
+                <span className="strip-sep">:</span>
+                <span className="strip-val">{item.value}</span>
+                {i < 3 && <span className="strip-div" />}
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
       </div>
 
-      <ScrollIndicator />
+      {/* Scroll indicator */}
+      <motion.div
+        className="scroll-ng"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2 }}
+      >
+        <motion.span
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+        >
+          ↓
+        </motion.span>
+        <span className="scroll-label mono">scroll</span>
+      </motion.div>
     </section>
   );
 };

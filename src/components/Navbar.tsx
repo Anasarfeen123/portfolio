@@ -1,12 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import './Navbar.css';
 
-interface NavbarProps {
-  onTerminalToggle: () => void;
-}
+const Navbar: React.FC = () => {
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
+  );
 
-const Navbar: React.FC<NavbarProps> = ({ onTerminalToggle }) => {
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   const handleNavClick = (event: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
     event.preventDefault();
 
@@ -46,13 +55,13 @@ const Navbar: React.FC<NavbarProps> = ({ onTerminalToggle }) => {
             </motion.a>
           ))}
           <motion.button 
-            className="term-toggle" 
-            onClick={onTerminalToggle}
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+            className="theme-toggle mono"
+            onClick={toggleTheme}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
           >
-            <span className="mono">&gt;_</span>
+            {theme === 'light' ? '🌙' : '☀️'}
           </motion.button>
         </div>
       </div>

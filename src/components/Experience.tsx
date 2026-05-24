@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import type { ExperienceItem } from '../types';
 import './Experience.css';
 
@@ -7,13 +8,40 @@ interface ExperienceProps {
 }
 
 const Experience: React.FC<ExperienceProps> = ({ experience }) => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1, 
+      transition: { staggerChildren: 0.2 } 
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -30 },
+    visible: { 
+      opacity: 1, 
+      x: 0, 
+      transition: { duration: 0.6, ease: "easeOut" } 
+    },
+  };
+
   return (
     <section id="experience" className="experience">
       <div className="container">
         <h2 className="section-title">Leadership & Experience</h2>
-        <div className="timeline">
+        <motion.div 
+          className="timeline"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           {experience.map((item, index) => (
-            <div key={index} className="timeline-item">
+            <motion.div 
+              key={index} 
+              className="timeline-item"
+              variants={itemVariants}
+            >
               <div className="timeline-dot"></div>
               <div className="timeline-content">
                 <div className="timeline-header">
@@ -27,9 +55,9 @@ const Experience: React.FC<ExperienceProps> = ({ experience }) => {
                   ))}
                 </ul>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

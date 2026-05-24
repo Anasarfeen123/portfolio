@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import './Skills.css';
 
 interface SkillsProps {
@@ -13,7 +13,7 @@ interface SkillsProps {
 
 const levelMap: Record<string, string> = {
   'Python': 'S', 'C++': 'S', 'PyTorch': 'A', 'Reinforcement Learning': 'S',
-  'PPO': 'A', 'SAC': 'A', 'ResNet50': 'B', 'Linux (Arch)': 'A',
+  'PPO': 'A', 'SAC': 'A', 'ResNet50': 'B', 'Linux': 'A',
   'Neovim': 'B', 'C#': 'B', 'GDScript': 'C', 'NumPy': 'A',
 };
 
@@ -52,43 +52,34 @@ const SkillTag: React.FC<{ skill: string; revealed: boolean; onReveal: () => voi
 };
 
 const SkillCategory: React.FC<{ title: string; skills: string[] }> = ({ title, skills }) => {
-  const [revealed, setRevealed] = useState<Set<number>>(new Set());
-  const allRevealed = revealed.size === skills.length;
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
 
-  const revealAll = () => {
-    const newSet = new Set(skills.map((_, i) => i));
-    setRevealed(newSet);
-  };
+  const rotateX = useTransform(scrollYProgress, [0, 1], [5, -5]);
 
   return (
     <motion.div
+      ref={ref}
       className="skill-category"
-      whileHover={{ transform: 'translateY(-5px)' }}
+      style={{ rotateX }}
+      whileHover={{ y: -5, rotateX: 0 }}
     >
       <div className="skill-cat-header">
         <h3 className="mono">{title}</h3>
         <div className="skill-cat-meta mono">
-          <span className="skill-progress">{revealed.size}/{skills.length}</span>
-          {!allRevealed && (
-            <motion.button
-              className="reveal-all-btn"
-              onClick={revealAll}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Reveal All
-            </motion.button>
-          )}
-          {allRevealed && <span className="all-revealed">✓ Mastered</span>}
+          <span className="all-revealed">✓ Mastered</span>
         </div>
       </div>
       <div className="skill-tags">
-        {skills.map((s, i) => (
+        {skills.map((s) => (
           <SkillTag
             key={s}
             skill={s}
-            revealed={revealed.has(i)}
-            onReveal={() => setRevealed((prev) => new Set([...prev, i]))}
+            revealed={true}
+            onReveal={() => {}}
           />
         ))}
       </div>
@@ -109,10 +100,9 @@ const Skills: React.FC<SkillsProps> = ({ skills }) => {
   return (
     <section id="skills" className="skills coffee-gradient">
       <div className="container">
-        <h2 className="section-title" style={{ color: 'var(--latte-light)' }}>
+        <h2 className="section-title" style={{ color: 'var(--on-gradient)' }}>
           Technical Arsenal
         </h2>
-        <p className="skills-hint mono">Click any hidden skill to reveal it</p>
         <motion.div
           className="skills-grid"
           variants={containerVariants}

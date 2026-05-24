@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
         <div className="footer-bottom">
-          <p className="mono">Built with React & ❤️ (and a lot of coffee)</p>
+          <p className="mono">Built with React & ❤️</p>
           <p>© 2026 Anas Arfeen</p>
         </div>
       </div>

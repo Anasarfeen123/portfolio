@@ -113,13 +113,36 @@
 }
 
 @media (max-width: 968px) {
+  .about {
+    padding: 6rem 0;
+  }
+
   .about-grid {
     grid-template-columns: 1fr;
     gap: 3rem;
+    text-align: center;
   }
   
   .about-image-container {
-    max-width: 400px;
+    max-width: 300px;
     margin: 0 auto;
+  }
+
+  .creative-summary {
+    border-left: none;
+    border-top: 3px solid var(--accent-gold);
+    padding-left: 0;
+    padding-top: 1.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .fun-facts-list li {
+    justify-content: center;
+  }
+
+  .interests-tags {
+    justify-content: center;
   }
 }
