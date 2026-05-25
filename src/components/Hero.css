@@ -1,6 +1,7 @@
 /* ─── Hero Section ─────────────────────────────────────────── */
 .hero-ng {
   min-height: 100vh;
+  padding: 0;
   position: relative;
   display: flex;
   align-items: center;
@@ -422,6 +423,9 @@
   min-height: 220px;
   max-height: 300px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 4px;

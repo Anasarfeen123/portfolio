@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, useSpring, useMotionValue, useVelocity, useTransform, AnimatePresence } from 'framer-motion';
 import './CustomCursor.css';
 
@@ -83,7 +84,7 @@ const CustomCursor: React.FC = () => {
     };
   }, [cursorX, cursorY, isVisible]);
 
-  return (
+  return createPortal(
     <>
       <AnimatePresence>
         {particles.map(p => (
@@ -128,7 +129,8 @@ const CustomCursor: React.FC = () => {
       >
         <div className="comet-head" />
       </motion.div>
-    </>
+    </>,
+    document.body
   );
 };
 

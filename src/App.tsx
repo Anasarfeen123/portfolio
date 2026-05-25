@@ -1,4 +1,4 @@
-import { motion, useScroll, useSpring } from 'framer-motion'
+import { motion, useReducedMotion, useScroll, useSpring } from 'framer-motion'
 import './App.css'
 import data from './data.json'
 import Navbar from './components/Navbar'
@@ -11,6 +11,7 @@ import Footer from './components/Footer'
 import CustomCursor from './components/CustomCursor'
 
 function App() {
+  const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -36,40 +37,40 @@ function App() {
         
         <motion.section 
           id="about"
-          initial={{ opacity: 0, x: -100 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 42 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.22, margin: '0px 0px -12% 0px' }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
         >
           <About photoUrl="/Photo.jpg" summary={data.personal.summary} />
         </motion.section>
 
         <motion.section 
           id="skills"
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 42 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2, margin: '0px 0px -12% 0px' }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
         >
           <Skills skills={data.skills} />
         </motion.section>
 
         <motion.section 
           id="experience"
-          initial={{ opacity: 0, y: 100 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 42 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          viewport={{ once: false, amount: 0.2, margin: '0px 0px -12% 0px' }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
         >
           <Experience experience={data.experience} />
         </motion.section>
 
         <motion.section 
           id="projects"
-          initial={{ opacity: 0, rotateX: 20 }}
-          whileInView={{ opacity: 1, rotateX: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 42 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.16, margin: '0px 0px -12% 0px' }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           style={{ perspective: 1000 }}
         >
           <Projects projects={data.projects} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import './Hero.css';
 
@@ -114,11 +114,35 @@ const MiniTerminal: React.FC = () => {
   const [cmdHist, setCmdHist] = useState<string[]>([]);
   const [hIdx, setHIdx] = useState(-1);
   const [booted, setBooted] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lockedPageScrollY = useRef<number | null>(null);
+
+  const restoreLockedPageScroll = useCallback(() => {
+    const y = lockedPageScrollY.current;
+    if (y === null || document.activeElement !== inputRef.current) return;
+
+    window.scrollTo(window.scrollX, y);
+    requestAnimationFrame(() => {
+      if (lockedPageScrollY.current !== null && document.activeElement === inputRef.current) {
+        window.scrollTo(window.scrollX, lockedPageScrollY.current);
+      }
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    restoreLockedPageScroll();
+  }, [input, lines, restoreLockedPageScroll]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const body = bodyRef.current;
+    if (!body) return;
+
+    const frame = requestAnimationFrame(() => {
+      body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' });
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [lines]);
 
   useEffect(() => {
@@ -179,10 +203,20 @@ const MiniTerminal: React.FC = () => {
     }
   };
 
+  const focusInput = () => {
+    lockedPageScrollY.current = window.scrollY;
+    inputRef.current?.focus({ preventScroll: true });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    restoreLockedPageScroll();
+  };
+
   return (
     <motion.div
       className="mini-term"
-      onClick={() => inputRef.current?.focus()}
+      onClick={focusInput}
       initial={{ opacity: 0, y: 20, scale: 0.97 }}
       animate={{ opacity: booted ? 1 : 0, y: booted ? 0 : 20, scale: booted ? 1 : 0.97 }}
       transition={{ duration: 0.5, delay: 0.4 }}
@@ -194,7 +228,7 @@ const MiniTerminal: React.FC = () => {
         <span className="mt-title mono">anas@portfolio — bash</span>
       </div>
 
-      <div className="mt-body mono">
+      <div className="mt-body mono" ref={bodyRef}>
         {lines.map((l, i) => (
           <div key={i} className={`mt-line mt-${l.type}`}>
             {l.type === 'in' && <span className="mt-prompt">❯&nbsp;</span>}
@@ -206,8 +240,14 @@ const MiniTerminal: React.FC = () => {
           <input
             ref={inputRef}
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKey}
+            onFocus={() => {
+              lockedPageScrollY.current = window.scrollY;
+            }}
+            onBlur={() => {
+              lockedPageScrollY.current = null;
+            }}
             className="mt-input mono"
             spellCheck={false}
             autoComplete="off"
@@ -216,7 +256,6 @@ const MiniTerminal: React.FC = () => {
             aria-label="Terminal input"
           />
         </form>
-        <div ref={endRef} />
       </div>
 
     </motion.div>
@@ -473,7 +512,7 @@ const Hero: React.FC = () => {
             transition={{ delay: 0.7 }}
           >
             <motion.a
-              href="/portfolio.pdf"
+              href="/Resume.pdf"
               download="Anas_Arfeen_Portfolio.pdf"
               className="cta-primary"
               whileHover={{ scale: 1.04, y: -2 }}
