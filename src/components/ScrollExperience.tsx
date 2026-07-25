@@ -11,6 +11,7 @@ import { experience, journey, profile, projects, skillClusters, type Project } f
 import { AllProjectsModal } from "@/components/AllProjectsModal";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
+import { Revolving3DCarousel } from "@/components/Revolving3DCarousel";
 import { TerminalModal } from "@/components/TerminalModal";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
 import { playChimeSound, playClickSound, setSoundEnabled } from "@/lib/audio";
@@ -31,40 +32,6 @@ function LinkedinIcon({ size = 16 }: { size?: number }) {
       <rect width="4" height="12" x="2" y="9" />
       <circle cx="4" cy="4" r="2" />
     </svg>
-  );
-}
-
-// Interactive 3D Parallax Tilt Card Component
-function DynamicTiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    setRotateX((-y / rect.height) * 7);
-    setRotateY((x / rect.width) * 7);
-  };
-
-  const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
-  };
-
-  return (
-    <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      animate={{ rotateX, rotateY }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className={`chapter-card ${className}`}
-    >
-      {children}
-    </motion.div>
   );
 }
 
@@ -343,7 +310,7 @@ export function ScrollExperience() {
       <div className="narrative" id="top">
         {/* Section 1: Hero & Profile (Centered Main Card) */}
         <section className="chapter-section is-center">
-          <DynamicTiltCard>
+          <div className="chapter-card">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Profile Avatar Photo */}
               <div className="relative shrink-0">
@@ -401,12 +368,12 @@ export function ScrollExperience() {
                 <Terminal size={15} /> Open Terminal (⌘K)
               </button>
             </div>
-          </DynamicTiltCard>
+          </div>
         </section>
 
         {/* Section 2: Origin & Education (Right) */}
         <section className="chapter-section is-right" id="origin">
-          <DynamicTiltCard>
+          <div className="chapter-card">
             <div className="kicker">
               <MapPin size={12} /> Origin Trace
             </div>
@@ -427,12 +394,12 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </DynamicTiltCard>
+          </div>
         </section>
 
         {/* Section 3: Skill Ecosystem (Left) */}
         <section className="chapter-section is-left" id="skills">
-          <DynamicTiltCard>
+          <div className="chapter-card">
             <div className="kicker">
               <Network size={12} /> Tech Ecosystem
             </div>
@@ -460,18 +427,18 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </DynamicTiltCard>
+          </div>
         </section>
 
-        {/* Section 4: Projects Showcase (Top 3 Featured + Catalog Pop-up) */}
+        {/* Section 4: Projects Showcase (3D Revolving Carousel + Catalog Pop-up) */}
         <section className="chapter-section is-right" id="projects">
-          <DynamicTiltCard>
+          <div className="chapter-card">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <div className="kicker">
-                  <Terminal size={12} /> Featured Flagship Systems
+                  <Terminal size={12} /> 3D Revolving Flagships
                 </div>
-                <h2 className="chapter-title">Top 3 Engineering Flagships.</h2>
+                <h2 className="chapter-title">Featured Systems Orbit.</h2>
               </div>
 
               <button
@@ -485,23 +452,19 @@ export function ScrollExperience() {
               </button>
             </div>
 
-            {/* Top 3 Featured Cards Container */}
-            <div className="project-reel mt-6 space-y-6">
-              {top3Projects.map((project, index) => (
-                <FeaturedProjectCard
-                  key={project.id}
-                  index={index}
-                  project={project}
-                  onOpenDetails={(p) => {
-                    playClickSound();
-                    setSelectedProject(p);
-                  }}
-                />
-              ))}
+            {/* 3D Revolving Cylindrical Carousel */}
+            <div className="mt-4">
+              <Revolving3DCarousel
+                projects={top3Projects}
+                onOpenDetails={(p) => {
+                  playClickSound();
+                  setSelectedProject(p);
+                }}
+              />
             </div>
 
             {/* Explore All Projects CTA Button */}
-            <div className="mt-8 text-center border-t border-[var(--line)] pt-6">
+            <div className="mt-6 text-center border-t border-[var(--line)] pt-6">
               <button
                 onClick={() => {
                   playClickSound();
@@ -512,12 +475,12 @@ export function ScrollExperience() {
                 <Layers size={15} /> Explore Full Catalog of All 11 Projects <ArrowRight size={14} />
               </button>
             </div>
-          </DynamicTiltCard>
+          </div>
         </section>
 
         {/* Section 5: Experience & Leadership (Left) */}
         <section className="chapter-section is-left" id="experience">
-          <DynamicTiltCard>
+          <div className="chapter-card">
             <div className="kicker">
               <ScrollText size={12} /> Leadership & Community Impact
             </div>
@@ -545,12 +508,12 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </DynamicTiltCard>
+          </div>
         </section>
 
         {/* Section 6: Convergence & Contact Form (Right) */}
         <section className="chapter-section is-right" id="contact">
-          <DynamicTiltCard>
+          <div className="chapter-card">
             <div className="kicker">
               <Sparkles size={12} /> Convergence
             </div>
@@ -608,7 +571,7 @@ export function ScrollExperience() {
                 <LinkedinIcon size={16} /> LinkedIn
               </a>
             </div>
-          </DynamicTiltCard>
+          </div>
         </section>
       </div>
 
@@ -656,121 +619,5 @@ function BootSequence({ visible }: { visible: boolean }) {
         </motion.div>
       </div>
     </motion.div>
-  );
-}
-
-function FeaturedProjectCard({
-  project,
-  index,
-  onOpenDetails,
-}: {
-  project: Project;
-  index: number;
-  onOpenDetails: (project: Project) => void;
-}) {
-  const ghStats = useGitHubRepo(project.repoName);
-
-  return (
-    <motion.article
-      onClick={() => onOpenDetails(project)}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group cursor-pointer rounded-2xl border border-[var(--line)] bg-[var(--card-hover)] p-5 transition-all hover:border-[var(--accent)] hover:shadow-2xl"
-    >
-      <div className="flex flex-col lg:flex-row gap-5 items-start lg:items-center">
-        {/* Prominent High-Res Screenshot Banner */}
-        {project.image ? (
-          <div className="w-full lg:w-5/12 h-44 sm:h-52 shrink-0 overflow-hidden rounded-xl border border-[var(--line)] bg-[#02040a]">
-            <img
-              src={project.image}
-              alt={project.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          </div>
-        ) : null}
-
-        <div className="flex-1 w-full flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-xs font-bold text-[var(--accent)] tracking-wider">
-                FEATURED // 0{index + 1}
-              </span>
-
-              {!ghStats.loading && (
-                <div className="flex items-center gap-2.5 font-mono text-xs text-[var(--muted)]">
-                  {ghStats.language && (
-                    <span className="rounded bg-[var(--background)] px-2.5 py-0.5 font-semibold text-[var(--accent)] text-[11px]">
-                      {ghStats.language}
-                    </span>
-                  )}
-                  {ghStats.stars > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Star size={12} className="text-amber-500 fill-amber-500" /> {ghStats.stars}
-                    </span>
-                  )}
-                  {ghStats.forks > 0 && (
-                    <span className="flex items-center gap-1">
-                      <GitFork size={12} /> {ghStats.forks}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <h3 className="text-xl sm:text-2xl font-bold text-[var(--heading)] group-hover:text-[var(--accent)] transition-colors mt-1">
-              {project.title}
-            </h3>
-
-            {/* Signal Highlight Box */}
-            <div className="my-2 border-l-2 border-[var(--accent)] pl-3 text-xs font-semibold text-[var(--heading)]">
-              {project.signal}
-            </div>
-
-            <p className="text-xs text-[var(--muted)] line-clamp-2 mt-1">{project.problem}</p>
-
-            <div className="tech-strip mt-3">
-              {project.technologies.map((tech) => (
-                <span className="module-pill" key={tech}>
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-3 text-xs font-mono font-semibold">
-            <span className="text-[var(--accent)] inline-flex items-center gap-1.5 group-hover:translate-x-1 transition-transform">
-              View Full Engineering Pipeline <ArrowRight size={13} />
-            </span>
-
-            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-              {project.github && (
-                <a
-                  href={project.github}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--background)] px-3 py-1 text-[11px] font-semibold text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
-                  title="Source Code"
-                >
-                  <GithubIcon size={12} /> Code
-                </a>
-              )}
-              {project.demo && (
-                <a
-                  href={project.demo}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full border border-[var(--signal)] bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-[var(--signal)] hover:bg-amber-500/20 transition-all"
-                  title="Live Demo"
-                >
-                  Live Demo <ExternalLink size={11} />
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.article>
   );
 }
