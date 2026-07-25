@@ -590,39 +590,81 @@ export function ScrollExperience() {
 }
 
 function BootSequence({ visible }: { visible: boolean }) {
+  const [progress, setProgress] = useState(0);
+  const [logIndex, setLogIndex] = useState(0);
+
+  const logs = [
+    "[0.001] INITIALIZING ANAS_OS // KERNEL v6.12-arch1-1",
+    "[0.124] MOUNTING 3D SOLAR STAGE ENGINE (WebGL 2.0)...",
+    "[0.342] LOADING NEURAL MODELS & RL POLICIES...",
+    "[0.612] ESTABLISHING SIGNAL TO CHENNAI_NODE (13.08°N 80.27°E)...",
+    "[0.980] ANAS ARFEEN PORTFOLIO READY. ENJOY THE FLIGHT.",
+  ];
+
+  useEffect(() => {
+    if (!visible) return;
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 40);
+
+    const logInterval = setInterval(() => {
+      setLogIndex((prev) => Math.min(logs.length - 1, prev + 1));
+    }, 220);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(logInterval);
+    };
+  }, [visible, logs.length]);
+
   if (!visible) return null;
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 grid place-items-center bg-[#f8f1e5] text-[#1a1410] pointer-events-none"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#02040a] text-[#e2e8f0] pointer-events-none p-4 select-none"
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
-      transition={{ delay: 0.8, duration: 0.4, ease: "easeInOut" }}
+      transition={{ delay: 1.4, duration: 0.6, ease: "easeInOut" }}
       aria-hidden="true"
     >
-      <div className="w-[min(580px,88vw)] p-6 text-center sm:text-left">
-        <motion.div
-          className="mb-3 h-px bg-[var(--accent)]"
-          initial={{ scaleX: 0, transformOrigin: "left" }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
-        />
-        <motion.p
-          className="font-mono text-xs uppercase tracking-wider text-[var(--accent)]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          ANAS_ARFEEN // PORTFOLIO
-        </motion.p>
-        <motion.div
-          className="mt-2 text-4xl font-bold tracking-tight text-[#0f0b08] sm:text-6xl"
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          {profile.name}
-        </motion.div>
+      <div className="w-[min(580px,90vw)] rounded-2xl border border-[var(--line-strong)] bg-[#081224]/90 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_0_50px_rgba(56,237,248,0.15)]">
+        <div className="flex items-center justify-between font-mono text-xs text-[var(--accent)] font-bold tracking-widest uppercase">
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[var(--accent)] animate-ping" />
+            ANAS_OS // SYSTEM_BOOT
+          </span>
+          <span>{progress}%</span>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="my-4 h-1.5 w-full overflow-hidden rounded-full bg-[#1e293b]">
+          <motion.div
+            className="h-full bg-gradient-to-r from-[var(--accent)] to-amber-400"
+            style={{ width: `${progress}%` }}
+            transition={{ ease: "easeOut" }}
+          />
+        </div>
+
+        {/* Main Title */}
+        <div className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+          Anas <span className="text-[var(--signal)]">Arfeen</span>
+        </div>
+        <p className="font-mono text-xs text-[#94a3b8] mt-1">AI Engineer & Systems Developer</p>
+
+        {/* Diagnostic Boot Logs Stream */}
+        <div className="mt-5 rounded-xl border border-[#1e293b] bg-[#02040a] p-3 font-mono text-[11px] text-[#38edf8] space-y-1 h-20 overflow-hidden">
+          {logs.slice(0, logIndex + 1).map((log, i) => (
+            <div key={i} className="line-clamp-1">
+              {log}
+            </div>
+          ))}
+        </div>
       </div>
     </motion.div>
   );
