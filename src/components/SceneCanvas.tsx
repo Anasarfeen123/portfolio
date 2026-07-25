@@ -217,7 +217,7 @@ export function SceneCanvas() {
   }
 
   return (
-    <div className="scene-canvas">
+    <div className="scene-canvas relative">
       <Canvas
         camera={{ position: [0, 2.5, 9.0], fov: 48 }}
         dpr={1}
@@ -228,7 +228,7 @@ export function SceneCanvas() {
         <pointLight position={[0, 0, 0]} intensity={isDark ? 4.2 : 3.0} color="#ffe066" distance={35} />
         <directionalLight position={[6, 6, 6]} intensity={isDark ? 2.5 : 2.0} color="#ffffff" />
         
-        {/* Twinkling Starfield in Deep Space */}
+        {/* Starfield */}
         <Stars
           radius={isDark ? 90 : 70}
           depth={isDark ? 50 : 30}
@@ -239,8 +239,11 @@ export function SceneCanvas() {
           speed={isDark ? 0.35 : 0.1}
         />
 
-        <SolarSystemAtlas />
+        <SolarSystemAtlas isDark={isDark} />
       </Canvas>
+
+      {/* Developer HUD Telemetry Overlay on Canvas */}
+      <CanvasHUDTelemetry />
     </div>
   );
 }
@@ -256,7 +259,23 @@ function FallbackScene() {
   );
 }
 
-function SolarSystemAtlas() {
+// Developer HUD Telemetry Overlay Ticks
+function CanvasHUDTelemetry() {
+  return (
+    <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-4 font-mono text-[10px] text-[#38edf8]/40 select-none">
+      <div className="flex justify-between items-center">
+        <span>SYS_INIT // 0x7FFF</span>
+        <span>LAT: 13.08°N LON: 80.27°E</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span>FRAME_LATENCY: 1.8ms</span>
+        <span>NODE: CHENNAI_SOLAR_V2</span>
+      </div>
+    </div>
+  );
+}
+
+function SolarSystemAtlas({ isDark }: { isDark: boolean }) {
   const root = useRef<THREE.Group>(null);
   const sunRef = useRef<THREE.Group>(null);
   const mercuryRef = useRef<THREE.Group>(null);
@@ -271,18 +290,15 @@ function SolarSystemAtlas() {
     const progress = readProgress();
     const t = clock.elapsedTime;
 
-    // Camera travel along solar system
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, Math.sin(progress * Math.PI * 1.3) * 3.8, 0.06);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.8 + progress * 1.5, 0.06);
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, 9.5 - progress * 4.5, 0.06);
     camera.lookAt(0, progress * 0.4, 0);
 
-    // Fast, energetic system rotation
     if (root.current) {
       root.current.rotation.y = t * 0.04;
     }
 
-    // Fast planet self-rotations
     if (sunRef.current) sunRef.current.rotation.y = t * 0.12;
     if (mercuryRef.current) mercuryRef.current.rotation.y = t * 0.45;
     if (venusRef.current) venusRef.current.rotation.y = -t * 0.35;
@@ -291,7 +307,6 @@ function SolarSystemAtlas() {
     if (jupiterRef.current) jupiterRef.current.rotation.y = t * 0.6;
     if (saturnRef.current) saturnRef.current.rotation.y = t * 0.55;
 
-    // Fast-moving Comet orbit across space
     if (cometRef.current) {
       const cTime = t * 0.6;
       cometRef.current.position.x = Math.sin(cTime) * 6.5;
@@ -303,6 +318,12 @@ function SolarSystemAtlas() {
 
   return (
     <group ref={root}>
+      {/* 3D Cyber Wireframe Grid Floor */}
+      <mesh position={[0, -2.5, 0]} rotation-x={-Math.PI / 2}>
+        <planeGeometry args={[40, 40, 30, 30]} />
+        <meshBasicMaterial color={isDark ? "#38edf8" : "#d97706"} wireframe transparent opacity={isDark ? 0.06 : 0.04} />
+      </mesh>
+
       {/* 1. SUN */}
       <SunMesh ref={sunRef} />
 
@@ -311,9 +332,14 @@ function SolarSystemAtlas() {
       <OrbitRing radius={2.8} />
       <OrbitRing radius={4.2} />
       <OrbitRing radius={5.6} />
-      <OrbitRing radius={6.5} color="#d97706" /> {/* Asteroid Belt Path */}
+      <OrbitRing radius={6.5} color="#d97706" />
       <OrbitRing radius={7.6} />
       <OrbitRing radius={9.6} />
+
+      {/* Interplanetary Data Packet Streams */}
+      <DataStreamLine from={[0, 0, 0]} to={[4.2, 0, 0]} />
+      <DataStreamLine from={[4.2, 0, 0]} to={[5.6, 0, 0]} />
+      <DataStreamLine from={[5.6, 0, 0]} to={[9.6, 0, 0]} />
 
       {/* 2. MERCURY */}
       <PlanetMesh ref={mercuryRef} name="mercury" radius={0.16} distance={1.8} />
@@ -327,7 +353,7 @@ function SolarSystemAtlas() {
       {/* 5. MARS */}
       <PlanetMesh ref={marsRef} name="mars" radius={0.38} distance={5.6} />
 
-      {/* 6. 3D ASTEROID BELT (60 Spinning Rocks) */}
+      {/* 6. 3D ASTEROID BELT */}
       <AsteroidBelt radius={6.5} count={60} />
 
       {/* 7. JUPITER */}
@@ -336,8 +362,31 @@ function SolarSystemAtlas() {
       {/* 8. SATURN WITH 3D RINGS & PROBE */}
       <SaturnSystem ref={saturnRef} distance={9.6} />
 
-      {/* 9. FAST COMET WITH GLOW TAIL */}
+      {/* 9. FAST COMET */}
       <CometMesh ref={cometRef} />
+    </group>
+  );
+}
+
+// --- Data Packet Beams Between Planets ---
+function DataStreamLine({ from, to }: { from: [number, number, number]; to: [number, number, number] }) {
+  const packetRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    if (packetRef.current) {
+      const progress = (clock.elapsedTime * 0.4) % 1;
+      packetRef.current.position.x = THREE.MathUtils.lerp(from[0], to[0], progress);
+      packetRef.current.position.y = THREE.MathUtils.lerp(from[1], to[1], progress);
+      packetRef.current.position.z = THREE.MathUtils.lerp(from[2], to[2], progress);
+    }
+  });
+
+  return (
+    <group>
+      <mesh ref={packetRef}>
+        <sphereGeometry args={[0.035, 8, 8]} />
+        <meshBasicMaterial color="#38edf8" />
+      </mesh>
     </group>
   );
 }
@@ -397,7 +446,6 @@ const PlanetMesh = ReactForwardGroup(function PlanetMesh(
   );
 });
 
-// --- EARTH WITH SATELLITES & MOON ---
 const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { distance: number }, ref) {
   const textures = useMemo(() => getSolarTextures(), []);
   const cloudRef = useRef<THREE.Mesh>(null);
@@ -413,33 +461,27 @@ const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { dista
   return (
     <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
       <group ref={ref}>
-        {/* Earth Globe */}
         <mesh>
           <sphereGeometry args={[0.58, 32, 32]} />
           <meshStandardMaterial map={textures.earth ?? undefined} roughness={0.55} metalness={0.15} />
         </mesh>
 
-        {/* Earth Clouds */}
         <mesh ref={cloudRef}>
           <sphereGeometry args={[0.595, 32, 32]} />
           <meshStandardMaterial map={textures.cloud ?? undefined} transparent opacity={0.45} depthWrite={false} />
         </mesh>
 
-        {/* Chennai Origin Beacon */}
         <mesh position={latLonToVector(13.08, 80.27, 0.59)}>
           <sphereGeometry args={[0.03, 8, 8]} />
           <meshBasicMaterial color="#ffb703" />
         </mesh>
 
-        {/* Orbiting Satellite 1 (GPS / Telemetry Satellite) */}
         <group ref={sat1Ref}>
           <group position={[0.82, 0.15, 0]}>
-            {/* Body */}
             <mesh>
               <boxGeometry args={[0.04, 0.04, 0.06]} />
               <meshStandardMaterial color="#38edf8" metalness={0.8} />
             </mesh>
-            {/* Solar Panels */}
             <mesh position={[0.08, 0, 0]}>
               <boxGeometry args={[0.1, 0.02, 0.005]} />
               <meshBasicMaterial color="#1e293b" />
@@ -448,7 +490,6 @@ const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { dista
               <boxGeometry args={[0.1, 0.02, 0.005]} />
               <meshBasicMaterial color="#1e293b" />
             </mesh>
-            {/* Signal Beacon */}
             <mesh position={[0, 0.03, 0]}>
               <sphereGeometry args={[0.015, 6, 6]} />
               <meshBasicMaterial color="#38edf8" />
@@ -456,7 +497,6 @@ const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { dista
           </group>
         </group>
 
-        {/* Orbiting Satellite 2 (Polar Orbit) */}
         <group ref={sat2Ref}>
           <group position={[0, 0.88, 0]}>
             <mesh>
@@ -466,7 +506,6 @@ const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { dista
           </group>
         </group>
 
-        {/* Moon */}
         <group position={[1.1, 0.25, 0]}>
           <mesh>
             <sphereGeometry args={[0.14, 16, 16]} />
@@ -478,7 +517,6 @@ const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { dista
   );
 });
 
-// --- SATURN SYSTEM WITH 3D RINGS & VOYAGER PROBE ---
 const SaturnSystem = ReactForwardGroup(function SaturnSystem({ distance }: { distance: number }, ref) {
   const textures = useMemo(() => getSolarTextures(), []);
   const probeRef = useRef<THREE.Group>(null);
@@ -492,19 +530,16 @@ const SaturnSystem = ReactForwardGroup(function SaturnSystem({ distance }: { dis
   return (
     <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
       <group ref={ref}>
-        {/* Saturn Sphere */}
         <mesh>
           <sphereGeometry args={[0.68, 28, 28]} />
           <meshStandardMaterial map={textures.saturn ?? undefined} roughness={0.6} />
         </mesh>
 
-        {/* 3D Saturn Rings */}
         <mesh rotation-x={Math.PI / 2.5}>
           <ringGeometry args={[0.88, 1.52, 36]} />
           <meshBasicMaterial map={textures.saturnRing ?? undefined} transparent opacity={0.75} side={THREE.DoubleSide} />
         </mesh>
 
-        {/* Space Probe Voyager */}
         <group ref={probeRef} position={[1.4, 0.5, 0]}>
           <mesh>
             <coneGeometry args={[0.06, 0.08, 8]} />
@@ -516,7 +551,6 @@ const SaturnSystem = ReactForwardGroup(function SaturnSystem({ distance }: { dis
   );
 });
 
-// --- 3D ASTEROID BELT (60 Spinning Rock Particles) ---
 function AsteroidBelt({ radius, count }: { radius: number; count: number }) {
   const asteroids = useMemo(() => {
     const rocks = [];
@@ -550,17 +584,14 @@ function AsteroidBelt({ radius, count }: { radius: number; count: number }) {
   );
 }
 
-// --- COMET MESH WITH TAIL ---
 const CometMesh = ReactForwardGroup(function CometMesh(_, ref) {
   return (
     <group ref={ref}>
-      {/* Comet Head */}
       <mesh>
         <sphereGeometry args={[0.06, 10, 10]} />
         <meshBasicMaterial color="#38edf8" />
       </mesh>
 
-      {/* Glowing Tail */}
       <mesh position={[-0.25, 0, 0]} rotation-z={Math.PI / 2}>
         <coneGeometry args={[0.08, 0.5, 12]} />
         <meshBasicMaterial color="#38edf8" transparent opacity={0.4} />
