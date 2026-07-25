@@ -591,81 +591,51 @@ export function ScrollExperience() {
 }
 
 function BootSequence({ visible }: { visible: boolean }) {
-  const [progress, setProgress] = useState(0);
-  const [logIndex, setLogIndex] = useState(0);
-
-  const logs = [
-    "[0.001] INITIALIZING ANAS_OS // KERNEL v6.12-arch1-1",
-    "[0.124] MOUNTING 3D SOLAR STAGE ENGINE (WebGL 2.0)...",
-    "[0.342] LOADING NEURAL MODELS & RL POLICIES...",
-    "[0.612] ESTABLISHING SIGNAL TO CHENNAI_NODE (13.08°N 80.27°E)...",
-    "[0.980] ANAS ARFEEN PORTFOLIO READY. ENJOY THE FLIGHT.",
-  ];
-
-  useEffect(() => {
-    if (!visible) return;
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 40);
-
-    const logInterval = setInterval(() => {
-      setLogIndex((prev) => Math.min(logs.length - 1, prev + 1));
-    }, 220);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(logInterval);
-    };
-  }, [visible, logs.length]);
-
   if (!visible) return null;
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#02040a] text-[#e2e8f0] pointer-events-none p-4 select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] pointer-events-none p-4 select-none"
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
-      transition={{ delay: 1.4, duration: 0.6, ease: "easeInOut" }}
+      transition={{ delay: 0.9, duration: 0.45, ease: "easeInOut" }}
       aria-hidden="true"
     >
-      <div className="w-[min(580px,90vw)] rounded-2xl border border-[var(--line-strong)] bg-[#081224]/90 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_0_50px_rgba(56,237,248,0.15)]">
-        <div className="flex items-center justify-between font-mono text-xs text-[var(--accent)] font-bold tracking-widest uppercase">
-          <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[var(--accent)] animate-ping" />
-            ANAS_OS // SYSTEM_BOOT
-          </span>
-          <span>{progress}%</span>
-        </div>
+      <div className="w-[min(500px,88vw)] rounded-2xl border border-[var(--line-strong)] bg-[var(--card-bg)] p-6 sm:p-8 backdrop-blur-2xl shadow-2xl">
+        {/* Animated Loading Bar */}
+        <motion.div
+          className="mb-4 h-[2px] bg-[var(--accent)]"
+          initial={{ scaleX: 0, transformOrigin: "left" }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.7, ease: "easeInOut" }}
+        />
 
-        {/* Progress Bar */}
-        <div className="my-4 h-1.5 w-full overflow-hidden rounded-full bg-[#1e293b]">
-          <motion.div
-            className="h-full bg-gradient-to-r from-[var(--accent)] to-amber-400"
-            style={{ width: `${progress}%` }}
-            transition={{ ease: "easeOut" }}
-          />
-        </div>
+        <motion.p
+          className="font-mono text-xs font-semibold uppercase tracking-wider text-[var(--accent)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+        >
+          ANAS ARFEEN // PORTFOLIO
+        </motion.p>
 
-        {/* Main Title */}
-        <div className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+        <motion.div
+          className="mt-1 text-3xl sm:text-5xl font-extrabold text-[var(--heading)] tracking-tight"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.4 }}
+        >
           Anas <span className="text-[var(--signal)]">Arfeen</span>
-        </div>
-        <p className="font-mono text-xs text-[#94a3b8] mt-1">AI Engineer & Systems Developer</p>
+        </motion.div>
 
-        {/* Diagnostic Boot Logs Stream */}
-        <div className="mt-5 rounded-xl border border-[#1e293b] bg-[#02040a] p-3 font-mono text-[11px] text-[#38edf8] space-y-1 h-20 overflow-hidden">
-          {logs.slice(0, logIndex + 1).map((log, i) => (
-            <div key={i} className="line-clamp-1">
-              {log}
-            </div>
-          ))}
-        </div>
+        <motion.p
+          className="mt-2 text-xs sm:text-sm font-medium text-[var(--muted)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35 }}
+        >
+          Autonomous Agents • Computer Vision • Linux Systems
+        </motion.p>
       </div>
     </motion.div>
   );
