@@ -24,19 +24,17 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Connect scroll position of section to 3D project revolving index
+  // Connect page scroll position to 3D carousel index
   useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
 
-      // Calculate how far through the carousel viewport section we are (0 to 1)
       const totalDist = windowHeight + rect.height;
       const currentDist = windowHeight - rect.top;
       const scrollRatio = Math.max(0, Math.min(1, currentDist / totalDist));
 
-      // Map ratio to 0, 1, 2 index
       const targetIndex = Math.min(
         projects.length - 1,
         Math.floor(scrollRatio * projects.length)
@@ -61,10 +59,10 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
   return (
     <div
       ref={containerRef}
-      className="relative w-full py-8 flex flex-col items-center select-none"
+      className="relative w-full py-6 flex flex-col items-center select-none"
     >
-      {/* 3D Carousel Stage */}
-      <div className="relative w-full h-[380px] sm:h-[420px] flex items-center justify-center [perspective:1200px]">
+      {/* Sleek Compact 3D Carousel Stage */}
+      <div className="relative w-full h-[340px] sm:h-[370px] flex items-center justify-center [perspective:1000px]">
         {projects.map((project, idx) => {
           let offset = idx - activeIndex;
           if (offset < -1) offset += projects.length;
@@ -83,24 +81,24 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
 
           if (isActive) {
             rotateY = 0;
-            translateZ = 60;
+            translateZ = 40;
             translateX = "0%";
             scale = 1;
             opacity = 1;
             zIndex = 30;
           } else if (isLeft) {
-            rotateY = 32;
-            translateZ = -120;
-            translateX = "-45%";
-            scale = 0.82;
-            opacity = 0.65;
+            rotateY = 28;
+            translateZ = -90;
+            translateX = "-32%";
+            scale = 0.84;
+            opacity = 0.6;
             zIndex = 10;
           } else if (isRight) {
-            rotateY = -32;
-            translateZ = -120;
-            translateX = "45%";
-            scale = 0.82;
-            opacity = 0.65;
+            rotateY = -28;
+            translateZ = -90;
+            translateX = "32%";
+            scale = 0.84;
+            opacity = 0.6;
             zIndex = 10;
           } else {
             opacity = 0;
@@ -125,13 +123,13 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
                 opacity,
               }}
               transition={{
-                duration: 0.6,
+                duration: 0.55,
                 ease: [0.25, 1, 0.5, 1],
               }}
               style={{ zIndex }}
-              className={`absolute top-0 w-[min(680px,90vw)] h-full cursor-pointer rounded-2xl border p-5 sm:p-6 backdrop-blur-xl shadow-2xl transition-colors ${
+              className={`absolute top-0 w-[min(480px,86vw)] h-full cursor-pointer rounded-2xl border p-5 backdrop-blur-xl shadow-xl transition-colors flex flex-col justify-between ${
                 isActive
-                  ? "border-[var(--accent)] bg-[var(--card-hover)] shadow-[0_0_35px_rgba(56,237,248,0.2)]"
+                  ? "border-[var(--accent)] bg-[var(--card-hover)] shadow-[0_0_30px_rgba(0,230,168,0.18)]"
                   : "border-[var(--line)] bg-[var(--card-bg)] hover:border-[var(--line-strong)]"
               }`}
             >
@@ -142,13 +140,13 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
       </div>
 
       {/* Navigation Controls & Dots */}
-      <div className="mt-6 flex items-center justify-between w-full max-w-xs">
+      <div className="mt-5 flex items-center justify-between w-full max-w-xs">
         <button
           onClick={prevSlide}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--card-hover)] text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all shadow-md active:scale-95 cursor-pointer"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--card-hover)] text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all shadow-md active:scale-95 cursor-pointer"
           aria-label="Previous Project"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={15} />
         </button>
 
         <div className="flex items-center gap-2">
@@ -166,10 +164,10 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
 
         <button
           onClick={nextSlide}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--card-hover)] text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all shadow-md active:scale-95 cursor-pointer"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--card-hover)] text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all shadow-md active:scale-95 cursor-pointer"
           aria-label="Next Project"
         >
-          <ArrowRight size={16} />
+          <ArrowRight size={15} />
         </button>
       </div>
     </div>
@@ -194,61 +192,61 @@ function CarouselCardContent({
       <div>
         <div className="flex items-center justify-between gap-2">
           <span className="font-mono text-xs font-bold text-[var(--accent)] tracking-wider uppercase">
-            3D REVOLVING SYSTEM // 0{index + 1}
+            3D REVOLVER // 0{index + 1}
           </span>
 
           {!ghStats.loading && (
             <div className="flex items-center gap-2 font-mono text-xs text-[var(--muted)]">
               {ghStats.language && (
-                <span className="rounded bg-[var(--background)] px-2.5 py-0.5 font-semibold text-[var(--accent)] text-[11px]">
+                <span className="rounded bg-[var(--background)] px-2 py-0.5 font-semibold text-[var(--accent)] text-[10px]">
                   {ghStats.language}
                 </span>
               )}
               {ghStats.stars > 0 && (
-                <span className="flex items-center gap-1">
-                  <Star size={12} className="text-amber-500 fill-amber-500" /> {ghStats.stars}
+                <span className="flex items-center gap-1 font-bold text-amber-400">
+                  <Star size={11} className="fill-amber-400" /> {ghStats.stars}
                 </span>
               )}
             </div>
           )}
         </div>
 
-        <h3 className="text-xl sm:text-2xl font-bold text-[var(--heading)] mt-1.5">{project.title}</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-[var(--heading)] mt-1">{project.title}</h3>
 
-        {/* Screenshot Banner */}
+        {/* Compact Screenshot Banner */}
         {project.image && (
-          <div className="my-3 overflow-hidden rounded-xl border border-[var(--line)] max-h-[140px] sm:max-h-[160px] bg-[#02040a]">
+          <div className="my-2.5 overflow-hidden rounded-xl border border-[var(--line)] max-h-[120px] bg-[#02040a]">
             <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
           </div>
         )}
 
-        <div className="border-l-2 border-[var(--accent)] pl-3 text-xs font-semibold text-[var(--heading)]">
+        <div className="border-l-2 border-[var(--accent)] pl-2.5 text-xs font-semibold text-[var(--heading)]">
           {project.signal}
         </div>
 
-        <p className="text-xs text-[var(--muted)] line-clamp-2 mt-1.5">{project.problem}</p>
+        <p className="text-xs text-[var(--muted)] line-clamp-2 mt-1">{project.problem}</p>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-[var(--line)] pt-3 text-xs font-mono font-semibold">
+      <div className="mt-2.5 flex items-center justify-between border-t border-[var(--line)] pt-2.5 text-xs font-mono font-semibold">
         <span
           onClick={(e) => {
             e.stopPropagation();
             onOpenDetails(project);
           }}
-          className="text-[var(--accent)] inline-flex items-center gap-1.5 hover:underline cursor-pointer"
+          className="text-[var(--accent)] inline-flex items-center gap-1 hover:underline cursor-pointer"
         >
-          View Full Engineering Details <ArrowRight size={13} />
+          Full Details <ArrowRight size={12} />
         </span>
 
         <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
           {project.github && (
             <a href={project.github} target="_blank" rel="noreferrer" className="text-[var(--muted)] hover:text-[var(--heading)]" title="GitHub Repo">
-              <GithubIcon size={15} />
+              <GithubIcon size={14} />
             </a>
           )}
           {project.demo && (
             <a href={project.demo} target="_blank" rel="noreferrer" className="text-[var(--signal)] hover:underline" title="Live Demo">
-              <ExternalLink size={15} />
+              <ExternalLink size={14} />
             </a>
           )}
         </div>
