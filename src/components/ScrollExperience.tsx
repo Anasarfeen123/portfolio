@@ -9,9 +9,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { experience, journey, profile, projects, skillClusters, type Project } from "@/data/portfolio";
 import { AllProjectsModal } from "@/components/AllProjectsModal";
-import { HolodeckPrism } from "@/components/HolodeckPrism";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
+import { Revolving3DCarousel } from "@/components/Revolving3DCarousel";
 import { TerminalModal } from "@/components/TerminalModal";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
 import { playChimeSound, playClickSound, setSoundEnabled } from "@/lib/audio";
@@ -430,15 +430,15 @@ export function ScrollExperience() {
           </div>
         </section>
 
-        {/* Section 4: Projects Showcase (3D Holodeck Glass Prism Orbit) */}
+        {/* Section 4: Projects Showcase (3D Revolving Cylindrical Carousel) */}
         <section className="chapter-section is-right" id="projects">
           <div className="chapter-card">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <div className="kicker">
-                  <Terminal size={12} /> 3D Holodeck Glass Prism Orbit
+                  <Terminal size={12} /> 3D Revolving Flagships
                 </div>
-                <h2 className="chapter-title">Flagship Systems Prism.</h2>
+                <h2 className="chapter-title">Featured Systems Orbit.</h2>
               </div>
 
               <button
@@ -452,9 +452,9 @@ export function ScrollExperience() {
               </button>
             </div>
 
-            {/* 3D Holodeck Glass Prism Orbit Showcase */}
-            <div className="mt-2">
-              <HolodeckPrism
+            {/* 3D Revolving Cylindrical Carousel */}
+            <div className="mt-4">
+              <Revolving3DCarousel
                 projects={top3Projects}
                 onOpenDetails={(p) => {
                   playClickSound();
@@ -464,7 +464,7 @@ export function ScrollExperience() {
             </div>
 
             {/* Explore All Projects CTA Button */}
-            <div className="mt-4 text-center border-t border-[var(--line)] pt-6">
+            <div className="mt-6 text-center border-t border-[var(--line)] pt-6">
               <button
                 onClick={() => {
                   playClickSound();
