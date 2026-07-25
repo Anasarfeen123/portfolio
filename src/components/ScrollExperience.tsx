@@ -129,7 +129,13 @@ export function ScrollExperience() {
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactEmail || !contactMsg) return;
-    triggerToast(`Message dispatched! Thank you ${contactEmail.split("@")[0]}.`);
+    
+    const mailtoUrl = `mailto:${profile.email}?subject=${encodeURIComponent(
+      `Portfolio Inquiry from ${contactEmail}`
+    )}&body=${encodeURIComponent(`Sender Email: ${contactEmail}\n\nMessage:\n${contactMsg}`)}`;
+    
+    window.location.href = mailtoUrl;
+    triggerToast(`Opening mail client to send to ${profile.email}!`);
     setContactEmail("");
     setContactMsg("");
   };

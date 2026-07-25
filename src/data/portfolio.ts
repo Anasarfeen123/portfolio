@@ -35,7 +35,7 @@ export const profile = {
   statement: "Designing intelligent agents, computer vision systems, terminal tools, and machine learning applications.",
   bio: "Computer Science undergraduate at VIT Chennai passionate about autonomous agents, reinforcement learning, computer vision, terminal tooling, and Linux systems programming.",
   location: "Chennai, Tamil Nadu, India",
-  email: "anasarfeen123@gmail.com",
+  email: "codecrusader07@gmail.com",
   github: "https://github.com/Anasarfeen123",
   linkedin: "https://linkedin.com/in/anas-arfeen",
   portfolio: "https://anasarfeen.dev",
