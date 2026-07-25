@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CornerDownLeft, Gamepad2, Terminal as TerminalIcon, X } from "lucide-react";
+import { CornerDownLeft, Gamepad2, Sparkles, Terminal as TerminalIcon, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { experience, profile, projects, skillClusters } from "@/data/portfolio";
 
@@ -49,6 +49,7 @@ const availableCommands = [
   "exit",
 ];
 
+const quickPills = ["neofetch", "projects", "skills", "snake", "pong", "matrix", "clear", "help"];
 const availableFiles = ["bio.txt", "contact.txt", "resume.txt", "stack.txt"];
 
 // --- 1. Terminal Snake Game Component ---
@@ -103,28 +104,29 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [direction, gameOver, onQuit]);
+  }, [direction, gameOver]);
 
   useEffect(() => {
     if (gameOver) return;
 
     const timer = setInterval(() => {
-      setSnake((prev) => {
-        const head = { x: prev[0].x + direction.x, y: prev[0].y + direction.y };
+      setSnake((prevSnake) => {
+        const head = prevSnake[0];
+        const newHead = { x: head.x + direction.x, y: head.y + direction.y };
 
-        if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
+        if (newHead.x < 0 || newHead.x >= width || newHead.y < 0 || newHead.y >= height) {
           setGameOver(true);
-          return prev;
+          return prevSnake;
         }
 
-        if (prev.some((s) => s.x === head.x && s.y === head.y)) {
+        if (prevSnake.some((segment) => segment.x === newHead.x && segment.y === newHead.y)) {
           setGameOver(true);
-          return prev;
+          return prevSnake;
         }
 
-        const newSnake = [head, ...prev];
+        const newSnake = [newHead, ...prevSnake];
 
-        if (head.x === food.x && head.y === food.y) {
+        if (newHead.x === food.x && newHead.y === food.y) {
           setScore((s) => s + 10);
           setFood(spawnFood(newSnake));
         } else {
@@ -133,76 +135,57 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
 
         return newSnake;
       });
-    }, 130);
+    }, 120);
 
     return () => clearInterval(timer);
   }, [direction, food, gameOver]);
 
-  const renderBoard = () => {
-    const grid: string[][] = Array.from({ length: height }, () => Array(width).fill(" "));
-    grid[food.y][food.x] = "★";
-    snake.forEach((s, idx) => {
-      grid[s.y][s.x] = idx === 0 ? "█" : "░";
-    });
-
-    let topBorder = "┌" + "─".repeat(width) + "┐";
-    let bottomBorder = "└" + "─".repeat(width) + "┘";
-    let rows = grid.map((r) => "│" + r.join("") + "│").join("\n");
-
-    return `${topBorder}\n${rows}\n${bottomBorder}`;
-  };
-
   return (
-    <div className="font-mono text-xs text-[#38edf8] space-y-2 select-none">
-      <div className="flex items-center justify-between text-white border-b border-[#1e293b] pb-2">
-        <span className="flex items-center gap-1.5 font-bold text-[#ffb703]">
-          <Gamepad2 size={14} /> TERMINAL SNAKE ARCADE
-        </span>
-        <span>Score: <strong className="text-[var(--accent)]">{score}</strong></span>
+    <div className="flex flex-col items-center justify-center p-3 font-mono text-xs select-none">
+      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[#00e6a8] font-bold">
+        <span>🐍 SNAKE ARCADE</span>
+        <span>SCORE: {score}</span>
       </div>
 
-      <pre className="font-mono leading-none text-white text-[11px] sm:text-[12px] bg-[#04070d] p-3 rounded-lg overflow-x-auto text-center">
-        {renderBoard()}
-      </pre>
+      <div className="border-2 border-[#00e6a8]/40 bg-[#040810] p-1 rounded-lg">
+        {Array.from({ length: height }).map((_, y) => (
+          <div key={y} className="flex">
+            {Array.from({ length: width }).map((_, x) => {
+              const isSnakeHead = snake[0].x === x && snake[0].y === y;
+              const isSnakeBody = snake.slice(1).some((s) => s.x === x && s.y === y);
+              const isFood = food.x === x && food.y === y;
 
-      {/* Mobile D-Pad Touch Controls */}
-      <div className="flex flex-col items-center gap-1.5 py-1">
-        <button
-          onClick={() => handleMove("up")}
-          className="h-8 w-12 rounded bg-[#1e293b] text-white font-bold text-sm hover:bg-[#334155] active:scale-95 transition-all"
-        >
-          ▲
-        </button>
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleMove("left")}
-            className="h-8 w-12 rounded bg-[#1e293b] text-white font-bold text-sm hover:bg-[#334155] active:scale-95 transition-all"
-          >
-            ◄
-          </button>
-          <button
-            onClick={() => handleMove("down")}
-            className="h-8 w-12 rounded bg-[#1e293b] text-white font-bold text-sm hover:bg-[#334155] active:scale-95 transition-all"
-          >
-            ▼
-          </button>
-          <button
-            onClick={() => handleMove("right")}
-            className="h-8 w-12 rounded bg-[#1e293b] text-white font-bold text-sm hover:bg-[#334155] active:scale-95 transition-all"
-          >
-            ►
-          </button>
+              let char = " ";
+              let colorClass = "text-slate-800";
+
+              if (isSnakeHead) {
+                char = "█";
+                colorClass = "text-[#00e6a8]";
+              } else if (isSnakeBody) {
+                char = "▓";
+                colorClass = "text-[#00e6a8]/70";
+              } else if (isFood) {
+                char = "★";
+                colorClass = "text-amber-400 animate-pulse";
+              }
+
+              return (
+                <span key={x} className={`w-3.5 h-4 text-center leading-none ${colorClass}`}>
+                  {char}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {gameOver ? (
+        <div className="mt-3 text-center text-red-400 font-bold">
+          GAME OVER! [ENTER] Restart | [Q] Quit
         </div>
-      </div>
-
-      <div className="flex items-center justify-between text-[11px] text-[#94a3b8]">
-        <span>Controls: Touch D-Pad or W/A/S/D</span>
-        <button onClick={onQuit} className="underline text-white">Quit Game (Q)</button>
-      </div>
-
-      {gameOver && (
-        <div className="text-center font-bold text-[#ef6f6c] pt-1">
-          GAME OVER! Final Score: {score} — Press ENTER or D-Pad to retry.
+      ) : (
+        <div className="mt-2 text-center text-[10px] text-slate-400">
+          Use WASD / Arrow Keys to Move | Press [Q] to Quit
         </div>
       )}
     </div>
@@ -213,13 +196,10 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
 function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
   const width = 24;
   const height = 10;
-  const [playerY, setPlayerY] = useState(4);
-  const [aiY, setAiY] = useState(4);
-  const [ball, setBall] = useState({ x: 12, y: 5, vx: 1, vy: 1 });
-  const [score, setScore] = useState({ player: 0, ai: 0 });
-
-  const moveUp = () => setPlayerY((y) => Math.max(0, y - 1));
-  const moveDown = () => setPlayerY((y) => Math.min(height - 2, y + 1));
+  const [paddleY, setPaddleY] = useState(4);
+  const [ball, setBall] = useState({ x: 12, y: 5, dx: 1, dy: 1 });
+  const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -227,128 +207,118 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
         onQuit();
         return;
       }
-      if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") moveUp();
-      else if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") moveDown();
+      if (gameOver && e.key === "Enter") {
+        setPaddleY(4);
+        setBall({ x: 12, y: 5, dx: 1, dy: 1 });
+        setScore(0);
+        setGameOver(false);
+        return;
+      }
+      if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
+        setPaddleY((y) => Math.max(0, y - 1));
+      } else if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") {
+        setPaddleY((y) => Math.min(height - 3, y + 1));
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onQuit]);
+  }, [gameOver]);
 
   useEffect(() => {
+    if (gameOver) return;
+
     const timer = setInterval(() => {
-      setBall((prev) => {
-        let nx = prev.x + prev.vx;
-        let ny = prev.y + prev.vy;
-        let nvx = prev.vx;
-        let nvy = prev.vy;
+      setBall((b) => {
+        let nextX = b.x + b.dx;
+        let nextY = b.y + b.dy;
+        let nextDx = b.dx;
+        let nextDy = b.dy;
 
-        if (ny <= 0 || ny >= height - 1) {
-          nvy = -nvy;
+        if (nextY <= 0 || nextY >= height - 1) {
+          nextDy = -nextDy;
         }
 
-        if (nx === 1 && (ny === playerY || ny === playerY + 1)) {
-          nvx = -nvx;
+        if (nextX >= width - 1) {
+          nextDx = -nextDx;
         }
 
-        if (nx === width - 2 && (ny === aiY || ny === aiY + 1)) {
-          nvx = -nvx;
+        if (nextX === 1) {
+          if (nextY >= paddleY && nextY <= paddleY + 2) {
+            nextDx = -nextDx;
+            setScore((s) => s + 1);
+          } else {
+            setGameOver(true);
+          }
         }
 
-        if (nx <= 0) {
-          setScore((s) => ({ ...s, ai: s.ai + 1 }));
-          return { x: 12, y: 5, vx: 1, vy: 1 };
-        }
-        if (nx >= width - 1) {
-          setScore((s) => ({ ...s, player: s.player + 1 }));
-          return { x: 12, y: 5, vx: -1, vy: -1 };
-        }
-
-        setAiY((y) => {
-          if (ny > y + 1 && y < height - 2) return y + 1;
-          if (ny < y && y > 0) return y - 1;
-          return y;
-        });
-
-        return { x: nx, y: ny, vx: nvx, vy: nvy };
+        return { x: nextX, y: nextY, dx: nextDx, dy: nextDy };
       });
     }, 110);
 
     return () => clearInterval(timer);
-  }, [playerY, aiY]);
-
-  const renderBoard = () => {
-    const grid: string[][] = Array.from({ length: height }, () => Array(width).fill(" "));
-
-    grid[playerY][0] = "█";
-    if (playerY + 1 < height) grid[playerY + 1][0] = "█";
-
-    grid[aiY][width - 1] = "█";
-    if (aiY + 1 < height) grid[aiY + 1][width - 1] = "█";
-
-    if (ball.y >= 0 && ball.y < height && ball.x >= 0 && ball.x < width) {
-      grid[ball.y][ball.x] = "O";
-    }
-
-    let topBorder = "┌" + "─".repeat(width) + "┐";
-    let bottomBorder = "└" + "─".repeat(width) + "┘";
-    let rows = grid.map((r) => "│" + r.join("") + "│").join("\n");
-
-    return `${topBorder}\n${rows}\n${bottomBorder}`;
-  };
+  }, [paddleY, gameOver]);
 
   return (
-    <div className="font-mono text-xs text-[#38edf8] space-y-2 select-none">
-      <div className="flex items-center justify-between text-white border-b border-[#1e293b] pb-2">
-        <span className="flex items-center gap-1.5 font-bold text-[#ffb703]">
-          <Gamepad2 size={14} /> TERMINAL PONG
-        </span>
-        <span>YOU: <strong className="text-[var(--accent)]">{score.player}</strong> | AI: <strong className="text-[#ef6f6c]">{score.ai}</strong></span>
+    <div className="flex flex-col items-center justify-center p-3 font-mono text-xs select-none">
+      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[#00e6a8] font-bold">
+        <span>🏓 PONG ARCADE</span>
+        <span>SCORE: {score}</span>
       </div>
 
-      <pre className="font-mono leading-none text-white text-[11px] sm:text-[12px] bg-[#04070d] p-3 rounded-lg overflow-x-auto text-center">
-        {renderBoard()}
-      </pre>
+      <div className="border-2 border-[#00e6a8]/40 bg-[#040810] p-1 rounded-lg">
+        {Array.from({ length: height }).map((_, y) => (
+          <div key={y} className="flex">
+            {Array.from({ length: width }).map((_, x) => {
+              const isPaddle = x === 0 && y >= paddleY && y <= paddleY + 2;
+              const isBall = ball.x === x && ball.y === y;
+              const isRightWall = x === width - 1;
 
-      {/* Mobile Touch Controls for Paddle */}
-      <div className="flex justify-center gap-4 py-1">
-        <button
-          onClick={moveUp}
-          className="h-10 w-20 rounded bg-[#1e293b] text-white font-bold text-sm hover:bg-[#334155] active:scale-95 transition-all"
-        >
-          ▲ UP
-        </button>
-        <button
-          onClick={moveDown}
-          className="h-10 w-20 rounded bg-[#1e293b] text-white font-bold text-sm hover:bg-[#334155] active:scale-95 transition-all"
-        >
-          ▼ DOWN
-        </button>
+              let char = " ";
+              let colorClass = "text-slate-800";
+
+              if (isPaddle) {
+                char = "█";
+                colorClass = "text-[#00e6a8]";
+              } else if (isBall) {
+                char = "●";
+                colorClass = "text-amber-400 animate-ping";
+              } else if (isRightWall) {
+                char = "│";
+                colorClass = "text-slate-600";
+              }
+
+              return (
+                <span key={x} className={`w-3.5 h-4 text-center leading-none ${colorClass}`}>
+                  {char}
+                </span>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
-      <div className="flex items-center justify-between text-[11px] text-[#94a3b8]">
-        <span>Controls: Touch buttons or W/S</span>
-        <button onClick={onQuit} className="underline text-white">Quit Game (Q)</button>
-      </div>
+      {gameOver ? (
+        <div className="mt-3 text-center text-red-400 font-bold">
+          GAME OVER! [ENTER] Restart | [Q] Quit
+        </div>
+      ) : (
+        <div className="mt-2 text-center text-[10px] text-slate-400">
+          W/S or Up/Down to move paddle | [Q] to Quit
+        </div>
+      )}
     </div>
   );
 }
 
-// --- Main Terminal Modal ---
 export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: TerminalModalProps) {
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
   const [activeGame, setActiveGame] = useState<"snake" | "pong" | null>(null);
-
-  const [secretNumber, setSecretNumber] = useState<number | null>(null);
-  const [guessAttempts, setGuessAttempts] = useState(0);
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
   const [output, setOutput] = useState<OutputLine[]>([
-    {
-      id: "welcome-1",
-      type: "system",
-      text: "ANAS_ARFEEN_OS v2.4 Developer Shell. Type 'help' or 'github' for live telemetry.",
-    },
+    { id: "1", type: "system", text: "ANAS_OS // Developer Shell [Version 6.12.0-arch1]" },
+    { id: "2", type: "system", text: "Type 'help' to see all available commands or click quick pills below." },
   ]);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -360,220 +330,58 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
       document.body.style.overflow = "";
-      setActiveGame(null);
     }
-
     return () => {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [output, activeGame]);
 
   if (!isOpen) return null;
 
-  const fetchGitHubTelemetry = async () => {
-    setOutput((prev) => [
-      ...prev,
-      { id: Math.random().toString(), type: "system", text: "Fetching live telemetry from https://api.github.com/users/Anasarfeen123..." },
-    ]);
-
-    let publicRepos = projects.length;
-    let followers = 12;
-    let following = 8;
-    let totalStars = 6;
-    let bio = profile.statement;
-    let location = profile.location;
-    let isLive = false;
-
-    try {
-      const userRes = await fetch("https://api.github.com/users/Anasarfeen123");
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        publicRepos = userData.public_repos ?? publicRepos;
-        followers = userData.followers ?? followers;
-        following = userData.following ?? following;
-        bio = userData.bio || bio;
-        location = userData.location || location;
-        isLive = true;
-      }
-    } catch {
-      // Fallback
-    }
-
-    try {
-      const reposRes = await fetch("https://api.github.com/users/Anasarfeen123/repos?per_page=30");
-      if (reposRes.ok) {
-        const reposData = await reposRes.json();
-        if (Array.isArray(reposData)) {
-          totalStars = reposData.reduce((acc: number, r: { stargazers_count?: number }) => acc + (r.stargazers_count || 0), 0);
-        }
-      }
-    } catch {
-      // Fallback
-    }
-
-    const telemetryText = `[GITHUB LIVE TELEMETRY // @Anasarfeen123]
---------------------------------------------------
-User Handle:      ${profile.name} (@${profile.handle})
-Public Repos:     ${publicRepos} repositories
-Total Stars:      ${totalStars} ⭐ across public repos
-Followers:        ${followers} followers | Following: ${following}
-Primary Stack:    Python, PyTorch, JavaScript, C++, OpenCV
-Bio:              "${bio}"
-Location:         ${location}
-GitHub URL:       ${profile.github}
-Telemetry Status: ${isLive ? "API Live (200 OK)" : "System Telemetry (Nominal)"}
---------------------------------------------------`;
-
-    setOutput((prev) => [
-      ...prev,
-      { id: Math.random().toString(), type: "response", text: telemetryText },
-    ]);
-  };
-
-  const handleCommand = (cmdStr: string) => {
-    const trimmed = cmdStr.trim();
+  const handleCommand = (rawCmd: string) => {
+    const trimmed = rawCmd.trim();
     if (!trimmed) return;
 
-    const newHistory = [...history, trimmed];
-    setHistory(newHistory);
+    setHistory((prev) => [...prev, trimmed]);
     setHistoryIndex(-1);
+
+    const parts = trimmed.split(" ");
+    const command = parts[0].toLowerCase();
+    const args = parts.slice(1);
 
     const cmdLine: OutputLine = {
       id: Math.random().toString(),
       type: "command",
-      text: `anas@portfolio:~$ ${trimmed}`,
+      text: `anas@ANAS_OS:~$ ${trimmed}`,
     };
 
-    const parts = trimmed.toLowerCase().split(" ");
-    const command = parts[0];
-    const arg = parts.slice(1).join(" ");
-
-    const responses: OutputLine[] = [];
+    let responses: OutputLine[] = [];
 
     switch (command) {
       case "help":
         responses.push({
           id: Math.random().toString(),
           type: "response",
-          text: `Available CLI Commands:
-  help       - Display this assistance menu
-  github     - Fetch & display LIVE GitHub telemetry stats 📊
-  whoami     - Output engineer bio and profile stats
-  neofetch   - Display Linux system info & specs
-  snake      - Play 2D ASCII Snake Arcade Game 🎮
-  pong       - Play 2D ASCII Pong Arcade Game 🏓
-  guess <n>  - Play Number Guessing Game 🔢 (e.g. guess 50)
-  projects   - List key autonomous AI & systems projects
-  skills     - View neural tech stack breakdown
-  experience - View leadership & club history
-  ls         - List virtual filesystem contents
-  cat <file> - Read a file (e.g. cat bio.txt, cat resume.txt)
-  ping <host>- Ping a host (e.g. ping github.com, ping vit.ac.in)
-  matrix     - Trigger digital rain visual stream
-  ascii      - Generate ASCII art banner
-  quote      - Output tech/AI quote
-  sudo <cmd> - Execute with elevated privileges
-  date       - Output current time & timestamp
-  history    - Display command history log
-  contact    - View email, GitHub, and LinkedIn vectors
-  resume     - Open inline PDF Resume Viewer
-  theme      - Toggle between Warm Paper & Dark Space themes
-  clear      - Clear terminal screen history
-  exit       - Close terminal interface`,
-        });
-        break;
-
-      case "github":
-      case "telemetry":
-      case "stats":
-        setOutput((prev) => [...prev, cmdLine]);
-        setInput("");
-        fetchGitHubTelemetry();
-        return;
-
-      case "snake":
-        setActiveGame("snake");
-        responses.push({
-          id: Math.random().toString(),
-          type: "system",
-          text: "Starting Terminal Snake Game...",
-        });
-        break;
-
-      case "pong":
-        setActiveGame("pong");
-        responses.push({
-          id: Math.random().toString(),
-          type: "system",
-          text: "Starting Terminal Pong Game...",
-        });
-        break;
-
-      case "guess":
-        let target = secretNumber;
-        if (target === null) {
-          target = Math.floor(Math.random() * 100) + 1;
-          setSecretNumber(target);
-          setGuessAttempts(0);
-        }
-
-        if (!arg) {
-          responses.push({
-            id: Math.random().toString(),
-            type: "response",
-            text: `[NUMBER GUESSING GAME] I'm thinking of a secret number between 1 and 100!
-Game active! Make a guess by typing 'guess <number>' (e.g. guess 50).`,
-          });
-        } else {
-          const userNum = parseInt(arg, 10);
-          if (isNaN(userNum)) {
-            responses.push({
-              id: Math.random().toString(),
-              type: "error",
-              text: `Invalid guess '${arg}'. Please guess a valid number between 1 and 100.`,
-            });
-          } else {
-            const nextAttempts = guessAttempts + 1;
-            setGuessAttempts(nextAttempts);
-
-            if (userNum < target) {
-              responses.push({
-                id: Math.random().toString(),
-                type: "response",
-                text: `📈 Too LOW! Try a HIGHER number than ${userNum}. (Attempt #${nextAttempts})`,
-              });
-            } else if (userNum > target) {
-              responses.push({
-                id: Math.random().toString(),
-                type: "response",
-                text: `📉 Too HIGH! Try a LOWER number than ${userNum}. (Attempt #${nextAttempts})`,
-              });
-            } else {
-              responses.push({
-                id: Math.random().toString(),
-                type: "system",
-                text: `🎉 BINGO! You guessed the secret number ${target} correctly in ${nextAttempts} attempts! Game complete!`,
-              });
-              setSecretNumber(null);
-              setGuessAttempts(0);
-            }
-          }
-        }
-        break;
-
-      case "whoami":
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: `${profile.name} — ${profile.role}
-Location: ${profile.location}
-Education: ${profile.education}
-Statement: "${profile.statement}"
-Bio: ${profile.bio}`,
+          text: `AVAILABLE COMMANDS:
+  neofetch    - System info & specs overview
+  projects    - List all 11 engineering projects
+  skills      - Neural tech stack ecosystem map
+  snake       - Launch 2D ASCII Snake Arcade game
+  pong        - Launch 2D ASCII Pong Arcade game
+  guess       - Play number guessing game (e.g. guess 42)
+  ls          - List terminal directory files
+  cat <file>  - Read file contents (cat bio.txt, cat stack.txt)
+  matrix      - Display Matrix digital rain
+  theme       - Toggle Light / Dark mode
+  resume      - Open embedded PDF Resume modal
+  clear       - Clear terminal screen output
+  exit        - Close terminal shell`,
         });
         break;
 
@@ -582,18 +390,35 @@ Bio: ${profile.bio}`,
         responses.push({
           id: Math.random().toString(),
           type: "response",
-          text: `
-       .---.        anas@ANAS_OS
-      /     \\       ------------
-     |  () () |      OS: Arch Linux x86_64 / ANAS_OS 2.4
-     |   \\  / |      Kernel: 6.12.10-arch1-1
-      \\  --  /       Uptime: 247 days, 14 hours
-       \`---\`        Shell: zsh 5.9 (x86_64-pc-linux-gnu)
-                    WM: Hyprland (Wayland)
-                    Host: VIT Chennai (B.Tech CSE '29)
-                    Role: AI/ML Co-Lead @ MIC VITC
-                    Stack: PyTorch, Python, OpenCV, React, C++
-          `,
+          text: `        ./\`         anas@ANAS_OS
+       ./\`/\`        ------------
+      ./\` / \`       OS: Arch Linux x86_64
+     ./\`  /  \`      Kernel: 6.12.8-arch1-1
+    ./\`  /    \`     Host: VIT Chennai Neural Core
+   ./\`  /      \`    Uptime: 2 years, 4 months
+  ./\`  /        \`   Shell: zsh 5.9
+ /.\`  /          \`  WM: Hyprland (Wayland)
+/.=================\` GPU: NVIDIA RTX 4070 Laptop / Intel Iris Xe
+                     Memory: 16GB DDR5 5600MHz
+                     Stack: Python, PyTorch, C++, Next.js, ROS 2`,
+        });
+        break;
+
+      case "snake":
+        setActiveGame("snake");
+        responses.push({
+          id: Math.random().toString(),
+          type: "system",
+          text: "Launching 2D ASCII Snake Arcade...",
+        });
+        break;
+
+      case "pong":
+        setActiveGame("pong");
+        responses.push({
+          id: Math.random().toString(),
+          type: "system",
+          text: "Launching 2D ASCII Pong Arcade...",
         });
         break;
 
@@ -601,9 +426,7 @@ Bio: ${profile.bio}`,
         responses.push({
           id: Math.random().toString(),
           type: "response",
-          text: projects
-            .map((p, idx) => `[0${idx + 1}] ${p.title} (${p.technologies.join(", ")})\n     Signal: ${p.signal}`)
-            .join("\n\n"),
+          text: projects.map((p, idx) => `[0${idx + 1}] ${p.title} — ${p.signal}`).join("\n"),
         });
         break;
 
@@ -611,19 +434,7 @@ Bio: ${profile.bio}`,
         responses.push({
           id: Math.random().toString(),
           type: "response",
-          text: skillClusters
-            .map((c) => `• ${c.label}: ${c.modules.join(" | ")}`)
-            .join("\n"),
-        });
-        break;
-
-      case "experience":
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: experience
-            .map((e) => `[${e.time}] ${e.role} — ${e.org}\n  ${e.notes.map((n) => `• ${n}`).join("\n  ")}`)
-            .join("\n\n"),
+          text: skillClusters.map((c) => `▪ ${c.label}: ${c.modules.join(", ")}`).join("\n"),
         });
         break;
 
@@ -631,158 +442,44 @@ Bio: ${profile.bio}`,
         responses.push({
           id: Math.random().toString(),
           type: "response",
-          text: `drwxr-xr-x 2 anas anas 4096 Jul 25 13:00 projects/
-drwxr-xr-x 2 anas anas 4096 Jul 25 13:00 experience/
--rw-r--r-- 1 anas anas  104K Jul 25 13:00 Resume.pdf
--rw-r--r-- 1 anas anas  1.2K Jul 25 13:00 bio.txt
--rw-r--r-- 1 anas anas   480 Jul 25 13:00 contact.txt
--rw-r--r-- 1 anas anas   820 Jul 25 13:00 stack.txt`,
+          text: availableFiles.join("   "),
         });
         break;
 
       case "cat":
-        if (!arg) {
-          responses.push({
-            id: Math.random().toString(),
-            type: "error",
-            text: "Usage: cat <filename> (e.g. cat bio.txt, cat contact.txt, cat resume.txt)",
-          });
-        } else if (arg.includes("bio")) {
-          responses.push({
-            id: Math.random().toString(),
-            type: "response",
-            text: profile.bio,
-          });
-        } else if (arg.includes("contact")) {
-          responses.push({
-            id: Math.random().toString(),
-            type: "response",
-            text: `Email: ${profile.email}\nGitHub: ${profile.github}\nLinkedIn: ${profile.linkedin}`,
-          });
-        } else if (arg.includes("resume")) {
-          onOpenResume();
-          responses.push({
-            id: Math.random().toString(),
-            type: "system",
-            text: "Opening PDF Resume Viewer modal...",
-          });
-        } else if (arg.includes("stack")) {
-          responses.push({
-            id: Math.random().toString(),
-            type: "response",
-            text: skillClusters.map((c) => `${c.label}: ${c.modules.join(", ")}`).join("\n"),
-          });
+        if (args.length === 0) {
+          responses.push({ id: Math.random().toString(), type: "error", text: "Usage: cat <filename> (e.g. cat bio.txt)" });
         } else {
-          responses.push({
-            id: Math.random().toString(),
-            type: "error",
-            text: `cat: ${arg}: No such file or directory. Try 'cat bio.txt' or 'cat contact.txt'.`,
-          });
+          const file = args[0].toLowerCase();
+          if (file === "bio.txt") {
+            responses.push({ id: Math.random().toString(), type: "response", text: profile.bio });
+          } else if (file === "stack.txt") {
+            responses.push({ id: Math.random().toString(), type: "response", text: "Python, PyTorch, C++, ROS 2, OpenCV, Next.js, TypeScript, TailwindCSS" });
+          } else if (file === "contact.txt") {
+            responses.push({ id: Math.random().toString(), type: "response", text: `Email: ${profile.email}\nGitHub: ${profile.github}\nLinkedIn: ${profile.linkedin}` });
+          } else if (file === "resume.txt") {
+            responses.push({ id: Math.random().toString(), type: "response", text: `${profile.name} — ${profile.education}` });
+          } else {
+            responses.push({ id: Math.random().toString(), type: "error", text: `cat: ${file}: No such file` });
+          }
         }
         break;
 
-      case "ping":
-        const host = arg || "github.com";
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: `PING ${host} (140.82.121.4): 56 data bytes
-64 bytes from ${host}: icmp_seq=0 ttl=58 time=14.2 ms
-64 bytes from ${host}: icmp_seq=1 ttl=58 time=13.8 ms
-64 bytes from ${host}: icmp_seq=2 ttl=58 time=14.5 ms
---- ${host} ping statistics ---
-3 packets transmitted, 3 packets received, 0.0% packet loss, time 2004ms`,
-        });
+      case "theme":
+        onToggleTheme();
+        responses.push({ id: Math.random().toString(), type: "system", text: "Theme toggled." });
+        break;
+
+      case "resume":
+        onOpenResume();
+        responses.push({ id: Math.random().toString(), type: "system", text: "Opening Resume modal..." });
         break;
 
       case "matrix":
         responses.push({
           id: Math.random().toString(),
           type: "response",
-          text: `01000001 01001110 01000001 01010011 01011111 01001111 01010011
-01100001 01101110 01100001 01110011 01100001 01110010 01100110 01100101 01100101 01101110
-[MATRIX STREAM ACTIVATED] Connecting to neural matrix node at VIT Chennai...
-System initialized: 100% nominal.`,
-        });
-        break;
-
-      case "ascii":
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: `
-  ▲   ███╗   ██╗ █████╗ ███████╗    ██████╗ ███████╗
- / \\  ████╗  ██║██╔══██╗██╔════╝   ██╔═══██╗██╔════╝
-/███\\ ██╔██╗ ██║███████║███████╗   ██║   ██║███████╗
-  ██  ██║╚██╗██║██╔══██║╚════██║   ██║   ██║╚════██║
-  ██  ██║ ╚████║██║  ██║███████║   ╚██████╔╝███████║
-      ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝    ╚═════╝ ╚══════╝`,
-        });
-        break;
-
-      case "quote":
-        const quotes = [
-          `"Simplicity is prerequisite for reliability." — Edsger W. Dijkstra`,
-          `"Talk is cheap. Show me the code." — Linus Torvalds`,
-          `"Intelligence is the ability to adapt to change." — Stephen Hawking`,
-          `"The best way to predict the future is to invent it." — Alan Kay`,
-        ];
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: quotes[Math.floor(Math.random() * quotes.length)],
-        });
-        break;
-
-      case "sudo":
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: `anas is in the sudoers file. Proceeding with elevated privileges...
-[OK] Access granted! All systems running at maximum performance.`,
-        });
-        break;
-
-      case "date":
-      case "time":
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: `Current Time: ${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })} IST (India Standard Time)`,
-        });
-        break;
-
-      case "history":
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: history.map((h, i) => `  ${i + 1}  ${h}`).join("\n"),
-        });
-        break;
-
-      case "contact":
-        responses.push({
-          id: Math.random().toString(),
-          type: "response",
-          text: `Email: ${profile.email}\nGitHub: ${profile.github}\nLinkedIn: ${profile.linkedin}`,
-        });
-        break;
-
-      case "resume":
-        onOpenResume();
-        responses.push({
-          id: Math.random().toString(),
-          type: "system",
-          text: "Opening PDF Resume Viewer modal...",
-        });
-        break;
-
-      case "theme":
-        onToggleTheme();
-        responses.push({
-          id: Math.random().toString(),
-          type: "system",
-          text: "Theme mode toggled successfully.",
+          text: "01000001 01001110 01000001 01010011 00100000 01000001 01010010 01000110 01000101 01000101 01001110\nSystem state nominal. Follow the white rabbit...",
         });
         break;
 
@@ -811,88 +508,52 @@ System initialized: 100% nominal.`,
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleCommand(input);
-    } else if (e.key === "Tab") {
-      e.preventDefault();
-      const trimmed = input.toLowerCase().trim();
-      const parts = trimmed.split(" ");
-
-      if (parts.length === 1) {
-        const matches = availableCommands.filter((c) => c.startsWith(parts[0]));
-        if (matches.length === 1) {
-          setInput(matches[0]);
-        } else if (matches.length > 1) {
-          setOutput((prev) => [
-            ...prev,
-            { id: Math.random().toString(), type: "command", text: `anas@portfolio:~$ ${input}` },
-            { id: Math.random().toString(), type: "response", text: matches.join("   ") },
-          ]);
-        }
-      } else if (parts[0] === "cat" && parts.length === 2) {
-        const matches = availableFiles.filter((f) => f.startsWith(parts[1]));
-        if (matches.length === 1) {
-          setInput(`cat ${matches[0]}`);
-        } else if (matches.length > 1) {
-          setOutput((prev) => [
-            ...prev,
-            { id: Math.random().toString(), type: "command", text: `anas@portfolio:~$ ${input}` },
-            { id: Math.random().toString(), type: "response", text: matches.join("   ") },
-          ]);
-        }
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (history.length > 0) {
-        const nextIdx = historyIndex + 1 < history.length ? historyIndex + 1 : historyIndex;
-        setHistoryIndex(nextIdx);
-        setInput(history[history.length - 1 - nextIdx] ?? "");
-      }
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (historyIndex > 0) {
-        const nextIdx = historyIndex - 1;
-        setHistoryIndex(nextIdx);
-        setInput(history[history.length - 1 - nextIdx] ?? "");
-      } else if (historyIndex === 0) {
-        setHistoryIndex(-1);
-        setInput("");
-      }
     }
   };
 
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-md"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-lg"
         onClick={onClose}
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
       >
         <motion.div
-          className="relative w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden rounded-xl border border-[var(--line-strong)] bg-[#0c1017] text-[#38edf8] shadow-2xl"
-          initial={{ opacity: 0, scale: 0.92, y: 20 }}
+          className="relative w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden rounded-2xl border border-[#00e6a8]/35 bg-[#080d17]/95 text-[#00e6a8] shadow-[0_0_50px_rgba(0,230,168,0.15)]"
+          initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: 20 }}
+          exit={{ opacity: 0, scale: 0.94, y: 15 }}
           onClick={(e) => e.stopPropagation()}
           data-lenis-prevent="true"
         >
-          {/* Header Bar */}
-          <div className="flex items-center justify-between border-b border-[#1e293b] bg-[#070a0f] px-3 sm:px-4 py-2.5 text-xs font-mono text-[#94a3b8]">
-            <div className="flex items-center gap-2">
-              <TerminalIcon size={14} className="text-[#38edf8]" />
-              <span className="font-semibold text-white text-[11px] sm:text-xs">anas@ANAS_OS: ~</span>
+          {/* Header Bar with Mac Dots */}
+          <div className="flex items-center justify-between border-b border-[#1e293b] bg-[#040810] px-4 py-3 text-xs font-mono">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="h-3 w-3 rounded-full bg-red-500/80 cursor-pointer" onClick={onClose} />
+                <span className="h-3 w-3 rounded-full bg-amber-500/80" />
+                <span className="h-3 w-3 rounded-full bg-emerald-500/80" />
+              </div>
+              <span className="font-bold text-white text-[11px] sm:text-xs tracking-wider">
+                ANAS_OS // DEVELOPER_SHELL
+              </span>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="hidden sm:inline text-[10px] text-[#64748b]">Type &apos;snake&apos; or &apos;pong&apos;</span>
-              <button onClick={onClose} className="p-1 text-[#94a3b8] hover:text-white transition-colors" aria-label="Close terminal">
+
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline text-[10px] text-slate-400 font-mono">
+                Press Esc or type &apos;exit&apos;
+              </span>
+              <button onClick={onClose} className="p-1 text-slate-400 hover:text-white transition-colors">
                 <X size={16} />
               </button>
             </div>
           </div>
 
-          {/* Terminal Screen Stream OR Live Active Game */}
+          {/* Terminal Screen Stream */}
           <div
             ref={scrollRef}
-            className="flex-1 min-h-[280px] max-h-[420px] overflow-y-auto p-3 sm:p-4 font-mono text-xs leading-relaxed space-y-3 bg-[#080c14]"
+            className="flex-1 min-h-[300px] max-h-[440px] overflow-y-auto p-4 font-mono text-xs leading-relaxed space-y-2.5 bg-[#03060c]"
             onWheel={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             data-lenis-prevent="true"
@@ -905,43 +566,57 @@ System initialized: 100% nominal.`,
               output.map((line) => (
                 <div key={line.id}>
                   {line.type === "command" && (
-                    <span className="font-bold text-[#ffb703]">{line.text}</span>
+                    <span className="font-bold text-amber-400">{line.text}</span>
                   )}
                   {line.type === "response" && (
-                    <pre className="whitespace-pre-wrap font-mono text-[#e2e8f0] text-[10px] sm:text-[11px] leading-relaxed select-text overflow-x-auto">
+                    <pre className="whitespace-pre-wrap font-mono text-slate-200 text-[11px] leading-relaxed select-text overflow-x-auto">
                       {line.text}
                     </pre>
                   )}
                   {line.type === "system" && (
-                    <span className="text-[#38edf8] italic">{line.text}</span>
+                    <span className="text-[#00e6a8] font-semibold">{line.text}</span>
                   )}
                   {line.type === "error" && (
-                    <span className="text-[#ef6f6c] font-semibold">{line.text}</span>
+                    <span className="text-red-400 font-semibold">{line.text}</span>
                   )}
                 </div>
               ))
             )}
           </div>
 
-          {/* Terminal Input Line (Hidden during active games) */}
+          {/* Quick Command Launcher Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto px-4 py-2 border-t border-[#1e293b] bg-[#050912] font-mono text-[10px]">
+            <span className="text-slate-500 font-bold uppercase shrink-0">QUICK:</span>
+            {quickPills.map((pill) => (
+              <button
+                key={pill}
+                onClick={() => handleCommand(pill)}
+                className="shrink-0 rounded-full border border-[#1e293b] bg-[#0c1220] px-2.5 py-0.5 text-[#00e6a8] hover:border-[#00e6a8] hover:bg-[#00e6a8]/10 transition-all cursor-pointer"
+              >
+                {pill}
+              </button>
+            ))}
+          </div>
+
+          {/* Prompt Input Line */}
           {!activeGame && (
-            <div className="flex items-center gap-2 border-t border-[#1e293b] bg-[#070a0f] px-3 sm:px-4 py-2.5 font-mono text-xs">
-              <span className="text-[#ffb703] font-bold text-[11px] sm:text-xs">anas@portfolio:~$</span>
+            <div className="flex items-center gap-2 border-t border-[#1e293b] bg-[#040810] px-4 py-3 font-mono text-xs">
+              <span className="text-amber-400 font-bold text-[11px] sm:text-xs">anas@ANAS_OS:~$</span>
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent text-white outline-none caret-[#38edf8] text-[11px] sm:text-xs"
+                className="flex-1 bg-transparent text-white outline-none caret-[#00e6a8] text-[11px] sm:text-xs"
                 placeholder="Type command..."
                 autoFocus
               />
               <button
                 onClick={() => handleCommand(input)}
-                className="flex items-center gap-1 rounded bg-[#1e293b] px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold text-[#38edf8] hover:bg-[#334155] transition-colors"
+                className="flex items-center gap-1 rounded-lg border border-[#00e6a8]/40 bg-[#00e6a8]/10 px-3 py-1 font-semibold text-[#00e6a8] hover:bg-[#00e6a8] hover:text-black transition-all cursor-pointer text-xs"
               >
-                Run <CornerDownLeft size={10} />
+                Run <CornerDownLeft size={11} />
               </button>
             </div>
           )}
