@@ -319,14 +319,14 @@ export function ScrollExperience() {
         <section className="chapter-section is-center">
           <div className="chapter-card">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              {/* Profile Avatar Photo */}
-              <div className="relative shrink-0">
+              {/* Profile Avatar Photo - Hero Scaled */}
+              <div className="relative shrink-0 mx-auto md:mx-0">
                 <img
                   src={profile.avatar}
                   alt={profile.name}
-                  className="h-24 w-24 sm:h-36 sm:w-36 rounded-2xl border-2 border-[var(--accent)] object-cover shadow-xl transition-transform hover:scale-105"
+                  className="h-36 w-36 sm:h-48 sm:w-48 md:h-56 md:w-56 rounded-2xl border-2 border-[var(--accent)] ring-4 ring-[var(--accent)]/20 object-cover shadow-2xl transition-transform hover:scale-105"
                 />
-                <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[var(--background)] bg-[var(--accent)] shadow-[0_0_10px_var(--accent)]" />
+                <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-[var(--background)] bg-[var(--accent)] shadow-[0_0_12px_var(--accent)]" />
               </div>
 
               <div className="flex-1">
