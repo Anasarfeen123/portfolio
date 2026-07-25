@@ -9,8 +9,8 @@
   --line-strong: rgba(120, 113, 108, 0.38);
   --accent: #00e6a8;
   --signal: #f59e0b;
-  --card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(248, 241, 229, 0.45) 100%);
-  --card-hover: rgba(255, 255, 255, 0.75);
+  --card-bg: rgba(255, 253, 248, 0.88);
+  --card-hover: rgba(255, 255, 255, 0.95);
   --stage-progress: 0;
   --scene-light: 0.22;
 }
@@ -20,12 +20,12 @@
   --foreground: #e5e7eb;
   --heading: #ffffff;
   --muted: #9ca3af;
-  --line: rgba(255, 255, 255, 0.18);
-  --line-strong: rgba(255, 255, 255, 0.3);
+  --line: rgba(255, 255, 255, 0.22);
+  --line-strong: rgba(255, 255, 255, 0.35);
   --accent: #00e6a8;
   --signal: #f59e0b;
-  --card-bg: linear-gradient(135deg, rgba(8, 14, 28, 0.52) 0%, rgba(3, 7, 18, 0.38) 100%);
-  --card-hover: rgba(17, 27, 49, 0.55);
+  --card-bg: rgba(8, 14, 28, 0.82);
+  --card-hover: rgba(15, 23, 42, 0.92);
 }
 
 * {
@@ -37,6 +37,7 @@ html {
   color: var(--foreground);
   color-scheme: light;
   scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
   transition: background-color 300ms ease, color 300ms ease;
   overflow-x: hidden;
 }
@@ -203,7 +204,7 @@ a {
   cursor: pointer;
 }
 
-/* One Card at a Time Section Stream */
+/* One Card at a Time Section Stream with Mandatory Scroll Snap */
 .narrative {
   position: relative;
   z-index: 10;
@@ -216,15 +217,18 @@ a {
   pointer-events: auto;
 }
 
-/* Each Chapter Section Takes Full Viewport Height so ONE card is visible at a time */
+/* Strictly 1 Section at a Time (Scroll Snap mandatory) */
 .chapter-section {
   position: relative;
   width: 100%;
   min-height: 100vh;
+  height: 100vh;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 80px 0 60px;
+  padding: 70px 0 40px;
   scroll-margin-top: 0;
 }
 
@@ -244,33 +248,35 @@ a {
   justify-content: flex-end;
 }
 
-/* Deep Frosted Glassmorphism Blur ("Blur Kinda Feel") */
+/* Deep Frosted Glassmorphism Blur on Each Card */
 .chapter-card {
   position: relative;
   width: min(840px, 95vw);
   border: 1px solid var(--line);
   border-radius: 28px;
-  padding: clamp(22px, 3.8vw, 48px);
+  padding: clamp(20px, 3.5vw, 42px);
   background: var(--card-bg);
-  backdrop-filter: blur(44px) saturate(200%);
-  -webkit-backdrop-filter: blur(44px) saturate(200%);
+  backdrop-filter: blur(55px) saturate(220%);
+  -webkit-backdrop-filter: blur(55px) saturate(220%);
   box-shadow:
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2),
-    0 25px 60px rgba(0, 0, 0, 0.45);
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
+    0 25px 70px rgba(0, 0, 0, 0.55);
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
 }
 
 [data-theme="light"] .chapter-card {
   box-shadow:
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9),
-    0 18px 44px rgba(15, 23, 42, 0.08);
+    0 18px 44px rgba(15, 23, 42, 0.1);
 }
 
 .kicker {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   border: 1px solid rgba(0, 230, 168, 0.35);
   border-radius: 999px;
   padding: 4px 12px;
@@ -287,7 +293,7 @@ a {
 .mega-title {
   margin: 0;
   color: var(--heading);
-  font-size: clamp(32px, 6vw, 80px);
+  font-size: clamp(30px, 5.5vw, 76px);
   font-weight: 700;
   line-height: 0.95;
   letter-spacing: -0.03em;
@@ -300,9 +306,9 @@ a {
 }
 
 .statement {
-  margin: 12px 0 0;
+  margin: 10px 0 0;
   color: var(--foreground);
-  font-size: clamp(15px, 1.5vw, 19px);
+  font-size: clamp(14px, 1.4vw, 18px);
   font-weight: 450;
   line-height: 1.45;
 }
@@ -310,7 +316,7 @@ a {
 .chapter-title {
   margin: 0;
   color: var(--heading);
-  font-size: clamp(22px, 3.8vw, 42px);
+  font-size: clamp(22px, 3.5vw, 38px);
   font-weight: 650;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -318,11 +324,11 @@ a {
 }
 
 .chapter-copy {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   color: var(--muted);
-  font-size: clamp(14px, 1.2vw, 16px);
+  font-size: clamp(13px, 1.1vw, 15px);
   font-weight: 450;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 /* Quick Stats Bar in Hero */
@@ -330,7 +336,7 @@ a {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
 @media (min-width: 640px) {
@@ -347,13 +353,13 @@ a {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 [data-theme="light"] .stat-badge {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .stat-badge-label {
@@ -373,8 +379,8 @@ a {
 .timeline-stream,
 .mission-log {
   display: grid;
-  gap: 12px;
-  margin-top: 18px;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .timeline-node,
@@ -383,17 +389,17 @@ a {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 [data-theme="light"] .timeline-node,
 [data-theme="light"] .log-row {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 @media (min-width: 640px) {
@@ -444,8 +450,8 @@ a {
 .skill-system {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  margin-top: 18px;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 @media (min-width: 640px) {
@@ -457,14 +463,14 @@ a {
 .skill-cluster-card {
   border: 1px solid var(--line);
   border-radius: 18px;
-  padding: 18px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 [data-theme="light"] .skill-cluster-card {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .cluster-name {
@@ -504,7 +510,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
 @media (min-width: 520px) {
@@ -611,14 +617,16 @@ a {
   }
 
   .chapter-section {
-    padding: 60px 0 40px;
+    padding: 55px 0 35px;
     min-height: 100vh;
+    height: 100vh;
   }
 
   .chapter-card {
     width: 100% !important;
-    padding: 18px;
+    padding: 16px;
     border-radius: 20px;
+    max-height: calc(100vh - 90px);
   }
 
   .hero-stats {
