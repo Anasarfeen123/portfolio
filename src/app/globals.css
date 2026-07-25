@@ -208,17 +208,17 @@ a {
   width: 100%;
   max-width: 1560px;
   margin: 0 auto;
-  padding: clamp(70px, 8vh, 120px) max(3vw, 12px) 100px;
+  padding: clamp(80px, 12vh, 160px) max(3vw, 12px) 160px;
   display: flex;
   flex-direction: column;
-  gap: clamp(45px, 8vh, 110px);
+  gap: clamp(140px, 25vh, 280px);
   pointer-events: auto;
 }
 
 .chapter-section {
   position: relative;
   width: 100%;
-  scroll-margin-top: 80px;
+  scroll-margin-top: 100px;
 }
 
 .chapter-section.is-center {
