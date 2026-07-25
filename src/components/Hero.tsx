@@ -1,610 +1,206 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import './Hero.css';
+'use me';
+'use client';
 
-// ─── Glitch Effect ──────────────────────────────────────────
-const CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#@$%&!?';
-const FULL_NAME = 'Anas Arfeen';
+import React from 'react';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { Terminal, ShieldCheck, Sparkles, ChevronDown, Download, Brain, ArrowRight } from 'lucide-react';
+import { PERSONAL_INFO } from '@/data/portfolioData';
+import { playSound } from '@/lib/audio';
 
-const GlitchName: React.FC<{ trigger: number }> = ({ trigger }) => {
-  const [display, setDisplay] = useState(FULL_NAME);
-  const [isGlitching, setIsGlitching] = useState(false);
-
-  useEffect(() => {
-    if (trigger === 0) {
-      setDisplay(FULL_NAME);
-      return;
-    }
-    setIsGlitching(true);
-    let frames = 0;
-    const maxFrames = 12;
-    const interval = setInterval(() => {
-      setDisplay(
-        FULL_NAME.split('').map((ch: string) => {
-          if (ch === ' ' || Math.random() > 0.25) return ch;
-          return CHARSET[Math.floor(Math.random() * CHARSET.length)];
-        }).join('')
-      );
-      frames++;
-      if (frames >= maxFrames) {
-        clearInterval(interval);
-        setDisplay(FULL_NAME);
-        setIsGlitching(false);
-      }
-    }, 70);
-    return () => clearInterval(interval);
-  }, [trigger]);
-
-  return <span className={isGlitching ? 'glitch-active' : ''}>{display}</span>;
-};
-
-// ─── Personas ───────────────────────────────────────────────
-const PERSONAS = [
-  {
-    icon: '🤖',
-    label: 'AI/ML',
-    subtitle: 'Building autonomous RL agents — from warehouse rovers to game-playing bots — using PyTorch and curriculum learning.',
-    tag: 'PyTorch · PPO · SAC · SB3',
-    accent: '#a6e22e',
-    accentRgb: '166, 226, 46',
-  },
-  {
-    icon: '⚡',
-    label: 'Systems',
-    subtitle: 'Passionate about low-level optimization, systems programming, and building efficient developer tools.',
-    tag: 'C++ · Rust · Linux · Neovim',
-    accent: '#66d9ef',
-    accentRgb: '102, 217, 239',
-  },
-  {
-    icon: '🚀',
-    label: 'Builder',
-    subtitle: 'Turning complex ideas into functional prototypes. Focused on performance, scalability, and clean architecture.',
-    tag: 'React · Node.js · Go · Docker',
-    accent: '#e7bc91',
-    accentRgb: '231, 188, 145',
-  },
-] as const;
-
-// ─── Mini Terminal ───────────────────────────────────────────
-const MINI_RESPONSES: Record<string, string[]> = {
-  help: ['→ Commands: about · stack · hire · ls · whoami'],
-  about: [
-    'CS undergrad @ VIT Chennai (2025–2029)',
-    'AI/ML Co-Lead, Microsoft Innovations Club',
-    'RL researcher & systems programmer',
-  ],
-  stack: [
-    '⎡ Languages : Python · C++ · Rust · Go · C#',
-    '⎢ AI/ML     : PyTorch · SB3 · NumPy · PPO · SAC',
-    '⎣ Tools     : Linux · Neovim · Docker · Git',
-  ],
-  hire: [
-    '🚀 Open to internships & collabs!',
-    '📧 codecrusader07@gmail.com',
-    '🐙 github.com/Anasarfeen123',
-  ],
-  ls: [
-    'about.md   projects/   skills.json',
-    'cv.pdf     contact.txt  .zshrc',
-  ],
-  whoami: ['anas — builder · tinkerer · RL researcher · linux enthusiast'],
-  sudo: ['[sudo] password for anas: ********', 'sudo: Permission denied. Nice try. 😈'],
-  'cat contact.txt': [
-    'Email: codecrusader07@gmail.com',
-    'GitHub: github.com/Anasarfeen123',
-    'LinkedIn: linkedin.com/in/anas-arfeen-b94870366',
-  ],
-  'git push': ['Everything up-to-date.'],
-  'npm install': [
-    'added 847 packages in 0.3s',
-    'Found 0 vulnerabilities. Perfect.',
-  ],
-};
-
-type LineType = 'in' | 'out' | 'err';
-interface TermLine { type: LineType; text: string; }
-
-const MiniTerminal: React.FC = () => {
-  const [lines, setLines] = useState<TermLine[]>([
-    { type: 'out', text: 'anas@portfolio ~ bash — interactive terminal' },
-    { type: 'out', text: 'Type "help" to explore. Tab for autocomplete.' },
-  ]);
-  const [input, setInput] = useState('');
-  const [cmdHist, setCmdHist] = useState<string[]>([]);
-  const [hIdx, setHIdx] = useState(-1);
-  const [booted, setBooted] = useState(false);
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const lockedPageScrollY = useRef<number | null>(null);
-
-  const restoreLockedPageScroll = useCallback(() => {
-    const y = lockedPageScrollY.current;
-    if (y === null || document.activeElement !== inputRef.current) return;
-
-    window.scrollTo(window.scrollX, y);
-    requestAnimationFrame(() => {
-      if (lockedPageScrollY.current !== null && document.activeElement === inputRef.current) {
-        window.scrollTo(window.scrollX, lockedPageScrollY.current);
-      }
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    restoreLockedPageScroll();
-  }, [input, lines, restoreLockedPageScroll]);
-
-  useEffect(() => {
-    const body = bodyRef.current;
-    if (!body) return;
-
-    const frame = requestAnimationFrame(() => {
-      body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' });
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [lines]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setBooted(true), 600);
-    return () => clearTimeout(t);
-  }, []);
-
-  const run = useCallback((raw: string) => {
-    const trimmed = raw.trim();
-    if (!trimmed) return;
-    const cmd = trimmed.toLowerCase();
-
-    if (cmd === 'clear') {
-      setLines([{ type: 'out', text: 'Terminal cleared.' }]);
-      setInput('');
-      setCmdHist(prev => [trimmed, ...prev]);
-      setHIdx(-1);
-      return;
-    }
-
-    const newLines: TermLine[] = [...lines, { type: 'in', text: trimmed }];
-    const resp = MINI_RESPONSES[cmd];
-
-    if (resp) {
-      resp.forEach(r => newLines.push({ type: 'out', text: r }));
-    } else {
-      newLines.push({ type: 'err', text: `bash: ${cmd}: command not found` });
-      newLines.push({ type: 'out', text: 'Try "help" for available commands.' });
-    }
-
-    setLines(newLines);
-    setCmdHist(prev => [trimmed, ...prev]);
-    setHIdx(-1);
-    setInput('');
-  }, [lines]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    run(input);
-  };
-
-  const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const i = Math.min(hIdx + 1, cmdHist.length - 1);
-      setHIdx(i);
-      setInput(cmdHist[i] ?? '');
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const i = Math.max(hIdx - 1, -1);
-      setHIdx(i);
-      setInput(i === -1 ? '' : cmdHist[i]);
-    } else if (e.key === 'Tab') {
-      e.preventDefault();
-      const allCmds = Object.keys(MINI_RESPONSES);
-      const match = allCmds.find(s => s.startsWith(input.toLowerCase()) && s !== input.toLowerCase());
-      if (match) setInput(match);
-    }
-  };
-
-  const focusInput = () => {
-    lockedPageScrollY.current = window.scrollY;
-    inputRef.current?.focus({ preventScroll: true });
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-    restoreLockedPageScroll();
-  };
-
-  return (
-    <motion.div
-      className="mini-term"
-      onClick={focusInput}
-      initial={{ opacity: 0, y: 20, scale: 0.97 }}
-      animate={{ opacity: booted ? 1 : 0, y: booted ? 0 : 20, scale: booted ? 1 : 0.97 }}
-      transition={{ duration: 0.5, delay: 0.4 }}
-    >
-      <div className="mt-header">
-        <span className="mt-dot" style={{ background: '#ff5f56' }} />
-        <span className="mt-dot" style={{ background: '#ffbd2e' }} />
-        <span className="mt-dot" style={{ background: '#27c93f' }} />
-        <span className="mt-title mono">anas@portfolio — bash</span>
-      </div>
-
-      <div className="mt-body mono" ref={bodyRef}>
-        {lines.map((l, i) => (
-          <div key={i} className={`mt-line mt-${l.type}`}>
-            {l.type === 'in' && <span className="mt-prompt">❯&nbsp;</span>}
-            <span>{l.text}</span>
-          </div>
-        ))}
-        <form onSubmit={handleSubmit} className="mt-form">
-          <span className="mt-prompt">❯&nbsp;</span>
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKey}
-            onFocus={() => {
-              lockedPageScrollY.current = window.scrollY;
-            }}
-            onBlur={() => {
-              lockedPageScrollY.current = null;
-            }}
-            className="mt-input mono"
-            spellCheck={false}
-            autoComplete="off"
-            autoCorrect="off"
-            placeholder="start typing..."
-            aria-label="Terminal input"
-          />
-        </form>
-      </div>
-
-    </motion.div>
-  );
-};
-
-// ─── Floating Glyphs ─────────────────────────────────────────
-const GLYPHS = ['{}', '=>', '()', '//', '&&', '||', 'RL', 'AI', '0xFF', '#!/', '...', '===', '::'];
-const PARTICLE_DATA = GLYPHS.flatMap((g, i) => [
-  { glyph: g, x: (i * 7.3 + 2) % 92, delay: i * 0.55, dur: 9 + (i % 4) },
-  { glyph: GLYPHS[(i + 4) % GLYPHS.length], x: (i * 7.3 + 43) % 92, delay: i * 0.38 + 2, dur: 11 + (i % 3) },
-]);
-
-// ─── Stats ───────────────────────────────────────────────────
-const STATS = [
-  { v: '5+', l: 'Projects', detail: 'RL, ML, Web, Systems' },
-  { v: '3+', l: 'Leadership', detail: 'MIC AI/ML Co-Lead, LUG' },
-  { v: '500+', l: 'Commits', detail: 'Consistent contributions' },
-];
-
-// ─── Floating Coffee Beans ──────────────────────────────────
-interface CoffeeBeanProps {
-  delay?: number;
-  x?: string | number;
-  y?: string | number;
-  scale?: number;
-  rotate?: number;
-  speed?: number;
+interface HeroProps {
+  onOpenCommandPalette: () => void;
 }
 
-const CoffeeBean: React.FC<CoffeeBeanProps> = ({ delay = 0, x = 0, y = 0, scale = 1, rotate = 0, speed = 0.3 }) => {
-  const { scrollY } = useScroll();
-  const yParallax = useTransform(scrollY, [0, 1000], [0, 1000 * speed]);
-
+export function Hero({ onOpenCommandPalette }: HeroProps) {
   return (
-    <motion.div
-      className="floating-bean"
-      initial={{ x, y, rotate, opacity: 0 }}
-      style={{ 
-        left: x,
-        top: y,
-        y: yParallax,
-        scale,
-      }}
-      animate={{ 
-        rotate: [rotate, rotate + 45, rotate],
-        opacity: [0, 0.6, 0.4]
-      }}
-      transition={{ 
-        rotate: { duration: 10 + Math.random() * 5, repeat: Infinity, ease: "easeInOut" },
-        opacity: { duration: 2, delay }
-      }}
+    <section
+      id="hero"
+      className="relative min-h-screen pt-28 pb-16 flex items-center justify-center overflow-hidden bg-cyber-grid"
     >
-      ☕
-    </motion.div>
-  );
-};
+      {/* Radial Gradient Spotlight */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 blur-[140px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-purple-600/10 blur-[130px] rounded-full pointer-events-none" />
 
-// ─── Hero ─────────────────────────────────────────────────────
-const Hero: React.FC = () => {
-  const [persona, setPersona] = useState(0);
-  const [glitchTrigger, setGlitchTrigger] = useState(0);
-  const [statPop, setStatPop] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
-  const cur = PERSONAS[persona];
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const t = setTimeout(() => setGlitchTrigger(1), 350);
-    return () => clearTimeout(t);
-  }, []);
-
-  const handleNameClick = useCallback(() => {
-    setGlitchTrigger(s => s + 1);
-  }, []);
-
-  const handleStatClick = (i: number) => {
-    setStatPop(i);
-    setTimeout(() => setStatPop(null), 1200);
-  };
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText('codecrusader07@gmail.com').catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <section id="hero" className="hero-ng">
-      {/* Background elements */}
-      <div className="hero-grid-bg" aria-hidden />
-      
-      <div className="hero-beans-bg" aria-hidden>
-        <CoffeeBean x="10%" y="15%" scale={1.2} delay={0} rotate={20} speed={0.2} />
-        <CoffeeBean x="80%" y="10%" scale={0.8} delay={1} rotate={-10} speed={0.4} />
-        <CoffeeBean x="40%" y="60%" scale={1.5} delay={2} rotate={45} speed={0.15} />
-        <CoffeeBean x="90%" y="50%" scale={0.7} delay={3} rotate={180} speed={0.5} />
-        <CoffeeBean x="15%" y="55%" scale={0.9} delay={4} rotate={-30} speed={0.25} />
-        <CoffeeBean x="65%" y="75%" scale={1.1} delay={5} rotate={15} speed={0.35} />
-      </div>
-
-      {/* Floating particles */}
-      <div className="hero-particles" aria-hidden>
-        {PARTICLE_DATA.map((p, i) => (
-          <span
-            key={i}
-            className="glyph-particle mono"
-            style={{
-              left: `${p.x}%`,
-              animationDelay: `${p.delay}s`,
-              animationDuration: `${p.dur}s`,
-            }}
-          >
-            {p.glyph}
-          </span>
-        ))}
-      </div>
-
-      <div className="hero-ng-inner container">
-
-        {/* ── LEFT ── */}
-        <motion.div
-          className="hero-left"
-          initial={{ opacity: 0, x: -28 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {/* Available badge */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Column: Text & Hero Headline */}
           <motion.div
-            className="avail-badge mono"
-            animate={{
-              boxShadow: [
-                '0 0 0px rgba(39,201,63,0)',
-                '0 0 14px rgba(39,201,63,0.35)',
-                '0 0 0px rgba(39,201,63,0)',
-              ],
-            }}
-            transition={{ repeat: Infinity, duration: 2.8 }}
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="lg:col-span-7 space-y-6 text-left"
           >
-            <span className="avail-dot" />
-            Available for new projects
-          </motion.div>
+            {/* HUD Status Tag */}
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              </span>
+              <span>SYSTEM READY // AI ENGINEER & SYSTEMS DEVELOPER</span>
+            </div>
 
-          {/* Name — click to glitch */}
-          <motion.h1
-            className="hero-name-ng"
-            onClick={handleNameClick}
-            title="Click to glitch!"
-            whileHover={{ scale: 1.012, x: 2 }}
-            whileTap={{ scale: 0.995 }}
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <GlitchName trigger={glitchTrigger} />
-            <span className="name-cursor" aria-hidden>_</span>
-          </motion.h1>
+            {/* Massive Cinematic Heading */}
+            <div className="space-y-2">
+              <h2 className="font-mono text-xs uppercase tracking-[0.3em] text-cyan-400 font-bold">
+                COMMAND CENTER // ARCH LINUX & NEOVIM
+              </h2>
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-none">
+                BUILDING THE <br />
+                <span className="text-gradient-cyan">FUTURE</span> WITH <br />
+                <span className="text-gradient-emerald">CODE + AI</span>
+              </h1>
+            </div>
 
-          {/* Persona tabs */}
-          <motion.div
-            className="persona-row"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            {PERSONAS.map((p, i) => (
-              <motion.button
-                key={p.label}
-                className={`persona-btn${i === persona ? ' active' : ''}`}
-                style={i === persona ? {
-                  background: `rgba(${p.accentRgb}, 0.12)`,
-                  borderColor: p.accent,
-                  color: p.accent,
-                } : {}}
-                onClick={() => setPersona(i)}
-                whileHover={{ scale: 1.06, y: -1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span>{p.icon}</span>
-                <span>{p.label}</span>
-              </motion.button>
-            ))}
-          </motion.div>
+            {/* Role & Name */}
+            <div className="border-l-2 border-cyan-500/50 pl-4 py-1 space-y-1">
+              <p className="text-xl sm:text-2xl font-semibold text-slate-100 font-sans">
+                {PERSONAL_INFO.name}
+              </p>
+              <p className="font-mono text-sm text-slate-400">
+                AI/ML Co-Lead @ Microsoft Innovations Club (MIC) | VIT Chennai
+              </p>
+            </div>
 
-          {/* Subtitle — animated per persona */}
-          <div className="subtitle-wrap">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={`sub-${persona}`}
-                className="hero-sub-ng"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.22 }}
-              >
-                {cur.subtitle}
-              </motion.p>
-            </AnimatePresence>
-          </div>
+            {/* Subtext Tagline */}
+            <p className="text-slate-300 text-base sm:text-lg max-w-2xl font-sans leading-relaxed">
+              {PERSONAL_INFO.tagline}
+            </p>
 
-          {/* Tech tag */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`tag-${persona}`}
-              className="hero-tag-ng mono"
-              style={{ color: cur.accent, borderColor: `rgba(${cur.accentRgb}, 0.35)` }}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ duration: 0.2 }}
-            >
-              ▶&nbsp;{cur.tag}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Stats */}
-          <div className="hero-stats-ng">
-            {STATS.map((s, i) => (
-              <div key={s.l} style={{ position: 'relative' }}>
-                <motion.div
-                  className="stat-ng"
-                  onClick={() => handleStatClick(i)}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  whileHover={{ scale: 1.1, y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="stat-ng-val mono">{s.v}</div>
-                  <div className="stat-ng-lbl">{s.l}</div>
-                </motion.div>
-                <AnimatePresence>
-                  {statPop === i && (
-                    <motion.div
-                      className="stat-tooltip mono"
-                      initial={{ opacity: 0, y: 4, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      {s.detail}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* Telemetry Metrics Bar */}
+            <div className="grid grid-cols-3 gap-3 max-w-xl py-2">
+              <div className="glass-panel p-3 rounded-lg border-slate-800">
+                <div className="font-mono text-[10px] text-slate-400 uppercase">RL AGENTS</div>
+                <div className="font-mono text-lg font-bold text-cyan-400">98.4% ACC</div>
               </div>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <motion.div
-            className="hero-cta-ng"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-          >
-            <motion.a
-              href="/Resume.pdf"
-              download="Anas_Arfeen_Portfolio.pdf"
-              className="cta-primary"
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              📄 Download CV (PDF)
-            </motion.a>
-            <motion.a
-              href="https://github.com/Anasarfeen123"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="cta-secondary"
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              GitHub →
-            </motion.a>
-            <motion.button
-              className="cta-copy mono"
-              onClick={handleCopy}
-              title="Copy email"
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
-            >
-              {copied ? '✓ Copied!' : '@ Email'}
-            </motion.button>
-          </motion.div>
-
-          {/* Hint */}
-          <motion.p
-            className="hero-hint-ng mono"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-          >
-            ↑ click name to glitch ·&nbsp;
-            <a href="https://github.com/Anasarfeen123" target="_blank" rel="noopener noreferrer">GitHub</a>
-            &nbsp;·&nbsp;
-            <a href="https://linkedin.com/in/anas-arfeen-b94870366" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-          </motion.p>
-        </motion.div>
-
-        {/* ── RIGHT ── */}
-        <motion.div
-          className="hero-right"
-          initial={{ opacity: 0, x: 28 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <MiniTerminal />
-
-          {/* System status strip */}
-          <motion.div
-            className="status-strip mono"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-          >
-            {[
-              { label: 'OS', value: 'Linux' },
-              { label: 'Shell', value: 'zsh' },
-              { label: 'Editor', value: 'Neovim' },
-              { label: 'Status', value: 'Productive' },
-            ].map((item, i) => (
-              <div key={item.label} className="strip-item">
-                <span className="strip-label">{item.label}</span>
-                <span className="strip-sep">:</span>
-                <span className="strip-val">{item.value}</span>
-                {i < 3 && <span className="strip-div" />}
+              <div className="glass-panel p-3 rounded-lg border-slate-800">
+                <div className="font-mono text-[10px] text-slate-400 uppercase">PRIMARY OS</div>
+                <div className="font-mono text-lg font-bold text-emerald-400">ARCH LINUX</div>
               </div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </div>
+              <div className="glass-panel p-3 rounded-lg border-slate-800">
+                <div className="font-mono text-[10px] text-slate-400 uppercase">COMMUNITY</div>
+                <div className="font-mono text-lg font-bold text-purple-400">MIC CO-LEAD</div>
+              </div>
+            </div>
 
-      {/* Scroll indicator */}
-      <motion.div
-        className="scroll-ng"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2 }}
-      >
-        <motion.span
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-        >
-          ↓
-        </motion.span>
-        <span className="scroll-label mono">scroll</span>
-      </motion.div>
+            {/* CTA Action Buttons */}
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <button
+                onClick={() => {
+                  playSound('click');
+                  onOpenCommandPalette();
+                }}
+                onMouseEnter={() => playSound('hover')}
+                className="flex items-center space-x-2 px-6 py-3.5 rounded-xl bg-cyan-500 text-slate-950 font-mono font-bold text-sm hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/25 hover:scale-105 active:scale-95"
+              >
+                <Terminal className="w-4 h-4" />
+                <span>LAUNCH COMMAND PALETTE</span>
+              </button>
+
+              <a
+                href="#projects"
+                onClick={() => playSound('click')}
+                onMouseEnter={() => playSound('hover')}
+                className="flex items-center space-x-2 px-6 py-3.5 rounded-xl glass-panel text-white font-mono text-sm hover:border-cyan-500/50 hover:text-cyan-400 transition-all hover:scale-105"
+              >
+                <span>EXPLORE PROJECTS</span>
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          </motion.div>
+
+          {/* Right Column: Bio-Scanner Profile Picture HUD */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9, delay: 0.2 }}
+            className="lg:col-span-5 flex justify-center"
+          >
+            <div className="relative w-full max-w-md">
+              {/* Outer Glowing Cyber HUD Frame */}
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-500 opacity-30 blur-lg animate-pulse-glow" />
+
+              <div className="relative glass-panel-glow p-4 rounded-2xl border-cyan-500/30 space-y-4">
+                {/* HUD Header Bar */}
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800 font-mono text-[11px] text-slate-400">
+                  <div className="flex items-center space-x-2">
+                    <Brain className="w-4 h-4 text-cyan-400" />
+                    <span className="text-white font-semibold">NEURAL_ID // 07</span>
+                  </div>
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" /> VERIFIED
+                  </span>
+                </div>
+
+                {/* Profile Image with Bio-Scanner Overlay */}
+                <div className="relative aspect-square rounded-xl overflow-hidden border border-cyan-500/40 group">
+                  <Image
+                    src={PERSONAL_INFO.avatarPath}
+                    alt={PERSONAL_INFO.name}
+                    fill
+                    className="object-cover object-center filter contrast-105 brightness-95 group-hover:scale-105 transition-transform duration-700"
+                    priority
+                  />
+
+                  {/* Bio Scanner Grid Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-cyber-grid opacity-30 pointer-events-none" />
+
+                  {/* Scanning Bar Animation */}
+                  <div className="absolute left-0 right-0 h-0.5 bg-cyan-400 shadow-[0_0_15px_#00f0ff] animate-scanline pointer-events-none opacity-70" />
+
+                  {/* Dynamic Corner Target Reticles */}
+                  <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400" />
+                  <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400" />
+                  <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400" />
+                  <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400" />
+
+                  {/* Profile Bottom Floating Badge */}
+                  <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-lg bg-slate-950/80 backdrop-blur-md border border-cyan-500/30 flex items-center justify-between font-mono text-xs">
+                    <div>
+                      <p className="text-white font-bold">ANAS ARFEEN</p>
+                      <p className="text-[10px] text-cyan-400">PPO/SAC • PyTorch • Linux</p>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      ONLINE
+                    </span>
+                  </div>
+                </div>
+
+                {/* Telemetry Audio Frequency Bars Simulator */}
+                <div className="pt-1 flex items-center justify-between font-mono text-[10px] text-slate-400">
+                  <span>AUDIO_FREQ // RX</span>
+                  <div className="flex items-end space-x-1 h-4">
+                    {[60, 90, 40, 100, 70, 85, 50, 95, 40, 80].map((h, i) => (
+                      <span
+                        key={i}
+                        className="w-1 bg-cyan-400/80 rounded-t animate-pulse"
+                        style={{
+                          height: `${h}%`,
+                          animationDelay: `${i * 100}ms`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <span>100% SYS_OK</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="mt-16 flex justify-center">
+          <a
+            href="#about"
+            onClick={() => playSound('click')}
+            className="flex flex-col items-center space-y-2 text-slate-400 hover:text-cyan-400 font-mono text-xs transition-colors group"
+          >
+            <span>SCROLL TO INITIALIZE STORY</span>
+            <ChevronDown className="w-4 h-4 animate-bounce text-cyan-400" />
+          </a>
+        </div>
+      </div>
     </section>
   );
-};
-
-export default Hero;
+}
