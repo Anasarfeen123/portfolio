@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CornerDownLeft, Sparkles, Terminal as TerminalIcon, X } from "lucide-react";
+import { CornerDownLeft, Gamepad2, Sparkles, Terminal as TerminalIcon, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { experience, profile, projects, skillClusters } from "@/data/portfolio";
 
@@ -54,18 +54,19 @@ const projectFiles = projects.map((p) => `${p.id}.json`);
 
 const quickPills = ["neofetch", "projects", "skills", "snake", "pong", "invaders", "matrix", "clear", "help"];
 
-// --- 1. Fast & Responsive Terminal Snake Game ---
+// --- 1. Rock-Solid Responsive Snake Game ---
 function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
-  const width = 24;
-  const height = 12;
+  const width = 22;
+  const height = 11;
+  const gameRef = useRef<HTMLDivElement>(null);
+
   const [snake, setSnake] = useState<{ x: number; y: number }[]>([
-    { x: 10, y: 6 },
-    { x: 9, y: 6 },
-    { x: 8, y: 6 },
+    { x: 10, y: 5 },
+    { x: 9, y: 5 },
+    { x: 8, y: 5 },
   ]);
-  const [direction, setDirection] = useState<{ x: number; y: number }>({ x: 1, y: 0 });
-  const nextDirRef = useRef<{ x: number; y: number }>({ x: 1, y: 0 });
-  const [food, setFood] = useState<{ x: number; y: number }>({ x: 17, y: 6 });
+  const [food, setFood] = useState<{ x: number; y: number }>({ x: 16, y: 5 });
+  const dirRef = useRef<{ x: number; y: number }>({ x: 1, y: 0 });
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
@@ -78,32 +79,49 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
     return { x: newX, y: newY };
   };
 
+  const changeDir = (dx: number, dy: number) => {
+    if (gameOver) return;
+    const current = dirRef.current;
+    if (dx !== 0 && current.x === -dx) return;
+    if (dy !== 0 && current.y === -dy) return;
+    dirRef.current = { x: dx, y: dy };
+  };
+
   useEffect(() => {
+    gameRef.current?.focus();
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      const code = e.code;
       const key = e.key.toLowerCase();
+
       if (key === "q") {
+        e.preventDefault();
         onQuit();
         return;
       }
-      if (gameOver && e.key === "Enter") {
-        setSnake([{ x: 10, y: 6 }, { x: 9, y: 6 }, { x: 8, y: 6 }]);
-        setDirection({ x: 1, y: 0 });
-        nextDirRef.current = { x: 1, y: 0 };
-        setFood({ x: 17, y: 6 });
+
+      if (gameOver && (code === "Enter" || key === "enter")) {
+        e.preventDefault();
+        setSnake([{ x: 10, y: 5 }, { x: 9, y: 5 }, { x: 8, y: 5 }]);
+        dirRef.current = { x: 1, y: 0 };
+        setFood({ x: 16, y: 5 });
         setScore(0);
         setGameOver(false);
         return;
       }
 
-      const curr = nextDirRef.current;
-      if ((e.key === "ArrowUp" || key === "w") && curr.y !== 1) {
-        nextDirRef.current = { x: 0, y: -1 };
-      } else if ((e.key === "ArrowDown" || key === "s") && curr.y !== -1) {
-        nextDirRef.current = { x: 0, y: 1 };
-      } else if ((e.key === "ArrowLeft" || key === "a") && curr.x !== 1) {
-        nextDirRef.current = { x: -1, y: 0 };
-      } else if ((e.key === "ArrowRight" || key === "d") && curr.x !== -1) {
-        nextDirRef.current = { x: 1, y: 0 };
+      if (code === "ArrowUp" || code === "KeyW") {
+        e.preventDefault();
+        changeDir(0, -1);
+      } else if (code === "ArrowDown" || code === "KeyS") {
+        e.preventDefault();
+        changeDir(0, 1);
+      } else if (code === "ArrowLeft" || code === "KeyA") {
+        e.preventDefault();
+        changeDir(-1, 0);
+      } else if (code === "ArrowRight" || code === "KeyD") {
+        e.preventDefault();
+        changeDir(1, 0);
       }
     };
 
@@ -115,70 +133,70 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
     if (gameOver) return;
 
     const timer = setInterval(() => {
-      setDirection(nextDirRef.current);
-      const dir = nextDirRef.current;
-
-      setSnake((prevSnake) => {
-        const head = prevSnake[0];
+      const dir = dirRef.current;
+      setSnake((prev) => {
+        const head = prev[0];
         const newHead = { x: head.x + dir.x, y: head.y + dir.y };
 
         if (newHead.x < 0 || newHead.x >= width || newHead.y < 0 || newHead.y >= height) {
           setGameOver(true);
-          return prevSnake;
+          return prev;
         }
 
-        if (prevSnake.some((segment) => segment.x === newHead.x && segment.y === newHead.y)) {
+        if (prev.some((s) => s.x === newHead.x && s.y === newHead.y)) {
           setGameOver(true);
-          return prevSnake;
+          return prev;
         }
 
-        const newSnake = [newHead, ...prevSnake];
-
+        const newSnake = [newHead, ...prev];
         if (newHead.x === food.x && newHead.y === food.y) {
           setScore((s) => s + 10);
           setFood(spawnFood(newSnake));
         } else {
           newSnake.pop();
         }
-
         return newSnake;
       });
-    }, 85);
+    }, 90);
 
     return () => clearInterval(timer);
   }, [food, gameOver]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 font-mono text-xs select-none">
-      <div className="flex items-center justify-between w-full max-w-sm mb-1.5 text-[var(--accent)] font-bold">
-        <span>🐍 SNAKE ARCADE (FAST)</span>
+    <div
+      ref={gameRef}
+      tabIndex={0}
+      className="flex flex-col items-center justify-center p-2 font-mono text-xs outline-none select-none"
+    >
+      <div className="flex items-center justify-between w-full max-w-sm mb-1 text-[var(--accent)] font-bold">
+        <span>🐍 SNAKE ARCADE</span>
         <span>SCORE: {score}</span>
       </div>
 
-      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-inner">
+      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-lg">
         {Array.from({ length: height }).map((_, y) => (
           <div key={y} className="flex">
             {Array.from({ length: width }).map((_, x) => {
-              const isSnakeHead = snake[0].x === x && snake[0].y === y;
-              const isSnakeBody = snake.slice(1).some((s) => s.x === x && s.y === y);
+              const isHead = snake[0].x === x && snake[0].y === y;
+              const isBody = snake.slice(1).some((s) => s.x === x && s.y === y);
               const isFood = food.x === x && food.y === y;
 
               let char = " ";
-              let colorClass = "text-[var(--muted)]/20";
+              let color = "text-[var(--muted)]/20";
 
-              if (isSnakeHead) {
+              if (isHead) {
                 char = "█";
-                colorClass = "text-[var(--accent)] font-bold";
-              } else if (isSnakeBody) {
+                color = "text-[var(--accent)] font-bold";
+              } else if (isBody) {
                 char = "▓";
-                colorClass = "text-[var(--accent)]/70";
+                color = "text-[var(--accent)]/70";
               } else if (isFood) {
                 char = "★";
-                colorClass = "text-amber-400 animate-ping";
+                color = "text-amber-400 font-bold animate-ping";
               }
 
               return (
-                <span key={x} className={`w-3.5 h-4 text-center leading-none ${colorClass}`}>
+                <span key={x} className={`w-3.5 h-4 text-center leading-none ${color}`}>
                   {char}
                 </span>
               );
@@ -187,46 +205,93 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
         ))}
       </div>
 
+      {/* On-Screen Touch / Click Controls */}
+      <div className="flex flex-col items-center gap-1 mt-2">
+        <button
+          onClick={() => changeDir(0, -1)}
+          className="px-3 py-1 rounded bg-[var(--card-hover)] border border-[var(--line)] text-[var(--heading)] font-bold hover:bg-[var(--accent)] hover:text-black transition-all cursor-pointer"
+        >
+          ▲ UP
+        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => changeDir(-1, 0)}
+            className="px-3 py-1 rounded bg-[var(--card-hover)] border border-[var(--line)] text-[var(--heading)] font-bold hover:bg-[var(--accent)] hover:text-black transition-all cursor-pointer"
+          >
+            ◄ LEFT
+          </button>
+          <button
+            onClick={() => changeDir(0, 1)}
+            className="px-3 py-1 rounded bg-[var(--card-hover)] border border-[var(--line)] text-[var(--heading)] font-bold hover:bg-[var(--accent)] hover:text-black transition-all cursor-pointer"
+          >
+            ▼ DOWN
+          </button>
+          <button
+            onClick={() => changeDir(1, 0)}
+            className="px-3 py-1 rounded bg-[var(--card-hover)] border border-[var(--line)] text-[var(--heading)] font-bold hover:bg-[var(--accent)] hover:text-black transition-all cursor-pointer"
+          >
+            ► RIGHT
+          </button>
+        </div>
+      </div>
+
       {gameOver ? (
         <div className="mt-2 text-center text-red-400 font-bold">
           GAME OVER! Press [ENTER] to Restart | [Q] to Quit
         </div>
       ) : (
-        <div className="mt-1.5 text-center text-[10px] text-[var(--muted)]">
-          [WASD / Arrow Keys] Move | [Q] Quit
+        <div className="mt-1 text-center text-[10px] text-[var(--muted)]">
+          Controls: WASD / Arrow Keys or buttons above | Press [Q] to Quit
         </div>
       )}
     </div>
   );
 }
 
-// --- 2. Fast & Responsive Terminal Pong Game ---
+// --- 2. Rock-Solid Responsive Pong Game ---
 function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
   const width = 26;
   const height = 11;
+  const gameRef = useRef<HTMLDivElement>(null);
+
   const [paddleY, setPaddleY] = useState(4);
   const [ball, setBall] = useState({ x: 13, y: 5, dx: 1, dy: 1 });
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
+  const movePaddle = (dir: -1 | 1) => {
+    if (gameOver) return;
+    setPaddleY((y) => Math.max(0, Math.min(height - 3, y + dir)));
+  };
+
   useEffect(() => {
+    gameRef.current?.focus();
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      const code = e.code;
       const key = e.key.toLowerCase();
+
       if (key === "q") {
+        e.preventDefault();
         onQuit();
         return;
       }
-      if (gameOver && e.key === "Enter") {
+
+      if (gameOver && (code === "Enter" || key === "enter")) {
+        e.preventDefault();
         setPaddleY(4);
         setBall({ x: 13, y: 5, dx: 1, dy: 1 });
         setScore(0);
         setGameOver(false);
         return;
       }
-      if (e.key === "ArrowUp" || key === "w") {
-        setPaddleY((y) => Math.max(0, y - 1));
-      } else if (e.key === "ArrowDown" || key === "s") {
-        setPaddleY((y) => Math.min(height - 3, y + 1));
+
+      if (code === "ArrowUp" || code === "KeyW") {
+        e.preventDefault();
+        movePaddle(-1);
+      } else if (code === "ArrowDown" || code === "KeyS") {
+        e.preventDefault();
+        movePaddle(1);
       }
     };
 
@@ -263,42 +328,46 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
 
         return { x: nextX, y: nextY, dx: nextDx, dy: nextDy };
       });
-    }, 70);
+    }, 75);
 
     return () => clearInterval(timer);
   }, [paddleY, gameOver]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 font-mono text-xs select-none">
-      <div className="flex items-center justify-between w-full max-w-sm mb-1.5 text-[var(--accent)] font-bold">
-        <span>🏓 PONG ARCADE (FAST)</span>
+    <div
+      ref={gameRef}
+      tabIndex={0}
+      className="flex flex-col items-center justify-center p-2 font-mono text-xs outline-none select-none"
+    >
+      <div className="flex items-center justify-between w-full max-w-sm mb-1 text-[var(--accent)] font-bold">
+        <span>🏓 PONG ARCADE</span>
         <span>SCORE: {score}</span>
       </div>
 
-      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-inner">
+      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-lg">
         {Array.from({ length: height }).map((_, y) => (
           <div key={y} className="flex">
             {Array.from({ length: width }).map((_, x) => {
               const isPaddle = x === 0 && y >= paddleY && y <= paddleY + 2;
               const isBall = ball.x === x && ball.y === y;
-              const isRightWall = x === width - 1;
+              const isWall = x === width - 1;
 
               let char = " ";
-              let colorClass = "text-[var(--muted)]/20";
+              let color = "text-[var(--muted)]/20";
 
               if (isPaddle) {
                 char = "█";
-                colorClass = "text-[var(--accent)] font-bold";
+                color = "text-[var(--accent)] font-bold";
               } else if (isBall) {
                 char = "●";
-                colorClass = "text-amber-400 font-bold";
-              } else if (isRightWall) {
+                color = "text-amber-400 font-bold animate-ping";
+              } else if (isWall) {
                 char = "│";
-                colorClass = "text-[var(--muted)]";
+                color = "text-[var(--muted)]";
               }
 
               return (
-                <span key={x} className={`w-3.5 h-4 text-center leading-none ${colorClass}`}>
+                <span key={x} className={`w-3.5 h-4 text-center leading-none ${color}`}>
                   {char}
                 </span>
               );
@@ -307,23 +376,41 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
         ))}
       </div>
 
+      {/* On-Screen Touch / Click Controls */}
+      <div className="flex gap-3 mt-2">
+        <button
+          onClick={() => movePaddle(-1)}
+          className="px-4 py-1 rounded bg-[var(--card-hover)] border border-[var(--line)] text-[var(--heading)] font-bold hover:bg-[var(--accent)] hover:text-black transition-all cursor-pointer"
+        >
+          ▲ MOVE UP
+        </button>
+        <button
+          onClick={() => movePaddle(1)}
+          className="px-4 py-1 rounded bg-[var(--card-hover)] border border-[var(--line)] text-[var(--heading)] font-bold hover:bg-[var(--accent)] hover:text-black transition-all cursor-pointer"
+        >
+          ▼ MOVE DOWN
+        </button>
+      </div>
+
       {gameOver ? (
         <div className="mt-2 text-center text-red-400 font-bold">
           GAME OVER! Press [ENTER] to Restart | [Q] to Quit
         </div>
       ) : (
-        <div className="mt-1.5 text-center text-[10px] text-[var(--muted)]">
-          [W/S or Arrow Keys] Move Paddle | [Q] Quit
+        <div className="mt-1 text-center text-[10px] text-[var(--muted)]">
+          Controls: W/S or Up/Down arrows or buttons | Press [Q] to Quit
         </div>
       )}
     </div>
   );
 }
 
-// --- 3. Fast & Responsive Terminal Space Invaders Game ---
+// --- 3. Rock-Solid Responsive Space Invaders Game ---
 function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
   const width = 24;
   const height = 11;
+  const gameRef = useRef<HTMLDivElement>(null);
+
   const [playerX, setPlayerX] = useState(12);
   const [lasers, setLasers] = useState<{ x: number; y: number }[]>([]);
   const [aliens, setAliens] = useState<{ x: number; y: number }[]>([
@@ -333,14 +420,31 @@ function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
+  const movePlayer = (dir: -1 | 1) => {
+    if (gameOver) return;
+    setPlayerX((x) => Math.max(0, Math.min(width - 1, x + dir)));
+  };
+
+  const shootLaser = () => {
+    if (gameOver) return;
+    setLasers((prev) => [...prev, { x: playerX, y: height - 2 }]);
+  };
+
   useEffect(() => {
+    gameRef.current?.focus();
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      const code = e.code;
       const key = e.key.toLowerCase();
+
       if (key === "q") {
+        e.preventDefault();
         onQuit();
         return;
       }
-      if (gameOver && e.key === "Enter") {
+
+      if (gameOver && (code === "Enter" || key === "enter")) {
+        e.preventDefault();
         setPlayerX(12);
         setLasers([]);
         setAliens([
@@ -352,12 +456,15 @@ function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
         return;
       }
 
-      if (e.key === "ArrowLeft" || key === "a") {
-        setPlayerX((x) => Math.max(0, x - 1));
-      } else if (e.key === "ArrowRight" || key === "d") {
-        setPlayerX((x) => Math.min(width - 1, x + 1));
-      } else if (e.key === " " || key === "space") {
-        setLasers((prev) => [...prev, { x: playerX, y: height - 2 }]);
+      if (code === "ArrowLeft" || code === "KeyA") {
+        e.preventDefault();
+        movePlayer(-1);
+      } else if (code === "ArrowRight" || code === "KeyD") {
+        e.preventDefault();
+        movePlayer(1);
+      } else if (code === "Space" || key === " ") {
+        e.preventDefault();
+        shootLaser();
       }
     };
 
@@ -365,27 +472,23 @@ function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [playerX, gameOver]);
 
-  // Lasers Physics Loop
   useEffect(() => {
     if (gameOver) return;
 
     const timer = setInterval(() => {
-      setLasers((prevLasers) => {
-        return prevLasers.map((l) => ({ ...l, y: l.y - 1 })).filter((l) => l.y >= 0);
-      });
+      setLasers((prev) => prev.map((l) => ({ ...l, y: l.y - 1 })).filter((l) => l.y >= 0));
     }, 60);
 
     return () => clearInterval(timer);
   }, [gameOver]);
 
-  // Collision Loop
   useEffect(() => {
     if (gameOver || aliens.length === 0) return;
 
     setAliens((prevAliens) => {
-      let updatedAliens = [...prevAliens];
+      let updated = [...prevAliens];
       lasers.forEach((laser) => {
-        updatedAliens = updatedAliens.filter((alien) => {
+        updated = updated.filter((alien) => {
           if (alien.x === laser.x && alien.y === laser.y) {
             setScore((s) => s + 20);
             return false;
@@ -393,18 +496,22 @@ function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
           return true;
         });
       });
-      return updatedAliens;
+      return updated;
     });
   }, [lasers, gameOver]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 font-mono text-xs select-none">
-      <div className="flex items-center justify-between w-full max-w-sm mb-1.5 text-[var(--accent)] font-bold">
-        <span>👾 SPACE INVADERS (FAST)</span>
+    <div
+      ref={gameRef}
+      tabIndex={0}
+      className="flex flex-col items-center justify-center p-2 font-mono text-xs outline-none select-none"
+    >
+      <div className="flex items-center justify-between w-full max-w-sm mb-1 text-[var(--accent)] font-bold">
+        <span>👾 SPACE INVADERS</span>
         <span>SCORE: {score}</span>
       </div>
 
-      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-inner">
+      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-lg">
         {Array.from({ length: height }).map((_, y) => (
           <div key={y} className="flex">
             {Array.from({ length: width }).map((_, x) => {
@@ -413,27 +520,49 @@ function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
               const isAlien = aliens.some((a) => a.x === x && a.y === y);
 
               let char = " ";
-              let colorClass = "text-[var(--muted)]/20";
+              let color = "text-[var(--muted)]/20";
 
               if (isPlayer) {
                 char = "▲";
-                colorClass = "text-[var(--accent)] font-bold";
+                color = "text-[var(--accent)] font-bold";
               } else if (isLaser) {
                 char = "│";
-                colorClass = "text-amber-400 font-bold";
+                color = "text-amber-400 font-bold";
               } else if (isAlien) {
                 char = "W";
-                colorClass = "text-red-400 font-bold animate-pulse";
+                color = "text-red-400 font-bold animate-pulse";
               }
 
               return (
-                <span key={x} className={`w-3.5 h-4 text-center leading-none ${colorClass}`}>
+                <span key={x} className={`w-3.5 h-4 text-center leading-none ${color}`}>
                   {char}
                 </span>
               );
             })}
           </div>
         ))}
+      </div>
+
+      {/* On-Screen Touch / Click Controls */}
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={() => movePlayer(-1)}
+          className="px-3 py-1 rounded bg-[var(--card-hover)] border border-[var(--line)] text-[var(--heading)] font-bold hover:bg-[var(--accent)] hover:text-black transition-all cursor-pointer"
+        >
+          ◄ LEFT
+        </button>
+        <button
+          onClick={shootLaser}
+          className="px-4 py-1 rounded bg-[var(--accent)] text-black font-extrabold hover:brightness-110 transition-all cursor-pointer shadow-md"
+        >
+          🚀 SHOOT
+        </button>
+        <button
+          onClick={() => movePlayer(1)}
+          className="px-3 py-1 rounded bg-[var(--card-hover)] border border-[var(--line)] text-[var(--heading)] font-bold hover:bg-[var(--accent)] hover:text-black transition-all cursor-pointer"
+        >
+          ► RIGHT
+        </button>
       </div>
 
       {aliens.length === 0 ? (
@@ -445,8 +574,8 @@ function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
           GAME OVER! Press [ENTER] to Restart | [Q] to Quit
         </div>
       ) : (
-        <div className="mt-1.5 text-center text-[10px] text-[var(--muted)]">
-          [A/D or Arrows] Move | [SPACE] Shoot Lasers | [Q] Quit
+        <div className="mt-1 text-center text-[10px] text-[var(--muted)]">
+          Controls: A/D or Arrow keys to Move | SPACE to Shoot | Press [Q] to Quit
         </div>
       )}
     </div>
