@@ -317,7 +317,13 @@ export function ScrollExperience() {
       <div className="narrative" id="top">
         {/* Section 1: Hero & Profile (Centered Main Card) */}
         <section className="chapter-section is-center">
-          <div className="chapter-card">
+          <motion.div
+            initial={{ opacity: 0, y: 65, scale: 0.94 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="chapter-card"
+          >
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Profile Avatar Photo - Hero Scaled */}
               <div className="relative shrink-0 mx-auto md:mx-0">
@@ -375,12 +381,18 @@ export function ScrollExperience() {
                 <Terminal size={15} /> Open Terminal (⌘K)
               </button>
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* Section 2: Origin & Education (Right) */}
         <section className="chapter-section is-right" id="origin">
-          <div className="chapter-card">
+          <motion.div
+            initial={{ opacity: 0, y: 65, scale: 0.94 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="chapter-card"
+          >
             <div className="kicker">
               <MapPin size={12} /> Origin Trace
             </div>
@@ -401,12 +413,18 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* Section 3: Skill Ecosystem (Left) */}
         <section className="chapter-section is-left" id="skills">
-          <div className="chapter-card">
+          <motion.div
+            initial={{ opacity: 0, y: 65, scale: 0.94 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="chapter-card"
+          >
             <div className="kicker">
               <Network size={12} /> Tech Ecosystem
             </div>
@@ -434,12 +452,18 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* Section 4: Projects Showcase (3D Revolving Cylindrical Carousel) */}
         <section className="chapter-section is-right" id="projects">
-          <div className="chapter-card">
+          <motion.div
+            initial={{ opacity: 0, y: 65, scale: 0.94 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="chapter-card"
+          >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <div className="kicker">
@@ -482,12 +506,18 @@ export function ScrollExperience() {
                 <Layers size={15} /> Explore Full Catalog of All 11 Projects <ArrowRight size={14} />
               </button>
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* Section 5: Experience & Leadership (Left) */}
         <section className="chapter-section is-left" id="experience">
-          <div className="chapter-card">
+          <motion.div
+            initial={{ opacity: 0, y: 65, scale: 0.94 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="chapter-card"
+          >
             <div className="kicker">
               <ScrollText size={12} /> Leadership & Community Impact
             </div>
@@ -515,12 +545,18 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* Section 6: Convergence & Contact Form (Right) */}
         <section className="chapter-section is-right" id="contact">
-          <div className="chapter-card">
+          <motion.div
+            initial={{ opacity: 0, y: 65, scale: 0.94 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="chapter-card"
+          >
             <div className="kicker">
               <Sparkles size={12} /> Convergence
             </div>
@@ -578,7 +614,7 @@ export function ScrollExperience() {
                 <LinkedinIcon size={16} /> LinkedIn
               </a>
             </div>
-          </div>
+          </motion.div>
         </section>
       </div>
 

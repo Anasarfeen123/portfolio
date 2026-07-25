@@ -223,20 +223,20 @@ export function SceneCanvas() {
         dpr={1}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <color attach="background" args={[isDark ? "#02040a" : "#fbf7ee"]} />
-        <ambientLight intensity={isDark ? 0.65 : 1.15} />
-        <pointLight position={[0, 0, 0]} intensity={isDark ? 4.2 : 3.5} color="#d97706" distance={40} />
-        <directionalLight position={[6, 6, 6]} intensity={isDark ? 2.5 : 2.2} color="#fffdfa" />
+        <color attach="background" args={[isDark ? "#02040a" : "#f8f1e5"]} />
+        <ambientLight intensity={isDark ? 0.65 : 0.9} />
+        <pointLight position={[0, 0, 0]} intensity={isDark ? 4.2 : 3.0} color="#ffe066" distance={35} />
+        <directionalLight position={[6, 6, 6]} intensity={isDark ? 2.5 : 2.0} color="#ffffff" />
         
-        {/* Celestial Starfield / Golden Dust */}
+        {/* Starfield */}
         <Stars
-          radius={isDark ? 90 : 75}
-          depth={isDark ? 50 : 35}
-          count={isDark ? 1500 : 700}
-          factor={isDark ? 4.8 : 3.2}
-          saturation={isDark ? 0.85 : 0.6}
+          radius={isDark ? 90 : 70}
+          depth={isDark ? 50 : 30}
+          count={isDark ? 1500 : 450}
+          factor={isDark ? 4.8 : 2.5}
+          saturation={isDark ? 0.85 : 0.4}
           fade
-          speed={isDark ? 0.35 : 0.15}
+          speed={isDark ? 0.35 : 0.1}
         />
 
         <SolarSystemAtlas isDark={isDark} />
