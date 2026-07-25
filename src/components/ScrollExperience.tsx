@@ -34,6 +34,40 @@ function LinkedinIcon({ size = 16 }: { size?: number }) {
   );
 }
 
+// Interactive 3D Parallax Tilt Card Component
+function DynamicTiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    setRotateX((-y / rect.height) * 7);
+    setRotateY((x / rect.width) * 7);
+  };
+
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      animate={{ rotateX, rotateY }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className={`chapter-card ${className}`}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 // Club Brand Logos
 function ClubLogo({ iconKey }: { iconKey: "microsoft" | "linux" | "hackclub" }) {
   const [hasError, setHasError] = useState(false);
@@ -309,7 +343,7 @@ export function ScrollExperience() {
       <div className="narrative" id="top">
         {/* Section 1: Hero & Profile (Centered Main Card) */}
         <section className="chapter-section is-center">
-          <div className="chapter-card">
+          <DynamicTiltCard>
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Profile Avatar Photo */}
               <div className="relative shrink-0">
@@ -367,12 +401,12 @@ export function ScrollExperience() {
                 <Terminal size={15} /> Open Terminal (⌘K)
               </button>
             </div>
-          </div>
+          </DynamicTiltCard>
         </section>
 
         {/* Section 2: Origin & Education (Right) */}
         <section className="chapter-section is-right" id="origin">
-          <div className="chapter-card">
+          <DynamicTiltCard>
             <div className="kicker">
               <MapPin size={12} /> Origin Trace
             </div>
@@ -393,12 +427,12 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </div>
+          </DynamicTiltCard>
         </section>
 
         {/* Section 3: Skill Ecosystem (Left) */}
         <section className="chapter-section is-left" id="skills">
-          <div className="chapter-card">
+          <DynamicTiltCard>
             <div className="kicker">
               <Network size={12} /> Tech Ecosystem
             </div>
@@ -426,12 +460,12 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </div>
+          </DynamicTiltCard>
         </section>
 
         {/* Section 4: Projects Showcase (Top 3 Featured + Catalog Pop-up) */}
         <section className="chapter-section is-right" id="projects">
-          <div className="chapter-card">
+          <DynamicTiltCard>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <div className="kicker">
@@ -478,12 +512,12 @@ export function ScrollExperience() {
                 <Layers size={15} /> Explore Full Catalog of All 11 Projects <ArrowRight size={14} />
               </button>
             </div>
-          </div>
+          </DynamicTiltCard>
         </section>
 
         {/* Section 5: Experience & Leadership (Left) */}
         <section className="chapter-section is-left" id="experience">
-          <div className="chapter-card">
+          <DynamicTiltCard>
             <div className="kicker">
               <ScrollText size={12} /> Leadership & Community Impact
             </div>
@@ -511,12 +545,12 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
-          </div>
+          </DynamicTiltCard>
         </section>
 
         {/* Section 6: Convergence & Contact Form (Right) */}
         <section className="chapter-section is-right" id="contact">
-          <div className="chapter-card">
+          <DynamicTiltCard>
             <div className="kicker">
               <Sparkles size={12} /> Convergence
             </div>
@@ -574,7 +608,7 @@ export function ScrollExperience() {
                 <LinkedinIcon size={16} /> LinkedIn
               </a>
             </div>
-          </div>
+          </DynamicTiltCard>
         </section>
       </div>
 
@@ -625,7 +659,6 @@ function BootSequence({ visible }: { visible: boolean }) {
   );
 }
 
-// Prominent Top 3 Featured Card
 function FeaturedProjectCard({
   project,
   index,
