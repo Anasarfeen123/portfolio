@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CornerDownLeft, Gamepad2, Sparkles, Terminal as TerminalIcon, X } from "lucide-react";
+import { CornerDownLeft, Sparkles, Terminal as TerminalIcon, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { experience, profile, projects, skillClusters } from "@/data/portfolio";
 
@@ -52,7 +52,7 @@ const availableCommands = [
 const availableFiles = ["bio.txt", "contact.txt", "resume.txt", "stack.txt", "projects"];
 const projectFiles = projects.map((p) => `${p.id}.json`);
 
-const quickPills = ["neofetch", "projects", "skills", "snake", "pong", "invaders", "matrix", "clear", "help"];
+const quickPills = ["neofetch", "projects", "skills", "snake", "pong", "invaders", "guess", "matrix", "clear", "help"];
 
 // --- 1. Rock-Solid Responsive Snake Game ---
 function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
@@ -582,10 +582,105 @@ function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
   );
 }
 
+// --- 4. Interactive Number Guessing Game Component ---
+function TerminalGuessGame({ onQuit }: { onQuit: () => void }) {
+  const [target, setTarget] = useState<number>(() => Math.floor(Math.random() * 100) + 1);
+  const [guessInput, setGuessInput] = useState("");
+  const [attempts, setAttempts] = useState<number>(0);
+  const [feedback, setFeedback] = useState<string>("Guess a number between 1 and 100!");
+  const [won, setWon] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleGuess = (e: React.FormEvent) => {
+    e.preventDefault();
+    const val = parseInt(guessInput, 10);
+    if (isNaN(val)) return;
+
+    const newAttempts = attempts + 1;
+    setAttempts(newAttempts);
+
+    if (val < target) {
+      setFeedback(`📈 TOO LOW! '${val}' is smaller than the target. Try higher!`);
+    } else if (val > target) {
+      setFeedback(`📉 TOO HIGH! '${val}' is larger than the target. Try lower!`);
+    } else {
+      setFeedback(`🎉 BINGO! You guessed ${target} correctly in ${newAttempts} attempt(s)!`);
+      setWon(true);
+    }
+    setGuessInput("");
+  };
+
+  const restartGame = () => {
+    setTarget(Math.floor(Math.random() * 100) + 1);
+    setAttempts(0);
+    setFeedback("New target generated! Guess a number between 1 and 100!");
+    setWon(false);
+    setGuessInput("");
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center p-3 font-mono text-xs select-none">
+      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[var(--accent)] font-bold">
+        <span>🎯 NUMBER GUESSING ARCADE</span>
+        <span>ATTEMPTS: {attempts}</span>
+      </div>
+
+      <div className="w-full max-w-sm border border-[var(--line)] bg-[var(--background)] p-4 rounded-xl shadow-lg space-y-3 text-center">
+        <p className="font-semibold text-[var(--heading)] text-sm">{feedback}</p>
+
+        {!won ? (
+          <form onSubmit={handleGuess} className="flex gap-2 justify-center mt-2">
+            <input
+              ref={inputRef}
+              type="number"
+              min="1"
+              max="100"
+              value={guessInput}
+              onChange={(e) => setGuessInput(e.target.value)}
+              placeholder="1-100"
+              className="w-24 px-3 py-1.5 rounded-lg border border-[var(--line)] bg-[var(--card-bg)] text-[var(--heading)] font-mono font-bold text-center outline-none focus:border-[var(--accent)]"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="px-4 py-1.5 rounded-lg bg-[var(--accent)] text-black font-extrabold hover:brightness-110 transition-all cursor-pointer"
+            >
+              SUBMIT
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-2 mt-2">
+            <button
+              onClick={restartGame}
+              className="px-4 py-2 rounded-lg bg-[var(--accent)] text-black font-extrabold hover:brightness-110 transition-all cursor-pointer w-full"
+            >
+              PLAY AGAIN 🔄
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 flex gap-3">
+        <button
+          onClick={onQuit}
+          className="px-3 py-1 rounded border border-[var(--line)] text-[var(--muted)] hover:text-[var(--heading)] transition-all cursor-pointer text-[11px]"
+        >
+          Quit Game [Q]
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: TerminalModalProps) {
   const [input, setInput] = useState("");
   const [currentDir, setCurrentDir] = useState<string>("/home/anas");
-  const [activeGame, setActiveGame] = useState<"snake" | "pong" | "invaders" | null>(null);
+  const [activeGame, setActiveGame] = useState<"snake" | "pong" | "invaders" | "guess" | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
@@ -675,7 +770,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
   snake       - Launch 2D ASCII Snake Arcade game
   pong        - Launch 2D ASCII Pong Arcade game
   invaders    - Launch 2D ASCII Space Invaders Arcade game
-  guess       - Play interactive number guessing game
+  guess       - Launch interactive Number Guessing game
   ping <host> - Ping live telemetry server
   matrix      - Display Matrix digital rain
   history     - List terminal command history
@@ -846,11 +941,11 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
         break;
 
       case "guess":
-        const targetNum = Math.floor(Math.random() * 100) + 1;
+        setActiveGame("guess");
         responses.push({
           id: Math.random().toString(),
-          type: "response",
-          text: `🎯 NUMBER GUESSING GAME: Target number generated between 1 and 100! (Target is ${targetNum})`,
+          type: "system",
+          text: "Launching interactive Number Guessing game...",
         });
         break;
 
@@ -1071,6 +1166,8 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
               <TerminalPongGame onQuit={() => setActiveGame(null)} />
             ) : activeGame === "invaders" ? (
               <TerminalInvadersGame onQuit={() => setActiveGame(null)} />
+            ) : activeGame === "guess" ? (
+              <TerminalGuessGame onQuit={() => setActiveGame(null)} />
             ) : (
               output.map((line) => (
                 <div key={line.id}>
