@@ -318,10 +318,11 @@ export function ScrollExperience() {
         {/* Section 1: Hero & Profile (Centered Main Card) */}
         <section className="chapter-section is-center">
           <motion.div
-            initial={{ opacity: 0, y: 65, scale: 0.94 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -330,9 +331,9 @@ export function ScrollExperience() {
                 <img
                   src={profile.avatar}
                   alt={profile.name}
-                  className="h-36 w-36 sm:h-48 sm:w-48 md:h-56 md:w-56 rounded-2xl border-2 border-[var(--accent)] ring-4 ring-[var(--accent)]/20 object-cover shadow-2xl transition-transform hover:scale-105"
+                  className="h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52 rounded-2xl border-2 border-[var(--accent)] object-cover shadow-xl"
                 />
-                <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-[var(--background)] bg-[var(--accent)] shadow-[0_0_12px_var(--accent)]" />
+                <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[var(--background)] bg-[var(--accent)]" />
               </div>
 
               <div className="flex-1">
@@ -387,10 +388,11 @@ export function ScrollExperience() {
         {/* Section 2: Origin & Education (Right) */}
         <section className="chapter-section is-right" id="origin">
           <motion.div
-            initial={{ opacity: 0, y: 65, scale: 0.94 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
             <div className="kicker">
@@ -419,10 +421,11 @@ export function ScrollExperience() {
         {/* Section 3: Skill Ecosystem (Left) */}
         <section className="chapter-section is-left" id="skills">
           <motion.div
-            initial={{ opacity: 0, y: 65, scale: 0.94 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
             <div className="kicker">
@@ -458,10 +461,11 @@ export function ScrollExperience() {
         {/* Section 4: Projects Showcase (3D Revolving Cylindrical Carousel) */}
         <section className="chapter-section is-right" id="projects">
           <motion.div
-            initial={{ opacity: 0, y: 65, scale: 0.94 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -512,10 +516,11 @@ export function ScrollExperience() {
         {/* Section 5: Experience & Leadership (Left) */}
         <section className="chapter-section is-left" id="experience">
           <motion.div
-            initial={{ opacity: 0, y: 65, scale: 0.94 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
             <div className="kicker">
@@ -551,10 +556,11 @@ export function ScrollExperience() {
         {/* Section 6: Convergence & Contact Form (Right) */}
         <section className="chapter-section is-right" id="contact">
           <motion.div
-            initial={{ opacity: 0, y: 65, scale: 0.94 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: false, amount: 0.2 }}
-            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
             <div className="kicker">
