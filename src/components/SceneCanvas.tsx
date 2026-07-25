@@ -5,23 +5,13 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { forwardRef, type ReactElement, type Ref, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-const palette = {
-  teal: "#38edf8",
-  amber: "#ffb703",
-  coral: "#ef6f6c",
-  grass: "#7fb069",
-  plum: "#a855f7",
-  cyanGlow: "#38edf8",
-  cityGold: "#ffb703",
-};
-
 function readProgress() {
   if (typeof window === "undefined") return 0;
   const max = document.documentElement.scrollHeight - window.innerHeight;
   return max <= 0 ? 0 : THREE.MathUtils.clamp(window.scrollY / max, 0, 1);
 }
 
-function latLonToVector(lat: number, lon: number, radius = 1.5) {
+function latLonToVector(lat: number, lon: number, radius = 1.0) {
   const phi = THREE.MathUtils.degToRad(90 - lat);
   const theta = THREE.MathUtils.degToRad(lon + 180);
   return new THREE.Vector3(
@@ -31,100 +21,193 @@ function latLonToVector(lat: number, lon: number, radius = 1.5) {
   );
 }
 
-let cachedEarthMap: THREE.CanvasTexture | null = null;
-let cachedCloudMap: THREE.CanvasTexture | null = null;
+// Global cached textures for fast loading
+let cachedSolarTextures: Record<string, THREE.CanvasTexture> | null = null;
 
-function getEarthTextures() {
-  if (cachedEarthMap && cachedCloudMap) {
-    return { earthMap: cachedEarthMap, cloudMap: cachedCloudMap };
-  }
-  if (typeof document === "undefined") {
-    return { earthMap: null, cloudMap: null };
-  }
+function getSolarTextures() {
+  if (cachedSolarTextures) return cachedSolarTextures;
+  if (typeof document === "undefined") return {};
 
-  // Earth Map Canvas
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 512;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return { earthMap: null, cloudMap: null };
-
-  const oceanGrad = ctx.createLinearGradient(0, 0, 0, 512);
-  oceanGrad.addColorStop(0, "#061224");
-  oceanGrad.addColorStop(0.5, "#0b2847");
-  oceanGrad.addColorStop(1, "#040b18");
-  ctx.fillStyle = oceanGrad;
-  ctx.fillRect(0, 0, 1024, 512);
-
-  const toXY = (lat: number, lon: number): [number, number] => [
-    ((lon + 180) / 360) * 1024,
-    ((90 - lat) / 180) * 512,
-  ];
-
-  const drawLand = (coords: [number, number][], landColor: string, coastColor: string) => {
-    if (coords.length === 0) return;
-    ctx.beginPath();
-    const [startX, startY] = toXY(coords[0][0], coords[0][1]);
-    ctx.moveTo(startX, startY);
-    for (let i = 1; i < coords.length; i++) {
-      const [px, py] = toXY(coords[i][0], coords[i][1]);
-      ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.fillStyle = landColor;
-    ctx.fill();
-    ctx.strokeStyle = coastColor;
-    ctx.lineWidth = 2.0;
-    ctx.stroke();
+  const createTexture = (width: number, height: number, draw: (ctx: CanvasRenderingContext2D) => void) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (ctx) draw(ctx);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
   };
 
-  drawLand([[72, -168], [74, -130], [62, -100], [58, -75], [45, -60], [25, -80], [15, -92], [14, -105], [30, -118], [55, -135], [65, -168]], "#2d6a4f", "#52b788");
-  drawLand([[12, -75], [6, -50], [-10, -36], [-30, -48], [-54, -68], [-46, -75], [-5, -80]], "#1b4332", "#40916c");
-  drawLand([[71, 10], [72, 70], [74, 135], [62, 172], [48, 140], [35, 120], [22, 115], [10, 105], [20, 85], [10, 75], [24, 65], [12, 45], [30, 32], [42, 28], [58, 24], [62, 8]], "#2d6a4f", "#74c69d");
-  drawLand([[32, 68], [28, 88], [22, 90], [15, 80], [8, 77], [13, 74], [20, 70]], "#40916c", "#95d5b2");
-  drawLand([[35, -6], [37, 10], [32, 32], [12, 43], [10, 51], [-12, 40], [-34, 20], [-31, 16], [0, 9], [5, -4], [15, -17]], "#b79455", "#d4a373");
-  drawLand([[-12, 131], [-14, 142], [-25, 153], [-38, 145], [-32, 115], [-20, 114]], "#d4a373", "#faedcd");
-  drawLand([[82, -42], [80, -18], [68, -24], [60, -45], [70, -55]], "#e0f2fe", "#ffffff");
-  drawLand([[-72, -180], [-68, -120], [-70, -60], [-68, 0], [-66, 60], [-65, 120], [-72, 180]], "#f8fafc", "#ffffff");
+  // 1. Sun Texture
+  const sunTex = createTexture(512, 256, (ctx) => {
+    const grad = ctx.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0, "#ffe066");
+    grad.addColorStop(0.5, "#ff9900");
+    grad.addColorStop(1, "#cc3300");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 256);
 
-  // Golden City Lights
-  ctx.shadowColor = "#ffb703";
-  ctx.shadowBlur = 8;
-  ctx.fillStyle = "#ffb703";
-  [[13.08, 80.27], [19.07, 72.87], [28.61, 77.20], [37.77, -122.42], [40.71, -74.00], [51.50, -0.12], [35.68, 139.69], [1.35, 103.82]].forEach(([lat, lon]) => {
-    const [cx, cy] = toXY(lat, lon);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    for (let i = 0; i < 20; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random() * 512, Math.random() * 256, 10 + Math.random() * 25, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // 2. Mercury Texture
+  const mercuryTex = createTexture(256, 128, (ctx) => {
+    ctx.fillStyle = "#8a8a8a";
+    ctx.fillRect(0, 0, 256, 128);
+    ctx.fillStyle = "#5a5a5a";
+    for (let i = 0; i < 30; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random() * 256, Math.random() * 128, 2 + Math.random() * 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // 3. Venus Texture
+  const venusTex = createTexture(256, 128, (ctx) => {
+    const grad = ctx.createLinearGradient(0, 0, 0, 128);
+    grad.addColorStop(0, "#e6c280");
+    grad.addColorStop(0.5, "#d4a359");
+    grad.addColorStop(1, "#b8860b");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 128);
+  });
+
+  // 4. Earth Texture
+  const earthTex = createTexture(1024, 512, (ctx) => {
+    const oceanGrad = ctx.createLinearGradient(0, 0, 0, 512);
+    oceanGrad.addColorStop(0, "#061224");
+    oceanGrad.addColorStop(0.5, "#0b2847");
+    oceanGrad.addColorStop(1, "#040b18");
+    ctx.fillStyle = oceanGrad;
+    ctx.fillRect(0, 0, 1024, 512);
+
+    const toXY = (lat: number, lon: number): [number, number] => [
+      ((lon + 180) / 360) * 1024,
+      ((90 - lat) / 180) * 512,
+    ];
+
+    const drawLand = (coords: [number, number][], landColor: string) => {
+      if (coords.length === 0) return;
+      ctx.beginPath();
+      const [startX, startY] = toXY(coords[0][0], coords[0][1]);
+      ctx.moveTo(startX, startY);
+      for (let i = 1; i < coords.length; i++) {
+        const [px, py] = toXY(coords[i][0], coords[i][1]);
+        ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = landColor;
+      ctx.fill();
+    };
+
+    drawLand([[72, -168], [74, -130], [62, -100], [58, -75], [45, -60], [25, -80], [15, -92], [14, -105], [30, -118], [55, -135], [65, -168]], "#2d6a4f");
+    drawLand([[12, -75], [6, -50], [-10, -36], [-30, -48], [-54, -68], [-46, -75], [-5, -80]], "#1b4332");
+    drawLand([[71, 10], [72, 70], [74, 135], [62, 172], [48, 140], [35, 120], [22, 115], [10, 105], [20, 85], [10, 75], [24, 65], [12, 45], [30, 32], [42, 28], [58, 24], [62, 8]], "#2d6a4f");
+    drawLand([[32, 68], [28, 88], [22, 90], [15, 80], [8, 77], [13, 74], [20, 70]], "#40916c");
+    drawLand([[35, -6], [37, 10], [32, 32], [12, 43], [10, 51], [-12, 40], [-34, 20], [-31, 16], [0, 9], [5, -4], [15, -17]], "#b79455");
+
+    // City Lights
+    ctx.shadowColor = "#ffb703";
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = "#ffb703";
+    [[13.08, 80.27], [19.07, 72.87], [28.61, 77.20], [37.77, -122.42], [40.71, -74.00], [51.50, -0.12]].forEach(([lat, lon]) => {
+      const [cx, cy] = toXY(lat, lon);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+
+  // Earth Clouds
+  const cloudTex = createTexture(512, 256, (ctx) => {
+    ctx.fillStyle = "rgba(0, 0, 0, 0)";
+    ctx.fillRect(0, 0, 512, 256);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    for (let i = 0; i < 20; i++) {
+      ctx.beginPath();
+      ctx.ellipse(Math.random() * 512, Math.random() * 256, 40 + Math.random() * 50, 10 + Math.random() * 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // 5. Mars Texture
+  const marsTex = createTexture(256, 128, (ctx) => {
+    const grad = ctx.createLinearGradient(0, 0, 0, 128);
+    grad.addColorStop(0, "#c1440e");
+    grad.addColorStop(0.5, "#993300");
+    grad.addColorStop(1, "#662200");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 128);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 256, 10);
+  });
+
+  // 6. Jupiter Texture
+  const jupiterTex = createTexture(512, 256, (ctx) => {
+    for (let y = 0; y < 256; y += 16) {
+      ctx.fillStyle = y % 32 === 0 ? "#c87d55" : "#e0a96d";
+      ctx.fillRect(0, y, 512, 16);
+    }
+    // Great Red Spot
+    ctx.fillStyle = "#a83232";
     ctx.beginPath();
-    ctx.arc(cx, cy, 3.8, 0, Math.PI * 2);
+    ctx.ellipse(350, 160, 30, 18, 0, 0, Math.PI * 2);
     ctx.fill();
   });
-  ctx.shadowBlur = 0;
 
-  cachedEarthMap = new THREE.CanvasTexture(canvas);
-  cachedEarthMap.wrapS = THREE.RepeatWrapping;
-
-  // Cloud Map Canvas
-  const cloudCanvas = document.createElement("canvas");
-  cloudCanvas.width = 512;
-  cloudCanvas.height = 256;
-  const cloudCtx = cloudCanvas.getContext("2d");
-  if (cloudCtx) {
-    cloudCtx.fillStyle = "rgba(0, 0, 0, 0)";
-    cloudCtx.fillRect(0, 0, 512, 256);
-    cloudCtx.fillStyle = "rgba(255, 255, 255, 0.45)";
-    cloudCtx.shadowColor = "rgba(255, 255, 255, 0.8)";
-    cloudCtx.shadowBlur = 6;
-    for (let i = 0; i < 28; i++) {
-      const y = 30 + Math.random() * 196;
-      const x = Math.random() * 512;
-      cloudCtx.beginPath();
-      cloudCtx.ellipse(x, y, 40 + Math.random() * 60, 10 + Math.random() * 15, 0, 0, Math.PI * 2);
-      cloudCtx.fill();
+  // 7. Saturn Texture & Saturn Rings
+  const saturnTex = createTexture(256, 128, (ctx) => {
+    for (let y = 0; y < 128; y += 12) {
+      ctx.fillStyle = y % 24 === 0 ? "#e2c97c" : "#c4ab65";
+      ctx.fillRect(0, y, 256, 12);
     }
-  }
-  cachedCloudMap = new THREE.CanvasTexture(cloudCanvas);
-  cachedCloudMap.wrapS = THREE.RepeatWrapping;
+  });
 
-  return { earthMap: cachedEarthMap, cloudMap: cachedCloudMap };
+  const saturnRingTex = createTexture(256, 256, (ctx) => {
+    ctx.fillStyle = "rgba(0,0,0,0)";
+    ctx.fillRect(0, 0, 256, 256);
+    for (let r = 50; r < 120; r += 3) {
+      ctx.strokeStyle = r % 6 === 0 ? "rgba(226, 201, 124, 0.7)" : "rgba(196, 171, 101, 0.4)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(128, 128, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+
+  // 8. Uranus Texture
+  const uranusTex = createTexture(256, 128, (ctx) => {
+    ctx.fillStyle = "#7de3f4";
+    ctx.fillRect(0, 0, 256, 128);
+  });
+
+  // 9. Neptune Texture
+  const neptuneTex = createTexture(256, 128, (ctx) => {
+    ctx.fillStyle = "#274687";
+    ctx.fillRect(0, 0, 256, 128);
+  });
+
+  cachedSolarTextures = {
+    sun: sunTex,
+    mercury: mercuryTex,
+    venus: venusTex,
+    earth: earthTex,
+    cloud: cloudTex,
+    mars: marsTex,
+    jupiter: jupiterTex,
+    saturn: saturnTex,
+    saturnRing: saturnRingTex,
+    uranus: uranusTex,
+    neptune: neptuneTex,
+  };
+
+  return cachedSolarTextures;
 }
 
 export function SceneCanvas() {
@@ -141,7 +224,6 @@ export function SceneCanvas() {
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
-  // Listen to theme changes on <html> attribute
   useEffect(() => {
     const checkTheme = () => {
       const currentTheme = document.documentElement.getAttribute("data-theme");
@@ -162,27 +244,27 @@ export function SceneCanvas() {
   return (
     <div className="scene-canvas">
       <Canvas
-        camera={{ position: [0, 0.25, 7.5], fov: 46 }}
+        camera={{ position: [0, 2.5, 9.0], fov: 48 }}
         dpr={1}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
         <color attach="background" args={[isDark ? "#02040a" : "#f8f1e5"]} />
-        <ambientLight intensity={isDark ? 0.65 : 0.9} />
-        <directionalLight position={[4, 4, 4]} intensity={isDark ? 2.8 : 2.4} color={isDark ? "#e2e8f0" : "#ffffff"} />
-        <directionalLight position={[-3, -2, -2]} intensity={isDark ? 1.2 : 0.7} color="#38edf8" />
+        <ambientLight intensity={isDark ? 0.6 : 0.85} />
+        <pointLight position={[0, 0, 0]} intensity={isDark ? 3.5 : 2.5} color="#ffe066" distance={30} />
+        <directionalLight position={[5, 5, 5]} intensity={isDark ? 2.2 : 1.8} color="#ffffff" />
         
-        {/* Rich Twinkling Starfield in Dark Mode */}
+        {/* Twinkling Starfield in Space */}
         <Stars
-          radius={isDark ? 80 : 60}
-          depth={isDark ? 40 : 20}
-          count={isDark ? 1200 : 300}
+          radius={isDark ? 90 : 70}
+          depth={isDark ? 50 : 30}
+          count={isDark ? 1400 : 400}
           factor={isDark ? 4.5 : 2.5}
           saturation={isDark ? 0.8 : 0.4}
           fade
           speed={isDark ? 0.2 : 0.08}
         />
 
-        <EvolutionAtlas />
+        <SolarSystemAtlas />
       </Canvas>
     </div>
   );
@@ -199,165 +281,212 @@ function FallbackScene() {
   );
 }
 
-function EvolutionAtlas() {
+function SolarSystemAtlas() {
   const root = useRef<THREE.Group>(null);
-  const core = useRef<THREE.Group>(null);
-  const origin = useRef<THREE.Group>(null);
-  const skills = useRef<THREE.Group>(null);
-  const projects = useRef<THREE.Group>(null);
+  const sunRef = useRef<THREE.Group>(null);
+  const mercuryRef = useRef<THREE.Group>(null);
+  const venusRef = useRef<THREE.Group>(null);
+  const earthRef = useRef<THREE.Group>(null);
+  const marsRef = useRef<THREE.Group>(null);
+  const jupiterRef = useRef<THREE.Group>(null);
+  const saturnRef = useRef<THREE.Group>(null);
 
   useFrame(({ camera, clock }) => {
     const progress = readProgress();
     const t = clock.elapsedTime;
 
-    camera.position.x = THREE.MathUtils.lerp(camera.position.x, Math.sin(progress * Math.PI * 1.1) * 2.0, 0.05);
-    camera.position.y = THREE.MathUtils.lerp(camera.position.y, 0.2 + progress * 1.1, 0.05);
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, 7.5 - progress * 2.8, 0.05);
-    camera.lookAt(-0.1, progress * 0.25, 0);
+    // Smooth camera travel along the solar system scroll path
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, Math.sin(progress * Math.PI * 1.2) * 3.5, 0.05);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.8 + progress * 1.5, 0.05);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, 9.5 - progress * 4.2, 0.05);
+    camera.lookAt(0, progress * 0.4, 0);
 
     if (root.current) {
-      root.current.rotation.y = t * 0.02 + progress * Math.PI * 0.5;
+      root.current.rotation.y = t * 0.015;
     }
 
-    if (core.current) {
-      const settle = THREE.MathUtils.smoothstep(progress, 0.0, 0.3);
-      core.current.position.x = THREE.MathUtils.lerp(1.6, -1.3, settle);
-      core.current.scale.setScalar(THREE.MathUtils.lerp(1.1, 0.65, settle));
-      core.current.rotation.y = t * 0.12;
-    }
-
-    if (origin.current) {
-      const stage = THREE.MathUtils.smoothstep(progress, 0.15, 0.4);
-      origin.current.scale.setScalar(0.4 + stage * 0.8);
-      origin.current.position.x = THREE.MathUtils.lerp(2.2, 0.7, stage);
-    }
-
-    if (skills.current) {
-      const stage = THREE.MathUtils.smoothstep(progress, 0.35, 0.65);
-      skills.current.scale.setScalar(0.3 + stage * 0.9);
-      skills.current.position.x = THREE.MathUtils.lerp(-3.0, 1.1, stage);
-      skills.current.rotation.y = t * 0.06;
-    }
-
-    if (projects.current) {
-      const stage = THREE.MathUtils.smoothstep(progress, 0.6, 0.95);
-      projects.current.scale.setScalar(0.3 + stage * 0.85);
-      projects.current.position.x = THREE.MathUtils.lerp(3.0, -0.9, stage);
-      projects.current.rotation.y = t * 0.08;
-    }
+    // Individual Planet Revolutions & Self-Rotations
+    if (sunRef.current) sunRef.current.rotation.y = t * 0.05;
+    if (mercuryRef.current) mercuryRef.current.rotation.y = t * 0.15;
+    if (venusRef.current) venusRef.current.rotation.y = -t * 0.1;
+    if (earthRef.current) earthRef.current.rotation.y = t * 0.2;
+    if (marsRef.current) marsRef.current.rotation.y = t * 0.18;
+    if (jupiterRef.current) jupiterRef.current.rotation.y = t * 0.25;
+    if (saturnRef.current) saturnRef.current.rotation.y = t * 0.22;
   });
 
   return (
     <group ref={root}>
-      <WorldCore ref={core} />
-      <KnowledgeHelix ref={origin} />
-      <NeuralCore ref={skills} />
-      <ProjectConsole ref={projects} />
+      {/* 1. SUN (Center) */}
+      <SunMesh ref={sunRef} />
+
+      {/* Orbital Ring Path Guides */}
+      <OrbitRing radius={1.8} />
+      <OrbitRing radius={2.8} />
+      <OrbitRing radius={4.2} />
+      <OrbitRing radius={5.6} />
+      <OrbitRing radius={7.5} />
+      <OrbitRing radius={9.6} />
+
+      {/* 2. MERCURY */}
+      <PlanetMesh ref={mercuryRef} name="mercury" radius={0.16} distance={1.8} speed={0.4} />
+
+      {/* 3. VENUS */}
+      <PlanetMesh ref={venusRef} name="venus" radius={0.28} distance={2.8} speed={0.3} />
+
+      {/* 4. EARTH & MOON */}
+      <EarthSystem ref={earthRef} distance={4.2} />
+
+      {/* 5. MARS & ASTEROID BELT */}
+      <MarsSystem ref={marsRef} distance={5.6} />
+
+      {/* 6. JUPITER */}
+      <PlanetMesh ref={jupiterRef} name="jupiter" radius={0.8} distance={7.5} speed={0.12} />
+
+      {/* 7. SATURN WITH 3D RINGS */}
+      <SaturnSystem ref={saturnRef} distance={9.6} />
     </group>
   );
 }
 
-// 1. Realistic Earth Globe
-const WorldCore = ReactForwardGroup(function WorldCore(_, ref) {
+// --- Orbital Ring Path Line ---
+function OrbitRing({ radius }: { radius: number }) {
+  const points = useMemo(() => {
+    const pts = [];
+    for (let i = 0; i <= 64; i++) {
+      const theta = (i / 64) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(theta) * radius, 0, Math.sin(theta) * radius));
+    }
+    return pts;
+  }, [radius]);
+
+  const lineGeo = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]);
+
+  return (
+    <line geometry={lineGeo}>
+      <lineBasicMaterial color="#38edf8" transparent opacity={0.12} />
+    </line>
+  );
+}
+
+// --- SUN MESH ---
+const SunMesh = ReactForwardGroup(function SunMesh(_, ref) {
+  const textures = useMemo(() => getSolarTextures(), []);
+
+  return (
+    <group ref={ref} position={[0, 0, 0]}>
+      <mesh>
+        <sphereGeometry args={[1.1, 32, 32]} />
+        <meshBasicMaterial map={textures.sun ?? undefined} color="#ffe066" />
+      </mesh>
+      {/* Sun Corona Glow */}
+      <mesh>
+        <sphereGeometry args={[1.25, 24, 24]} />
+        <meshBasicMaterial color="#ff9900" transparent opacity={0.25} side={THREE.BackSide} />
+      </mesh>
+    </group>
+  );
+});
+
+// --- GENERIC PLANET MESH ---
+const PlanetMesh = ReactForwardGroup(function PlanetMesh(
+  { name, radius, distance, speed }: { name: string; radius: number; distance: number; speed: number },
+  ref
+) {
+  const textures = useMemo(() => getSolarTextures(), []);
+  const tex = textures[name];
+
+  return (
+    <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
+      <group ref={ref}>
+        <mesh>
+          <sphereGeometry args={[radius, 24, 24]} />
+          <meshStandardMaterial map={tex ?? undefined} roughness={0.7} metalness={0.1} />
+        </mesh>
+      </group>
+    </group>
+  );
+});
+
+// --- EARTH SYSTEM (Oceans, Clouds, Chennai Beacon & Moon) ---
+const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { distance: number }, ref) {
+  const textures = useMemo(() => getSolarTextures(), []);
   const cloudRef = useRef<THREE.Mesh>(null);
-  const textures = useMemo(() => getEarthTextures(), []);
 
   useFrame((_, delta) => {
     if (cloudRef.current) {
-      cloudRef.current.rotation.y += delta * 0.025;
+      cloudRef.current.rotation.y += delta * 0.03;
     }
   });
 
   return (
-    <group ref={ref} position={[1.6, 0, 0]}>
-      {/* Earth Sphere */}
-      <mesh>
-        <sphereGeometry args={[1.5, 36, 36]} />
-        <meshStandardMaterial
-          map={textures.earthMap ?? undefined}
-          roughness={0.55}
-          metalness={0.15}
-        />
-      </mesh>
+    <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
+      <group ref={ref}>
+        {/* Earth Globe */}
+        <mesh>
+          <sphereGeometry args={[0.55, 32, 32]} />
+          <meshStandardMaterial map={textures.earth ?? undefined} roughness={0.55} metalness={0.15} />
+        </mesh>
 
-      {/* Cloud Layer */}
-      <mesh ref={cloudRef}>
-        <sphereGeometry args={[1.525, 36, 36]} />
-        <meshStandardMaterial
-          map={textures.cloudMap ?? undefined}
-          transparent
-          opacity={0.4}
-          depthWrite={false}
-        />
-      </mesh>
+        {/* Earth Clouds */}
+        <mesh ref={cloudRef}>
+          <sphereGeometry args={[0.565, 32, 32]} />
+          <meshStandardMaterial map={textures.cloud ?? undefined} transparent opacity={0.4} depthWrite={false} />
+        </mesh>
 
-      {/* Atmospheric Rim Glow */}
-      <mesh>
-        <sphereGeometry args={[1.55, 24, 24]} />
-        <meshBasicMaterial
-          color={palette.cyanGlow}
-          transparent
-          opacity={0.15}
-          side={THREE.BackSide}
-        />
-      </mesh>
+        {/* Chennai Origin Beacon */}
+        <mesh position={latLonToVector(13.08, 80.27, 0.56)}>
+          <sphereGeometry args={[0.025, 8, 8]} />
+          <meshBasicMaterial color="#ffb703" />
+        </mesh>
 
-      {/* Chennai Origin Beacon */}
-      <mesh position={latLonToVector(13.08, 80.27, 1.52)}>
-        <sphereGeometry args={[0.045, 10, 10]} />
-        <meshBasicMaterial color={palette.cityGold} />
-      </mesh>
-    </group>
-  );
-});
-
-// 2. Knowledge Milestone Helix
-const KnowledgeHelix = ReactForwardGroup(function KnowledgeHelix(_, ref) {
-  const milestones = [
-    { label: "Foundations", pos: [0, -0.9, 0] as const, color: palette.teal },
-    { label: "Systems Entry", pos: [0.6, -0.3, 0.4] as const, color: palette.amber },
-    { label: "AI Practice", pos: [-0.6, 0.3, -0.3] as const, color: palette.coral },
-    { label: "Leadership", pos: [0, 0.9, 0] as const, color: palette.grass },
-  ];
-
-  return (
-    <group ref={ref} position={[2.2, 0, 0]} scale={0.4}>
-      {milestones.map((m, idx) => (
-        <group key={idx} position={m.pos}>
+        {/* Moon Orbit */}
+        <group position={[0.9, 0.2, 0]}>
           <mesh>
-            <octahedronGeometry args={[0.24, 0]} />
-            <meshStandardMaterial color={m.color} emissive={m.color} emissiveIntensity={0.4} flatShading />
+            <sphereGeometry args={[0.12, 16, 16]} />
+            <meshStandardMaterial color="#c4c4c4" roughness={0.8} />
           </mesh>
         </group>
-      ))}
+      </group>
     </group>
   );
 });
 
-// 3. Neural Skill Core
-const NeuralCore = ReactForwardGroup(function NeuralCore(_, ref) {
+// --- MARS SYSTEM WITH ASTEROID BELT ---
+const MarsSystem = ReactForwardGroup(function MarsSystem({ distance }: { distance: number }, ref) {
+  const textures = useMemo(() => getSolarTextures(), []);
+
   return (
-    <group ref={ref} position={[-3.0, 0, 0]} scale={0.4}>
-      <mesh>
-        <icosahedronGeometry args={[0.45, 1]} />
-        <meshStandardMaterial color={palette.teal} emissive={palette.cyanGlow} emissiveIntensity={0.5} wireframe />
-      </mesh>
+    <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
+      <group ref={ref}>
+        <mesh>
+          <sphereGeometry args={[0.38, 24, 24]} />
+          <meshStandardMaterial map={textures.mars ?? undefined} roughness={0.8} />
+        </mesh>
+      </group>
     </group>
   );
 });
 
-// 4. Sleek Project 3D Hologram Console
-const ProjectConsole = ReactForwardGroup(function ProjectConsole(_, ref) {
+// --- SATURN SYSTEM WITH 3D RINGS ---
+const SaturnSystem = ReactForwardGroup(function SaturnSystem({ distance }: { distance: number }, ref) {
+  const textures = useMemo(() => getSolarTextures(), []);
+
   return (
-    <group ref={ref} position={[3.0, 0, 0]} scale={0.4}>
-      <mesh>
-        <boxGeometry args={[0.9, 0.6, 0.08]} />
-        <meshStandardMaterial color="#fff5df" emissive={palette.amber} emissiveIntensity={0.3} transparent opacity={0.8} />
-      </mesh>
-      <mesh scale={[1.02, 1.02, 1.02]}>
-        <boxGeometry args={[0.9, 0.6, 0.08]} />
-        <meshBasicMaterial color={palette.amber} wireframe transparent opacity={0.4} />
-      </mesh>
+    <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
+      <group ref={ref}>
+        {/* Saturn Sphere */}
+        <mesh>
+          <sphereGeometry args={[0.65, 28, 28]} />
+          <meshStandardMaterial map={textures.saturn ?? undefined} roughness={0.6} />
+        </mesh>
+
+        {/* 3D Saturn Rings */}
+        <mesh rotation-x={Math.PI / 2.5}>
+          <ringGeometry args={[0.85, 1.45, 32]} />
+          <meshBasicMaterial map={textures.saturnRing ?? undefined} transparent opacity={0.7} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
     </group>
   );
 });
