@@ -2,17 +2,18 @@
 
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowDown, ArrowRight, Check, Code2, ExternalLink, FileText, GitFork, Mail, MapPin, Moon, Network, ScrollText, Send, Sparkles, Star, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Code2, ExternalLink, FileText, GitFork, Layers, Mail, MapPin, Moon, Network, ScrollText, Send, Sparkles, Star, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { experience, journey, profile, projects, skillClusters, type Project } from "@/data/portfolio";
+import { AllProjectsModal } from "@/components/AllProjectsModal";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
 import { TerminalModal } from "@/components/TerminalModal";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
-import { isSoundEnabled, playChimeSound, playClickSound, setSoundEnabled } from "@/lib/audio";
+import { playChimeSound, playClickSound, setSoundEnabled } from "@/lib/audio";
 
 function GithubIcon({ size = 16 }: { size?: number }) {
   return (
@@ -77,13 +78,9 @@ const SceneCanvas = dynamic(() => import("@/components/SceneCanvas").then((mod) 
   loading: () => <div className="scene-canvas" />,
 });
 
-const categories = [
-  { id: "all", label: "All Builds" },
-  { id: "ai", label: "AI & Vision" },
-  { id: "terminal", label: "Terminal & CLI" },
-  { id: "web", label: "Web & Telemetry" },
-  { id: "games", label: "Games & Simulation" },
-];
+// Top 3 Featured Projects
+const featuredProjectIds = ["rover", "amazecc", "ascii_cam"];
+const top3Projects = projects.filter((p) => featuredProjectIds.includes(p.id));
 
 export function ScrollExperience() {
   const rootRef = useRef<HTMLElement | null>(null);
@@ -92,8 +89,8 @@ export function ScrollExperience() {
   const [soundOn, setSoundOn] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isResumeOpen, setIsResumeOpen] = useState(false);
+  const [isAllProjectsOpen, setIsAllProjectsOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [activeCategory, setActiveCategory] = useState("all");
   const [techFilter, setTechFilter] = useState<string | null>(null);
 
   // Contact Form State
@@ -138,8 +135,8 @@ export function ScrollExperience() {
 
   const handleSkillClick = (moduleName: string) => {
     playClickSound();
-    setTechFilter((prev) => (prev === moduleName ? null : moduleName));
-    document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
+    setTechFilter(moduleName);
+    setIsAllProjectsOpen(true);
   };
 
   useEffect(() => {
@@ -192,18 +189,6 @@ export function ScrollExperience() {
     };
   }, []);
 
-  const filteredProjects = projects.filter((p) => {
-    if (techFilter) {
-      return p.technologies.some((t) => t.toLowerCase().includes(techFilter.toLowerCase()));
-    }
-    if (activeCategory === "all") return true;
-    if (activeCategory === "ai") return ["rover", "celeb", "movie_prediction", "clanofcode"].includes(p.id);
-    if (activeCategory === "terminal") return ["ascii_cam", "musicalterm", "hyprland"].includes(p.id);
-    if (activeCategory === "web") return ["amazecc", "signal", "clanofcode", "celeb"].includes(p.id);
-    if (activeCategory === "games") return ["breakout", "convoy_gol"].includes(p.id);
-    return true;
-  });
-
   return (
     <main ref={rootRef} className="journey">
       {/* Fixed 3D WebGL Canvas Stage */}
@@ -247,6 +232,16 @@ export function ScrollExperience() {
       <ProjectDetailsModal
         project={selectedProject}
         onClose={() => setSelectedProject(null)}
+      />
+
+      {/* All Projects Catalog Modal */}
+      <AllProjectsModal
+        isOpen={isAllProjectsOpen}
+        onClose={() => setIsAllProjectsOpen(false)}
+        onSelectProject={(p) => {
+          playClickSound();
+          setSelectedProject(p);
+        }}
       />
 
       {/* HUD Navigation Header */}
@@ -401,7 +396,7 @@ export function ScrollExperience() {
           </div>
         </section>
 
-        {/* Section 3: Skill Ecosystem (Left - Interactive Module Filtering) */}
+        {/* Section 3: Skill Ecosystem (Left) */}
         <section className="chapter-section is-left" id="skills">
           <div className="chapter-card">
             <div className="kicker">
@@ -418,22 +413,15 @@ export function ScrollExperience() {
                   <div className="cluster-name">{cluster.label}</div>
                   <div className="cluster-desc">{cluster.description}</div>
                   <div className="cluster-modules">
-                    {cluster.modules.map((mod) => {
-                      const isActive = techFilter?.toLowerCase() === mod.toLowerCase();
-                      return (
-                        <button
-                          key={mod}
-                          onClick={() => handleSkillClick(mod)}
-                          className={`module-pill cursor-pointer transition-all ${
-                            isActive
-                              ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-md font-bold scale-105"
-                              : "hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                          }`}
-                        >
-                          {mod}
-                        </button>
-                      );
-                    })}
+                    {cluster.modules.map((mod) => (
+                      <button
+                        key={mod}
+                        onClick={() => handleSkillClick(mod)}
+                        className="module-pill cursor-pointer transition-all hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                      >
+                        {mod}
+                      </button>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -441,74 +429,54 @@ export function ScrollExperience() {
           </div>
         </section>
 
-        {/* Section 4: Projects Showcase (Right) */}
+        {/* Section 4: Projects Showcase (Top 3 Featured + Catalog Pop-up) */}
         <section className="chapter-section is-right" id="projects">
           <div className="chapter-card">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <div className="kicker">
-                  <Terminal size={12} /> Project Portfolio
+                  <Terminal size={12} /> Featured Flagship Systems
                 </div>
-                <h2 className="chapter-title">Systems under continuous inspection.</h2>
+                <h2 className="chapter-title">Top 3 Engineering Flagships.</h2>
               </div>
+
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsAllProjectsOpen(true);
+                }}
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2 font-mono text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white transition-all shadow-md shrink-0 cursor-pointer"
+              >
+                <Layers size={14} /> View All 11 Projects Catalog <ArrowRight size={12} />
+              </button>
             </div>
 
-            {/* Active Technology Filter Indicator */}
-            {techFilter && (
-              <div className="mt-3 flex items-center gap-2 rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-1.5 font-mono text-xs text-white">
-                <span>Filtered by skill: <strong>{techFilter}</strong></span>
-                <button
-                  onClick={() => setTechFilter(null)}
-                  className="rounded bg-[var(--accent)] px-2 py-0.5 font-bold hover:brightness-110"
-                >
-                  Clear Filter ×
-                </button>
-              </div>
-            )}
-
-            {/* Filter Category Pills */}
-            <div className="mt-6 flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => {
+            {/* Top 3 Featured Cards Container */}
+            <div className="project-reel mt-6 space-y-6">
+              {top3Projects.map((project, index) => (
+                <FeaturedProjectCard
+                  key={project.id}
+                  index={index}
+                  project={project}
+                  onOpenDetails={(p) => {
                     playClickSound();
-                    setTechFilter(null);
-                    setActiveCategory(cat.id);
+                    setSelectedProject(p);
                   }}
-                  className={`rounded-full px-4 py-1.5 font-mono text-xs font-semibold transition-all ${
-                    !techFilter && activeCategory === cat.id
-                      ? "border border-[var(--accent)] bg-[var(--accent)] text-white shadow-md"
-                      : "border border-[var(--line)] bg-[var(--card-hover)] text-[var(--muted)] hover:border-[var(--line-strong)] hover:text-[var(--heading)]"
-                  }`}
-                >
-                  {cat.label}
-                </button>
+                />
               ))}
             </div>
 
-            <div className="project-reel mt-6">
-              <AnimatePresence mode="popLayout">
-                {filteredProjects.map((project, index) => (
-                  <motion.div
-                    key={project.id}
-                    layout
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <ProjectCard
-                      index={index}
-                      project={project}
-                      onOpenDetails={(p) => {
-                        playClickSound();
-                        setSelectedProject(p);
-                      }}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+            {/* Explore All Projects CTA Button */}
+            <div className="mt-8 text-center border-t border-[var(--line)] pt-6">
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsAllProjectsOpen(true);
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-6 py-3 font-mono text-xs font-bold text-white shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+              >
+                <Layers size={15} /> Explore Full Catalog of All 11 Projects <ArrowRight size={14} />
+              </button>
             </div>
           </div>
         </section>
@@ -657,7 +625,8 @@ function BootSequence({ visible }: { visible: boolean }) {
   );
 }
 
-function ProjectCard({
+// Prominent Top 3 Featured Card
+function FeaturedProjectCard({
   project,
   index,
   onOpenDetails,
@@ -669,85 +638,106 @@ function ProjectCard({
   const ghStats = useGitHubRepo(project.repoName);
 
   return (
-    <article
+    <motion.article
       onClick={() => onOpenDetails(project)}
-      className="project-scene cursor-pointer group transition-all hover:border-[var(--accent)] hover:shadow-lg"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+      className="group cursor-pointer rounded-2xl border border-[var(--line)] bg-[var(--card-hover)] p-5 transition-all hover:border-[var(--accent)] hover:shadow-2xl"
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="project-index">PROJECT // 0{index + 1}</div>
-        
-        {!ghStats.loading && (
-          <div className="flex items-center gap-2 font-mono text-xs text-[var(--muted)]">
-            {ghStats.language && (
-              <span className="rounded bg-[var(--background)] px-2 py-0.5 font-semibold text-[var(--accent)] text-[11px]">
-                {ghStats.language}
-              </span>
-            )}
-            {ghStats.stars > 0 && (
-              <span className="flex items-center gap-1">
-                <Star size={11} className="text-amber-500 fill-amber-500" /> {ghStats.stars}
-              </span>
-            )}
+      <div className="flex flex-col lg:flex-row gap-5 items-start lg:items-center">
+        {/* Prominent High-Res Screenshot Banner */}
+        {project.image ? (
+          <div className="w-full lg:w-5/12 h-44 sm:h-52 shrink-0 overflow-hidden rounded-xl border border-[var(--line)] bg-[#02040a]">
+            <img
+              src={project.image}
+              alt={project.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
           </div>
-        )}
-      </div>
+        ) : null}
 
-      <h3 className="project-title group-hover:text-[var(--accent)] transition-colors">{project.title}</h3>
+        <div className="flex-1 w-full flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-xs font-bold text-[var(--accent)] tracking-wider">
+                FEATURED // 0{index + 1}
+              </span>
 
-      {/* Image Thumbnail (if available) */}
-      {project.image ? (
-        <div className="overflow-hidden rounded-lg border border-[var(--line)] max-h-[140px] bg-[#02040a]">
-          <img
-            src={project.image}
-            alt={project.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+              {!ghStats.loading && (
+                <div className="flex items-center gap-2.5 font-mono text-xs text-[var(--muted)]">
+                  {ghStats.language && (
+                    <span className="rounded bg-[var(--background)] px-2.5 py-0.5 font-semibold text-[var(--accent)] text-[11px]">
+                      {ghStats.language}
+                    </span>
+                  )}
+                  {ghStats.stars > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Star size={12} className="text-amber-500 fill-amber-500" /> {ghStats.stars}
+                    </span>
+                  )}
+                  {ghStats.forks > 0 && (
+                    <span className="flex items-center gap-1">
+                      <GitFork size={12} /> {ghStats.forks}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-bold text-[var(--heading)] group-hover:text-[var(--accent)] transition-colors mt-1">
+              {project.title}
+            </h3>
+
+            {/* Signal Highlight Box */}
+            <div className="my-2 border-l-2 border-[var(--accent)] pl-3 text-xs font-semibold text-[var(--heading)]">
+              {project.signal}
+            </div>
+
+            <p className="text-xs text-[var(--muted)] line-clamp-2 mt-1">{project.problem}</p>
+
+            <div className="tech-strip mt-3">
+              {project.technologies.map((tech) => (
+                <span className="module-pill" key={tech}>
+                  {tech}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-3 text-xs font-mono font-semibold">
+            <span className="text-[var(--accent)] inline-flex items-center gap-1.5 group-hover:translate-x-1 transition-transform">
+              View Full Engineering Pipeline <ArrowRight size={13} />
+            </span>
+
+            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+              {project.github && (
+                <a
+                  href={project.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--background)] px-3 py-1 text-[11px] font-semibold text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
+                  title="Source Code"
+                >
+                  <GithubIcon size={12} /> Code
+                </a>
+              )}
+              {project.demo && (
+                <a
+                  href={project.demo}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full border border-[var(--signal)] bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-[var(--signal)] hover:bg-amber-500/20 transition-all"
+                  title="Live Demo"
+                >
+                  Live Demo <ExternalLink size={11} />
+                </a>
+              )}
+            </div>
+          </div>
         </div>
-      ) : null}
-
-      <p className="text-xs text-[var(--foreground)] font-medium line-clamp-2">{project.signal}</p>
-
-      <div className="tech-strip">
-        {project.technologies.slice(0, 4).map((tech) => (
-          <span className="module-pill" key={tech}>
-            {tech}
-          </span>
-        ))}
-        {project.technologies.length > 4 && (
-          <span className="module-pill opacity-75">+{project.technologies.length - 4}</span>
-        )}
       </div>
-
-      <div className="mt-2 flex items-center justify-between gap-2 text-xs font-mono font-semibold">
-        <span className="text-[var(--accent)] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-          View Full Details <ArrowRight size={12} />
-        </span>
-
-        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-          {project.github && (
-            <a
-              href={project.github}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[var(--muted)] hover:text-[var(--heading)]"
-              title="GitHub Repo"
-            >
-              <GithubIcon size={14} />
-            </a>
-          )}
-          {project.demo && (
-            <a
-              href={project.demo}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[var(--signal)] hover:underline"
-              title="Live Demo"
-            >
-              <ExternalLink size={14} />
-            </a>
-          )}
-        </div>
-      </div>
-    </article>
+    </motion.article>
   );
 }
