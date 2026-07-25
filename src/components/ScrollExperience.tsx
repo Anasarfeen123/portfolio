@@ -86,7 +86,7 @@ const top3Projects = projects.filter((p) => featuredProjectIds.includes(p.id));
 export function ScrollExperience() {
   const rootRef = useRef<HTMLElement | null>(null);
   const [booting, setBooting] = useState(true);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [soundOn, setSoundOn] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isResumeOpen, setIsResumeOpen] = useState(false);
@@ -100,6 +100,7 @@ export function ScrollExperience() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    document.documentElement.setAttribute("data-theme", "dark");
     const timeout = window.setTimeout(() => setBooting(false), 1200);
     return () => window.clearTimeout(timeout);
   }, []);
