@@ -142,12 +142,12 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
 
   return (
     <div className="flex flex-col items-center justify-center p-3 font-mono text-xs select-none">
-      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[#00e6a8] font-bold">
+      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[var(--accent)] font-bold">
         <span>🐍 SNAKE ARCADE</span>
         <span>SCORE: {score}</span>
       </div>
 
-      <div className="border-2 border-[#00e6a8]/40 bg-[#040810] p-1 rounded-lg">
+      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl">
         {Array.from({ length: height }).map((_, y) => (
           <div key={y} className="flex">
             {Array.from({ length: width }).map((_, x) => {
@@ -156,17 +156,17 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
               const isFood = food.x === x && food.y === y;
 
               let char = " ";
-              let colorClass = "text-slate-800";
+              let colorClass = "text-[var(--muted)]/30";
 
               if (isSnakeHead) {
                 char = "█";
-                colorClass = "text-[#00e6a8]";
+                colorClass = "text-[var(--accent)]";
               } else if (isSnakeBody) {
                 char = "▓";
-                colorClass = "text-[#00e6a8]/70";
+                colorClass = "text-[var(--accent)]/70";
               } else if (isFood) {
                 char = "★";
-                colorClass = "text-amber-400 animate-pulse";
+                colorClass = "text-[var(--signal)] animate-pulse";
               }
 
               return (
@@ -184,7 +184,7 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
           GAME OVER! [ENTER] Restart | [Q] Quit
         </div>
       ) : (
-        <div className="mt-2 text-center text-[10px] text-slate-400">
+        <div className="mt-2 text-center text-[10px] text-[var(--muted)]">
           Use WASD / Arrow Keys to Move | Press [Q] to Quit
         </div>
       )}
@@ -260,12 +260,12 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
 
   return (
     <div className="flex flex-col items-center justify-center p-3 font-mono text-xs select-none">
-      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[#00e6a8] font-bold">
+      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[var(--accent)] font-bold">
         <span>🏓 PONG ARCADE</span>
         <span>SCORE: {score}</span>
       </div>
 
-      <div className="border-2 border-[#00e6a8]/40 bg-[#040810] p-1 rounded-lg">
+      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl">
         {Array.from({ length: height }).map((_, y) => (
           <div key={y} className="flex">
             {Array.from({ length: width }).map((_, x) => {
@@ -274,17 +274,17 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
               const isRightWall = x === width - 1;
 
               let char = " ";
-              let colorClass = "text-slate-800";
+              let colorClass = "text-[var(--muted)]/30";
 
               if (isPaddle) {
                 char = "█";
-                colorClass = "text-[#00e6a8]";
+                colorClass = "text-[var(--accent)]";
               } else if (isBall) {
                 char = "●";
-                colorClass = "text-amber-400 animate-ping";
+                colorClass = "text-[var(--signal)] animate-ping";
               } else if (isRightWall) {
                 char = "│";
-                colorClass = "text-slate-600";
+                colorClass = "text-[var(--muted)]";
               }
 
               return (
@@ -302,7 +302,7 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
           GAME OVER! [ENTER] Restart | [Q] Quit
         </div>
       ) : (
-        <div className="mt-2 text-center text-[10px] text-slate-400">
+        <div className="mt-2 text-center text-[10px] text-[var(--muted)]">
           W/S or Up/Down to move paddle | [Q] to Quit
         </div>
       )}
@@ -514,13 +514,13 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-lg"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-md"
         onClick={onClose}
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
       >
         <motion.div
-          className="relative w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden rounded-2xl border border-[#00e6a8]/35 bg-[#080d17]/95 text-[#00e6a8] shadow-[0_0_50px_rgba(0,230,168,0.15)]"
+          className="relative w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] text-[var(--foreground)] backdrop-blur-[40px] shadow-2xl"
           initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
@@ -528,23 +528,23 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
           data-lenis-prevent="true"
         >
           {/* Header Bar with Mac Dots */}
-          <div className="flex items-center justify-between border-b border-[#1e293b] bg-[#040810] px-4 py-3 text-xs font-mono">
+          <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--card-hover)] px-4 py-3 text-xs font-mono">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <span className="h-3 w-3 rounded-full bg-red-500/80 cursor-pointer" onClick={onClose} />
                 <span className="h-3 w-3 rounded-full bg-amber-500/80" />
                 <span className="h-3 w-3 rounded-full bg-emerald-500/80" />
               </div>
-              <span className="font-bold text-white text-[11px] sm:text-xs tracking-wider">
+              <span className="font-bold text-[var(--heading)] text-[11px] sm:text-xs tracking-wider">
                 ANAS_OS // DEVELOPER_SHELL
               </span>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-[10px] text-slate-400 font-mono">
+              <span className="hidden sm:inline text-[10px] text-[var(--muted)] font-mono">
                 Press Esc or type &apos;exit&apos;
               </span>
-              <button onClick={onClose} className="p-1 text-slate-400 hover:text-white transition-colors">
+              <button onClick={onClose} className="p-1 text-[var(--muted)] hover:text-[var(--heading)] transition-colors">
                 <X size={16} />
               </button>
             </div>
@@ -553,7 +553,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
           {/* Terminal Screen Stream */}
           <div
             ref={scrollRef}
-            className="flex-1 min-h-[300px] max-h-[440px] overflow-y-auto p-4 font-mono text-xs leading-relaxed space-y-2.5 bg-[#03060c]"
+            className="flex-1 min-h-[300px] max-h-[440px] overflow-y-auto p-4 font-mono text-xs leading-relaxed space-y-2.5 bg-[var(--background)]/40"
             onWheel={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             data-lenis-prevent="true"
@@ -566,15 +566,15 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
               output.map((line) => (
                 <div key={line.id}>
                   {line.type === "command" && (
-                    <span className="font-bold text-amber-400">{line.text}</span>
+                    <span className="font-bold text-[var(--signal)]">{line.text}</span>
                   )}
                   {line.type === "response" && (
-                    <pre className="whitespace-pre-wrap font-mono text-slate-200 text-[11px] leading-relaxed select-text overflow-x-auto">
+                    <pre className="whitespace-pre-wrap font-mono text-[var(--foreground)] text-[11px] leading-relaxed select-text overflow-x-auto">
                       {line.text}
                     </pre>
                   )}
                   {line.type === "system" && (
-                    <span className="text-[#00e6a8] font-semibold">{line.text}</span>
+                    <span className="text-[var(--accent)] font-semibold">{line.text}</span>
                   )}
                   {line.type === "error" && (
                     <span className="text-red-400 font-semibold">{line.text}</span>
@@ -585,13 +585,13 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
           </div>
 
           {/* Quick Command Launcher Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto px-4 py-2 border-t border-[#1e293b] bg-[#050912] font-mono text-[10px]">
-            <span className="text-slate-500 font-bold uppercase shrink-0">QUICK:</span>
+          <div className="flex items-center gap-1.5 overflow-x-auto px-4 py-2 border-t border-[var(--line)] bg-[var(--card-hover)] font-mono text-[10px]">
+            <span className="text-[var(--muted)] font-bold uppercase shrink-0">QUICK:</span>
             {quickPills.map((pill) => (
               <button
                 key={pill}
                 onClick={() => handleCommand(pill)}
-                className="shrink-0 rounded-full border border-[#1e293b] bg-[#0c1220] px-2.5 py-0.5 text-[#00e6a8] hover:border-[#00e6a8] hover:bg-[#00e6a8]/10 transition-all cursor-pointer"
+                className="shrink-0 rounded-full border border-[var(--line)] bg-[var(--card-bg)] px-2.5 py-0.5 text-[var(--accent)] hover:border-[var(--accent)] transition-all cursor-pointer font-semibold"
               >
                 {pill}
               </button>
@@ -600,21 +600,21 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
 
           {/* Prompt Input Line */}
           {!activeGame && (
-            <div className="flex items-center gap-2 border-t border-[#1e293b] bg-[#040810] px-4 py-3 font-mono text-xs">
-              <span className="text-amber-400 font-bold text-[11px] sm:text-xs">anas@ANAS_OS:~$</span>
+            <div className="flex items-center gap-2 border-t border-[var(--line)] bg-[var(--card-hover)] px-4 py-3 font-mono text-xs">
+              <span className="text-[var(--signal)] font-bold text-[11px] sm:text-xs">anas@ANAS_OS:~$</span>
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent text-white outline-none caret-[#00e6a8] text-[11px] sm:text-xs"
+                className="flex-1 bg-transparent text-[var(--heading)] outline-none caret-[var(--accent)] text-[11px] sm:text-xs"
                 placeholder="Type command..."
                 autoFocus
               />
               <button
                 onClick={() => handleCommand(input)}
-                className="flex items-center gap-1 rounded-lg border border-[#00e6a8]/40 bg-[#00e6a8]/10 px-3 py-1 font-semibold text-[#00e6a8] hover:bg-[#00e6a8] hover:text-black transition-all cursor-pointer text-xs"
+                className="flex items-center gap-1 rounded-lg border border-[var(--line)] bg-[var(--card-bg)] px-3 py-1 font-semibold text-[var(--accent)] hover:border-[var(--accent)] transition-all cursor-pointer text-xs"
               >
                 Run <CornerDownLeft size={11} />
               </button>

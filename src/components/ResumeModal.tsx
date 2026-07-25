@@ -33,13 +33,13 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-lg"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md"
         onClick={onClose}
         onWheel={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
       >
         <motion.div
-          className="relative flex flex-col w-full max-w-4xl h-[88vh] overflow-hidden rounded-2xl border border-[var(--line-strong)] bg-[var(--card-bg)] text-[var(--foreground)] shadow-2xl"
+          className="relative flex flex-col w-full max-w-4xl h-[88vh] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] text-[var(--foreground)] backdrop-blur-[40px] shadow-2xl"
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -57,7 +57,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
               </div>
 
               {/* View Mode Tabs */}
-              <div className="flex items-center rounded-lg border border-[var(--line)] bg-[var(--background)] p-0.5 font-mono text-xs">
+              <div className="flex items-center rounded-lg border border-[var(--line)] bg-[var(--card-bg)] p-0.5 font-mono text-xs">
                 <button
                   onClick={() => setActiveTab("pdf")}
                   className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
@@ -119,7 +119,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
 
           {/* Modal Content Body */}
           {activeTab === "pdf" ? (
-            <div className="flex-1 w-full h-full bg-[#040810]" data-lenis-prevent="true">
+            <div className="flex-1 w-full h-full bg-[var(--background)]/30" data-lenis-prevent="true">
               <iframe
                 src={`${profile.resume}#toolbar=0`}
                 title={`${profile.name} Resume PDF`}
@@ -128,7 +128,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
             </div>
           ) : (
             <div
-              className="flex-1 w-full h-full overflow-y-auto p-5 sm:p-8 space-y-6 font-sans bg-[var(--background)]"
+              className="flex-1 w-full h-full overflow-y-auto p-5 sm:p-8 space-y-6 font-sans bg-[var(--background)]/30"
               data-lenis-prevent="true"
             >
               {/* Header Overview */}
