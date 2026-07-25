@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CornerDownLeft, Gamepad2, Sparkles, Terminal as TerminalIcon, X } from "lucide-react";
+import { CornerDownLeft, Sparkles, Terminal as TerminalIcon, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { experience, profile, projects, skillClusters } from "@/data/portfolio";
 
@@ -23,34 +23,35 @@ const availableCommands = [
   "whoami",
   "neofetch",
   "fastfetch",
-  "github",
-  "telemetry",
-  "stats",
-  "snake",
-  "pong",
-  "guess",
+  "uname",
+  "pwd",
+  "ls",
+  "cd",
+  "cat",
+  "echo",
+  "clear",
+  "history",
+  "date",
+  "uptime",
+  "ping",
   "projects",
   "skills",
   "experience",
-  "ls",
-  "cat",
-  "ping",
+  "snake",
+  "pong",
+  "guess",
   "matrix",
-  "ascii",
-  "quote",
   "sudo",
-  "date",
-  "time",
-  "history",
-  "contact",
-  "resume",
   "theme",
-  "clear",
+  "resume",
+  "contact",
   "exit",
 ];
 
+const availableFiles = ["bio.txt", "contact.txt", "resume.txt", "stack.txt", "projects"];
+const projectFiles = projects.map((p) => `${p.id}.json`);
+
 const quickPills = ["neofetch", "projects", "skills", "snake", "pong", "matrix", "clear", "help"];
-const availableFiles = ["bio.txt", "contact.txt", "resume.txt", "stack.txt"];
 
 // --- 1. Terminal Snake Game Component ---
 function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
@@ -312,13 +313,14 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
 
 export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: TerminalModalProps) {
   const [input, setInput] = useState("");
+  const [currentDir, setCurrentDir] = useState<string>("/home/anas");
   const [activeGame, setActiveGame] = useState<"snake" | "pong" | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
   const [output, setOutput] = useState<OutputLine[]>([
     { id: "1", type: "system", text: "ANAS_OS // Developer Shell [Version 6.12.0-arch1]" },
-    { id: "2", type: "system", text: "Type 'help' to see all available commands or click quick pills below." },
+    { id: "2", type: "system", text: "Type 'help' for commands, or press [TAB] to autocomplete." },
   ]);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -358,6 +360,8 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
 
   if (!isOpen) return null;
 
+  const promptPrefix = `anas@ANAS_OS:${currentDir.replace("/home/anas", "~")}$`;
+
   const handleCommand = (rawCmd: string) => {
     const trimmed = rawCmd.trim();
     if (!trimmed) return;
@@ -372,7 +376,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
     const cmdLine: OutputLine = {
       id: Math.random().toString(),
       type: "command",
-      text: `anas@ANAS_OS:~$ ${trimmed}`,
+      text: `${promptPrefix} ${trimmed}`,
     };
 
     let responses: OutputLine[] = [];
@@ -382,21 +386,113 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
         responses.push({
           id: Math.random().toString(),
           type: "response",
-          text: `AVAILABLE COMMANDS:
-  neofetch    - System info & specs overview
-  projects    - List all 11 engineering projects
-  skills      - Neural tech stack ecosystem map
+          text: `AVAILABLE SYSTEM COMMANDS:
+  neofetch    - System hardware & specs summary
+  whoami      - Display current shell user details
+  uname -a    - Kernel architectural release string
+  pwd         - Print working directory
+  ls          - List directory files & projects
+  cd <dir>    - Change working directory (e.g. cd projects, cd ..)
+  cat <file>  - Read file (e.g. cat bio.txt, cat stack.txt)
+  projects    - List all 11 flagship project repositories
+  skills      - Machine learning, systems & web tech ecosystem
   snake       - Launch 2D ASCII Snake Arcade game
   pong        - Launch 2D ASCII Pong Arcade game
-  guess       - Play number guessing game (e.g. guess 42)
-  ls          - List terminal directory files
-  cat <file>  - Read file contents (cat bio.txt, cat stack.txt)
+  ping <host> - Ping live telemetry server
   matrix      - Display Matrix digital rain
-  theme       - Toggle Light / Dark mode
-  resume      - Open embedded PDF Resume modal
-  clear       - Clear terminal screen output
-  exit        - Close terminal shell`,
+  history     - List terminal command history
+  theme       - Toggle Light / Dark color theme
+  resume      - Open embedded PDF Resume viewer
+  clear       - Clear screen output
+  exit        - Close developer shell`,
         });
+        break;
+
+      case "whoami":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: `anas (Anas Arfeen) — ${profile.role}`,
+        });
+        break;
+
+      case "uname":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: "Linux ANAS_OS 6.12.8-arch1-1 #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux",
+        });
+        break;
+
+      case "pwd":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: currentDir,
+        });
+        break;
+
+      case "ls":
+        if (currentDir === "/home/anas/projects") {
+          responses.push({
+            id: Math.random().toString(),
+            type: "response",
+            text: projectFiles.join("   "),
+          });
+        } else {
+          responses.push({
+            id: Math.random().toString(),
+            type: "response",
+            text: availableFiles.join("   "),
+          });
+        }
+        break;
+
+      case "cd":
+        if (args.length === 0 || args[0] === "~" || args[0] === "/home/anas") {
+          setCurrentDir("/home/anas");
+        } else if (args[0] === ".." || args[0] === "../") {
+          setCurrentDir("/home/anas");
+        } else if (args[0] === "projects" || args[0] === "projects/") {
+          setCurrentDir("/home/anas/projects");
+        } else {
+          responses.push({
+            id: Math.random().toString(),
+            type: "error",
+            text: `cd: no such file or directory: ${args[0]}`,
+          });
+        }
+        break;
+
+      case "cat":
+        if (args.length === 0) {
+          responses.push({ id: Math.random().toString(), type: "error", text: "Usage: cat <filename> (e.g. cat bio.txt)" });
+        } else {
+          const file = args[0].toLowerCase();
+          if (file === "bio.txt") {
+            responses.push({ id: Math.random().toString(), type: "response", text: profile.bio });
+          } else if (file === "stack.txt") {
+            responses.push({ id: Math.random().toString(), type: "response", text: "Python, PyTorch, C++, ROS 2, OpenCV, Next.js, TypeScript, TailwindCSS" });
+          } else if (file === "contact.txt") {
+            responses.push({ id: Math.random().toString(), type: "response", text: `Email: ${profile.email}\nGitHub: ${profile.github}\nLinkedIn: ${profile.linkedin}` });
+          } else if (file === "resume.txt") {
+            responses.push({ id: Math.random().toString(), type: "response", text: `${profile.name} — ${profile.education}` });
+          } else if (currentDir === "/home/anas/projects" || file.endsWith(".json")) {
+            const projId = file.replace(".json", "");
+            const found = projects.find((p) => p.id === projId);
+            if (found) {
+              responses.push({
+                id: Math.random().toString(),
+                type: "response",
+                text: JSON.stringify(found, null, 2),
+              });
+            } else {
+              responses.push({ id: Math.random().toString(), type: "error", text: `cat: ${file}: No such file` });
+            }
+          } else {
+            responses.push({ id: Math.random().toString(), type: "error", text: `cat: ${file}: No such file` });
+          }
+        }
         break;
 
       case "neofetch":
@@ -436,6 +532,28 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
         });
         break;
 
+      case "history":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: history.map((h, i) => ` ${i + 1}  ${h}`).join("\n"),
+        });
+        break;
+
+      case "ping":
+        const host = args[0] || "chennai.node.anas.dev";
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: `PING ${host} (13.08.80.27) 56(84) bytes of data.
+64 bytes from ${host}: icmp_seq=1 ttl=64 time=1.42 ms
+64 bytes from ${host}: icmp_seq=2 ttl=64 time=1.18 ms
+64 bytes from ${host}: icmp_seq=3 ttl=64 time=1.35 ms
+--- ${host} ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms`,
+        });
+        break;
+
       case "projects":
         responses.push({
           id: Math.random().toString(),
@@ -452,31 +570,12 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
         });
         break;
 
-      case "ls":
+      case "sudo":
         responses.push({
           id: Math.random().toString(),
-          type: "response",
-          text: availableFiles.join("   "),
+          type: "error",
+          text: "anas is not in the sudoers file. This incident will be reported.",
         });
-        break;
-
-      case "cat":
-        if (args.length === 0) {
-          responses.push({ id: Math.random().toString(), type: "error", text: "Usage: cat <filename> (e.g. cat bio.txt)" });
-        } else {
-          const file = args[0].toLowerCase();
-          if (file === "bio.txt") {
-            responses.push({ id: Math.random().toString(), type: "response", text: profile.bio });
-          } else if (file === "stack.txt") {
-            responses.push({ id: Math.random().toString(), type: "response", text: "Python, PyTorch, C++, ROS 2, OpenCV, Next.js, TypeScript, TailwindCSS" });
-          } else if (file === "contact.txt") {
-            responses.push({ id: Math.random().toString(), type: "response", text: `Email: ${profile.email}\nGitHub: ${profile.github}\nLinkedIn: ${profile.linkedin}` });
-          } else if (file === "resume.txt") {
-            responses.push({ id: Math.random().toString(), type: "response", text: `${profile.name} — ${profile.education}` });
-          } else {
-            responses.push({ id: Math.random().toString(), type: "error", text: `cat: ${file}: No such file` });
-          }
-        }
         break;
 
       case "theme":
@@ -510,7 +609,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
         responses.push({
           id: Math.random().toString(),
           type: "error",
-          text: `Command not recognized: '${command}'. Type 'help' for valid commands.`,
+          text: `zsh: command not found: ${command}. Type 'help' for available commands.`,
         });
         break;
     }
@@ -519,9 +618,65 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
     setInput("");
   };
 
+  // --- Real TAB Autocomplete & Arrow History Navigation ---
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleCommand(input);
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      const trimmed = input.toLowerCase().trimStart();
+      const parts = trimmed.split(" ");
+
+      if (parts.length === 1) {
+        // Autocomplete command name
+        const matches = availableCommands.filter((c) => c.startsWith(parts[0]));
+        if (matches.length === 1) {
+          setInput(matches[0]);
+        } else if (matches.length > 1) {
+          setOutput((prev) => [
+            ...prev,
+            { id: Math.random().toString(), type: "command", text: `${promptPrefix} ${input}` },
+            { id: Math.random().toString(), type: "response", text: matches.join("   ") },
+          ]);
+        }
+      } else if (parts[0] === "cat" && parts.length === 2) {
+        // Autocomplete cat filename
+        const filesToSearch = currentDir === "/home/anas/projects" ? projectFiles : availableFiles;
+        const matches = filesToSearch.filter((f) => f.startsWith(parts[1]));
+        if (matches.length === 1) {
+          setInput(`cat ${matches[0]}`);
+        } else if (matches.length > 1) {
+          setOutput((prev) => [
+            ...prev,
+            { id: Math.random().toString(), type: "command", text: `${promptPrefix} ${input}` },
+            { id: Math.random().toString(), type: "response", text: matches.join("   ") },
+          ]);
+        }
+      } else if (parts[0] === "cd" && parts.length === 2) {
+        // Autocomplete cd directory
+        const dirs = ["projects"];
+        const matches = dirs.filter((d) => d.startsWith(parts[1]));
+        if (matches.length === 1) {
+          setInput(`cd ${matches[0]}`);
+        }
+      }
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (history.length > 0) {
+        const nextIdx = historyIndex + 1 < history.length ? historyIndex + 1 : historyIndex;
+        setHistoryIndex(nextIdx);
+        setInput(history[history.length - 1 - nextIdx] ?? "");
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        const nextIdx = historyIndex - 1;
+        setHistoryIndex(nextIdx);
+        setInput(history[history.length - 1 - nextIdx] ?? "");
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
+        setInput("");
+      }
     }
   };
 
@@ -556,7 +711,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
 
             <div className="flex items-center gap-3">
               <span className="hidden sm:inline text-[10px] text-[var(--muted)] font-mono">
-                Press Esc or type &apos;exit&apos;
+                Press [TAB] to autocomplete | Esc to exit
               </span>
               <button onClick={onClose} className="p-1 text-[var(--muted)] hover:text-[var(--heading)] transition-colors">
                 <X size={16} />
@@ -615,7 +770,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
           {/* Prompt Input Line */}
           {!activeGame && (
             <div className="flex items-center gap-2 border-t border-[var(--line)] bg-[var(--card-hover)] px-4 py-3 font-mono text-xs">
-              <span className="text-[var(--signal)] font-bold text-[11px] sm:text-xs">anas@ANAS_OS:~$</span>
+              <span className="text-[var(--signal)] font-bold text-[11px] sm:text-xs">{promptPrefix}</span>
               <input
                 ref={inputRef}
                 type="text"
@@ -623,7 +778,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 className="flex-1 bg-transparent text-[var(--heading)] outline-none caret-[var(--accent)] text-[11px] sm:text-xs"
-                placeholder="Type command..."
+                placeholder="Type command or press [TAB]..."
                 autoFocus
               />
               <button
