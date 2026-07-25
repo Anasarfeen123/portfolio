@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ExternalLink, GitFork, Sparkles, Star } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import type { Project } from "@/data/portfolio";
@@ -56,7 +56,6 @@ export function HolodeckPrism({ projects, onOpenDetails }: HolodeckPrismProps) {
     setActiveIndex((prev) => (prev - 1 + projects.length) % projects.length);
   };
 
-  // Compute rotation angle (0 deg, -120 deg, -240 deg)
   const rotationAngle = activeIndex * -120;
 
   return (
@@ -64,19 +63,17 @@ export function HolodeckPrism({ projects, onOpenDetails }: HolodeckPrismProps) {
       ref={containerRef}
       className="relative w-full py-10 flex flex-col items-center select-none overflow-hidden"
     >
-      {/* Holodeck 3D Pedestal Base */}
-      <div className="absolute inset-x-0 bottom-12 h-32 bg-gradient-to-t from-[#38edf8]/10 via-[#38edf8]/5 to-transparent blur-2xl pointer-events-none" />
+      {/* Holodeck Ambient Glow Pedestal */}
+      <div className="absolute inset-x-0 bottom-12 h-36 bg-gradient-to-t from-[#38edf8]/15 via-[#38edf8]/5 to-transparent blur-3xl pointer-events-none" />
 
       {/* 3D Holodeck Prism Stage */}
-      <div className="relative w-full h-[440px] sm:h-[480px] flex items-center justify-center [perspective:1400px]">
-        {/* Revolving 3D Glass Prism Container */}
+      <div className="relative w-full h-[450px] sm:h-[490px] flex items-center justify-center [perspective:1400px]">
         <motion.div
           animate={{ rotateY: rotationAngle }}
-          transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+          transition={{ duration: 0.85, ease: [0.25, 1, 0.5, 1] }}
           className="relative w-[min(720px,92vw)] h-full [transform-style:preserve-3d]"
         >
           {projects.map((project, idx) => {
-            // Facet angles around 3D cylinder: 0°, 120°, 240°
             const facetAngle = idx * 120;
             const isActive = activeIndex === idx;
 
@@ -96,8 +93,8 @@ export function HolodeckPrism({ projects, onOpenDetails }: HolodeckPrismProps) {
                 }}
                 className={`absolute inset-0 cursor-pointer rounded-3xl border p-6 sm:p-8 backdrop-blur-2xl transition-all duration-500 shadow-2xl flex flex-col justify-between ${
                   isActive
-                    ? "border-[var(--accent)] bg-[#081224]/85 shadow-[0_0_50px_rgba(56,237,248,0.25)] ring-1 ring-[var(--accent)]"
-                    : "border-[var(--line)] bg-[#040812]/75 opacity-60 hover:opacity-90"
+                    ? "border-[var(--accent)] bg-[#081224]/90 shadow-[0_0_55px_rgba(56,237,248,0.3)] ring-1 ring-[var(--accent)]"
+                    : "border-[var(--line)] bg-[#040812]/80 opacity-60 hover:opacity-90"
                 }`}
               >
                 <HolodeckFacetContent project={project} index={idx} isActive={isActive} onOpenDetails={onOpenDetails} />
@@ -107,7 +104,7 @@ export function HolodeckPrism({ projects, onOpenDetails }: HolodeckPrismProps) {
         </motion.div>
       </div>
 
-      {/* Futuristic Holodeck Prism Controls */}
+      {/* Futuristic Controls */}
       <div className="mt-8 flex items-center justify-between w-full max-w-sm px-4">
         <button
           onClick={prevFacet}
@@ -117,7 +114,6 @@ export function HolodeckPrism({ projects, onOpenDetails }: HolodeckPrismProps) {
           <ArrowLeft size={18} />
         </button>
 
-        {/* Facet Dial Indicators */}
         <div className="flex items-center gap-3">
           {projects.map((_, i) => (
             <button
@@ -190,12 +186,12 @@ function HolodeckFacetContent({
           {project.title}
         </h3>
 
-        {/* High-Res Visual Display Frame */}
+        {/* Screenshot Banner */}
         {project.image && (
-          <div className="my-3.5 overflow-hidden rounded-2xl border border-[var(--line-strong)] max-h-[160px] sm:max-h-[185px] bg-[#02040a] relative group">
-            <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+          <div className="my-3.5 overflow-hidden rounded-2xl border border-[#1e293b] max-h-[160px] sm:max-h-[185px] bg-[#02040a] relative group">
+            <img src={project.image} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-            <div className="absolute bottom-2 left-3 font-mono text-[10px] text-[var(--accent)] tracking-widest">
+            <div className="absolute bottom-2 left-3 font-mono text-[10px] text-[var(--accent)] tracking-widest font-semibold">
               SYSTEM_STATE: OPERATIONAL
             </div>
           </div>
@@ -205,10 +201,10 @@ function HolodeckFacetContent({
           {project.signal}
         </div>
 
-        <p className="text-xs text-[var(--muted)] line-clamp-2 mt-1.5">{project.problem}</p>
+        <p className="text-xs text-[#cbd5e1] line-clamp-2 mt-1.5 leading-relaxed">{project.problem}</p>
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-[var(--line)] pt-3 text-xs font-mono font-bold">
+      <div className="mt-4 flex items-center justify-between border-t border-[#1e293b] pt-3 text-xs font-mono font-bold">
         <span
           onClick={(e) => {
             e.stopPropagation();
