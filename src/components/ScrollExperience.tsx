@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowDown, ArrowRight, Code2, ExternalLink, FileText, GitFork, Mail, MapPin, Moon, Network, ScrollText, Sparkles, Star, Sun, Terminal } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Code2, ExternalLink, FileText, GitFork, Mail, MapPin, Moon, Network, ScrollText, Send, Sparkles, Star, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -12,6 +12,7 @@ import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
 import { TerminalModal } from "@/components/TerminalModal";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
+import { isSoundEnabled, playChimeSound, playClickSound, setSoundEnabled } from "@/lib/audio";
 
 function GithubIcon({ size = 16 }: { size?: number }) {
   return (
@@ -88,10 +89,17 @@ export function ScrollExperience() {
   const rootRef = useRef<HTMLElement | null>(null);
   const [booting, setBooting] = useState(true);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [soundOn, setSoundOn] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isResumeOpen, setIsResumeOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [techFilter, setTechFilter] = useState<string | null>(null);
+
+  // Contact Form State
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMsg, setContactMsg] = useState("");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setBooting(false), 1200);
@@ -99,6 +107,7 @@ export function ScrollExperience() {
   }, []);
 
   const toggleTheme = () => {
+    playClickSound();
     setTheme((prev) => {
       const next = prev === "light" ? "dark" : "light";
       document.documentElement.setAttribute("data-theme", next);
@@ -106,10 +115,38 @@ export function ScrollExperience() {
     });
   };
 
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setSoundEnabled(next);
+    if (next) playChimeSound();
+  };
+
+  const triggerToast = (msg: string) => {
+    playChimeSound();
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactEmail || !contactMsg) return;
+    triggerToast(`Message dispatched! Thank you ${contactEmail.split("@")[0]}.`);
+    setContactEmail("");
+    setContactMsg("");
+  };
+
+  const handleSkillClick = (moduleName: string) => {
+    playClickSound();
+    setTechFilter((prev) => (prev === moduleName ? null : moduleName));
+    document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        playClickSound();
         setIsTerminalOpen((prev) => !prev);
       }
     };
@@ -156,6 +193,9 @@ export function ScrollExperience() {
   }, []);
 
   const filteredProjects = projects.filter((p) => {
+    if (techFilter) {
+      return p.technologies.some((t) => t.toLowerCase().includes(techFilter.toLowerCase()));
+    }
     if (activeCategory === "all") return true;
     if (activeCategory === "ai") return ["rover", "celeb", "movie_prediction", "clanofcode"].includes(p.id);
     if (activeCategory === "terminal") return ["ascii_cam", "musicalterm", "hyprland"].includes(p.id);
@@ -173,6 +213,21 @@ export function ScrollExperience() {
 
       {/* Fast Boot Overlay */}
       <BootSequence visible={booting} />
+
+      {/* Animated Toast System Notification */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className="fixed top-20 left-1/2 z-50 flex items-center gap-2 -translate-x-1/2 rounded-full border border-[var(--accent)] bg-[#0c1017] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-2xl backdrop-blur-md"
+          >
+            <Check size={14} className="text-[var(--accent)]" />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Terminal Easter Egg Modal */}
       <TerminalModal
@@ -202,7 +257,18 @@ export function ScrollExperience() {
         </a>
         <nav className="hud-actions" aria-label="Primary links">
           <button
-            onClick={() => setIsTerminalOpen(true)}
+            onClick={toggleSound}
+            className="hud-link hud-button"
+            title={soundOn ? "Mute Web Audio" : "Enable Web Audio SFX"}
+          >
+            {soundOn ? <Volume2 size={13} className="text-[var(--accent)]" /> : <VolumeX size={13} />}
+          </button>
+
+          <button
+            onClick={() => {
+              playClickSound();
+              setIsTerminalOpen(true);
+            }}
             className="hud-link hud-button"
             title="Open Developer Shell (Cmd + K)"
           >
@@ -224,7 +290,13 @@ export function ScrollExperience() {
           <a className="hud-link hud-hide-mobile" href="#projects">
             <Code2 size={13} /> Projects
           </a>
-          <button onClick={() => setIsResumeOpen(true)} className="hud-link hud-button">
+          <button
+            onClick={() => {
+              playClickSound();
+              setIsResumeOpen(true);
+            }}
+            className="hud-link hud-button"
+          >
             <FileText size={13} /> Resume
           </button>
           <a className="hud-link hud-hide-mobile" href={profile.github} target="_blank" rel="noreferrer">
@@ -249,7 +321,7 @@ export function ScrollExperience() {
                 <img
                   src={profile.avatar}
                   alt={profile.name}
-                  className="h-28 w-28 sm:h-36 sm:w-36 rounded-2xl border-2 border-[var(--accent)] object-cover shadow-xl transition-transform hover:scale-105"
+                  className="h-24 w-24 sm:h-36 sm:w-36 rounded-2xl border-2 border-[var(--accent)] object-cover shadow-xl transition-transform hover:scale-105"
                 />
                 <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[var(--background)] bg-[var(--accent)] shadow-[0_0_10px_var(--accent)]" />
               </div>
@@ -283,10 +355,20 @@ export function ScrollExperience() {
               <a href={`mailto:${profile.email}`}>
                 <Mail size={15} /> Contact Me
               </a>
-              <button onClick={() => setIsResumeOpen(true)}>
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsResumeOpen(true);
+                }}
+              >
                 <FileText size={15} /> View Resume PDF
               </button>
-              <button onClick={() => setIsTerminalOpen(true)}>
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsTerminalOpen(true);
+                }}
+              >
                 <Terminal size={15} /> Open Terminal (⌘K)
               </button>
             </div>
@@ -319,7 +401,7 @@ export function ScrollExperience() {
           </div>
         </section>
 
-        {/* Section 3: Skill Ecosystem (Left) */}
+        {/* Section 3: Skill Ecosystem (Left - Interactive Module Filtering) */}
         <section className="chapter-section is-left" id="skills">
           <div className="chapter-card">
             <div className="kicker">
@@ -327,7 +409,7 @@ export function ScrollExperience() {
             </div>
             <h2 className="chapter-title">Skills as a connected neural map.</h2>
             <p className="chapter-copy">
-              Organized by reinforcing systems: machine learning models, low-level systems, web engines, research habits, and developer tools.
+              Organized by reinforcing systems: machine learning models, low-level systems, web engines, research habits, and developer tools. <span className="text-[var(--accent)] font-semibold">(Click any skill pill to filter matching projects!)</span>
             </p>
 
             <div className="skill-system">
@@ -336,11 +418,22 @@ export function ScrollExperience() {
                   <div className="cluster-name">{cluster.label}</div>
                   <div className="cluster-desc">{cluster.description}</div>
                   <div className="cluster-modules">
-                    {cluster.modules.map((mod) => (
-                      <span className="module-pill" key={mod}>
-                        {mod}
-                      </span>
-                    ))}
+                    {cluster.modules.map((mod) => {
+                      const isActive = techFilter?.toLowerCase() === mod.toLowerCase();
+                      return (
+                        <button
+                          key={mod}
+                          onClick={() => handleSkillClick(mod)}
+                          className={`module-pill cursor-pointer transition-all ${
+                            isActive
+                              ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-md font-bold scale-105"
+                              : "hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                          }`}
+                        >
+                          {mod}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -360,14 +453,31 @@ export function ScrollExperience() {
               </div>
             </div>
 
+            {/* Active Technology Filter Indicator */}
+            {techFilter && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-1.5 font-mono text-xs text-white">
+                <span>Filtered by skill: <strong>{techFilter}</strong></span>
+                <button
+                  onClick={() => setTechFilter(null)}
+                  className="rounded bg-[var(--accent)] px-2 py-0.5 font-bold hover:brightness-110"
+                >
+                  Clear Filter ×
+                </button>
+              </div>
+            )}
+
             {/* Filter Category Pills */}
             <div className="mt-6 flex flex-wrap gap-2">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
+                  onClick={() => {
+                    playClickSound();
+                    setTechFilter(null);
+                    setActiveCategory(cat.id);
+                  }}
                   className={`rounded-full px-4 py-1.5 font-mono text-xs font-semibold transition-all ${
-                    activeCategory === cat.id
+                    !techFilter && activeCategory === cat.id
                       ? "border border-[var(--accent)] bg-[var(--accent)] text-white shadow-md"
                       : "border border-[var(--line)] bg-[var(--card-hover)] text-[var(--muted)] hover:border-[var(--line-strong)] hover:text-[var(--heading)]"
                   }`}
@@ -391,7 +501,10 @@ export function ScrollExperience() {
                     <ProjectCard
                       index={index}
                       project={project}
-                      onOpenDetails={(p) => setSelectedProject(p)}
+                      onOpenDetails={(p) => {
+                        playClickSound();
+                        setSelectedProject(p);
+                      }}
                     />
                   </motion.div>
                 ))}
@@ -433,7 +546,7 @@ export function ScrollExperience() {
           </div>
         </section>
 
-        {/* Section 6: Convergence & Contact (Right) */}
+        {/* Section 6: Convergence & Contact Form (Right) */}
         <section className="chapter-section is-right" id="contact">
           <div className="chapter-card">
             <div className="kicker">
@@ -444,11 +557,46 @@ export function ScrollExperience() {
               Operating from Chennai, India. Let&apos;s collaborate on intelligent agents, machine learning applications, or developer infrastructure.
             </p>
 
+            {/* Interactive Contact Dispatcher Form */}
+            <form onSubmit={handleContactSubmit} className="mt-4 space-y-3">
+              <div>
+                <input
+                  type="email"
+                  required
+                  placeholder="Your Email Address (e.g. alex@company.com)"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-4 py-2.5 text-xs text-[var(--heading)] placeholder:text-[var(--muted)] outline-none focus:border-[var(--accent)] transition-all font-mono"
+                />
+              </div>
+              <div>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Your Message / Technical Inquiry..."
+                  value={contactMsg}
+                  onChange={(e) => setContactMsg(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-4 py-2.5 text-xs text-[var(--heading)] placeholder:text-[var(--muted)] outline-none focus:border-[var(--accent)] transition-all font-mono resize-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+              >
+                <Send size={13} /> Dispatch Message
+              </button>
+            </form>
+
             <div className="contact-vector">
               <a href={`mailto:${profile.email}`}>
                 <Mail size={16} /> {profile.email}
               </a>
-              <button onClick={() => setIsResumeOpen(true)}>
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsResumeOpen(true);
+                }}
+              >
                 <FileText size={16} /> Resume PDF
               </button>
               <a href={profile.github} target="_blank" rel="noreferrer">
