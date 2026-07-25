@@ -39,6 +39,7 @@ const availableCommands = [
   "experience",
   "snake",
   "pong",
+  "invaders",
   "guess",
   "matrix",
   "sudo",
@@ -51,19 +52,20 @@ const availableCommands = [
 const availableFiles = ["bio.txt", "contact.txt", "resume.txt", "stack.txt", "projects"];
 const projectFiles = projects.map((p) => `${p.id}.json`);
 
-const quickPills = ["neofetch", "projects", "skills", "snake", "pong", "matrix", "clear", "help"];
+const quickPills = ["neofetch", "projects", "skills", "snake", "pong", "invaders", "matrix", "clear", "help"];
 
-// --- 1. Terminal Snake Game Component ---
+// --- 1. Fast & Responsive Terminal Snake Game ---
 function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
-  const width = 22;
-  const height = 11;
+  const width = 24;
+  const height = 12;
   const [snake, setSnake] = useState<{ x: number; y: number }[]>([
-    { x: 10, y: 5 },
-    { x: 9, y: 5 },
-    { x: 8, y: 5 },
+    { x: 10, y: 6 },
+    { x: 9, y: 6 },
+    { x: 8, y: 6 },
   ]);
   const [direction, setDirection] = useState<{ x: number; y: number }>({ x: 1, y: 0 });
-  const [food, setFood] = useState<{ x: number; y: number }>({ x: 16, y: 5 });
+  const nextDirRef = useRef<{ x: number; y: number }>({ x: 1, y: 0 });
+  const [food, setFood] = useState<{ x: number; y: number }>({ x: 17, y: 6 });
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
@@ -76,44 +78,49 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
     return { x: newX, y: newY };
   };
 
-  const handleMove = (dir: "up" | "down" | "left" | "right") => {
-    if (dir === "up" && direction.y !== 1) setDirection({ x: 0, y: -1 });
-    if (dir === "down" && direction.y !== -1) setDirection({ x: 0, y: 1 });
-    if (dir === "left" && direction.x !== 1) setDirection({ x: -1, y: 0 });
-    if (dir === "right" && direction.x !== -1) setDirection({ x: 1, y: 0 });
-  };
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "q") {
+      const key = e.key.toLowerCase();
+      if (key === "q") {
         onQuit();
         return;
       }
       if (gameOver && e.key === "Enter") {
-        setSnake([{ x: 10, y: 5 }, { x: 9, y: 5 }, { x: 8, y: 5 }]);
+        setSnake([{ x: 10, y: 6 }, { x: 9, y: 6 }, { x: 8, y: 6 }]);
         setDirection({ x: 1, y: 0 });
-        setFood({ x: 16, y: 5 });
+        nextDirRef.current = { x: 1, y: 0 };
+        setFood({ x: 17, y: 6 });
         setScore(0);
         setGameOver(false);
         return;
       }
-      if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") handleMove("up");
-      else if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") handleMove("down");
-      else if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") handleMove("left");
-      else if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") handleMove("right");
+
+      const curr = nextDirRef.current;
+      if ((e.key === "ArrowUp" || key === "w") && curr.y !== 1) {
+        nextDirRef.current = { x: 0, y: -1 };
+      } else if ((e.key === "ArrowDown" || key === "s") && curr.y !== -1) {
+        nextDirRef.current = { x: 0, y: 1 };
+      } else if ((e.key === "ArrowLeft" || key === "a") && curr.x !== 1) {
+        nextDirRef.current = { x: -1, y: 0 };
+      } else if ((e.key === "ArrowRight" || key === "d") && curr.x !== -1) {
+        nextDirRef.current = { x: 1, y: 0 };
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [direction, gameOver]);
+  }, [gameOver]);
 
   useEffect(() => {
     if (gameOver) return;
 
     const timer = setInterval(() => {
+      setDirection(nextDirRef.current);
+      const dir = nextDirRef.current;
+
       setSnake((prevSnake) => {
         const head = prevSnake[0];
-        const newHead = { x: head.x + direction.x, y: head.y + direction.y };
+        const newHead = { x: head.x + dir.x, y: head.y + dir.y };
 
         if (newHead.x < 0 || newHead.x >= width || newHead.y < 0 || newHead.y >= height) {
           setGameOver(true);
@@ -136,19 +143,19 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
 
         return newSnake;
       });
-    }, 120);
+    }, 85);
 
     return () => clearInterval(timer);
-  }, [direction, food, gameOver]);
+  }, [food, gameOver]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-3 font-mono text-xs select-none">
-      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[var(--accent)] font-bold">
-        <span>🐍 SNAKE ARCADE</span>
+    <div className="flex flex-col items-center justify-center p-2 font-mono text-xs select-none">
+      <div className="flex items-center justify-between w-full max-w-sm mb-1.5 text-[var(--accent)] font-bold">
+        <span>🐍 SNAKE ARCADE (FAST)</span>
         <span>SCORE: {score}</span>
       </div>
 
-      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl">
+      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-inner">
         {Array.from({ length: height }).map((_, y) => (
           <div key={y} className="flex">
             {Array.from({ length: width }).map((_, x) => {
@@ -157,17 +164,17 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
               const isFood = food.x === x && food.y === y;
 
               let char = " ";
-              let colorClass = "text-[var(--muted)]/30";
+              let colorClass = "text-[var(--muted)]/20";
 
               if (isSnakeHead) {
                 char = "█";
-                colorClass = "text-[var(--accent)]";
+                colorClass = "text-[var(--accent)] font-bold";
               } else if (isSnakeBody) {
                 char = "▓";
                 colorClass = "text-[var(--accent)]/70";
               } else if (isFood) {
                 char = "★";
-                colorClass = "text-[var(--signal)] animate-pulse";
+                colorClass = "text-amber-400 animate-ping";
               }
 
               return (
@@ -181,46 +188,48 @@ function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
       </div>
 
       {gameOver ? (
-        <div className="mt-3 text-center text-red-400 font-bold">
-          GAME OVER! [ENTER] Restart | [Q] Quit
+        <div className="mt-2 text-center text-red-400 font-bold">
+          GAME OVER! Press [ENTER] to Restart | [Q] to Quit
         </div>
       ) : (
-        <div className="mt-2 text-center text-[10px] text-[var(--muted)]">
-          Use WASD / Arrow Keys to Move | Press [Q] to Quit
+        <div className="mt-1.5 text-center text-[10px] text-[var(--muted)]">
+          [WASD / Arrow Keys] Move | [Q] Quit
         </div>
       )}
     </div>
   );
 }
 
-// --- 2. Terminal Pong Game Component ---
+// --- 2. Fast & Responsive Terminal Pong Game ---
 function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
-  const width = 24;
-  const height = 10;
+  const width = 26;
+  const height = 11;
   const [paddleY, setPaddleY] = useState(4);
-  const [ball, setBall] = useState({ x: 12, y: 5, dx: 1, dy: 1 });
+  const [ball, setBall] = useState({ x: 13, y: 5, dx: 1, dy: 1 });
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "q") {
+      const key = e.key.toLowerCase();
+      if (key === "q") {
         onQuit();
         return;
       }
       if (gameOver && e.key === "Enter") {
         setPaddleY(4);
-        setBall({ x: 12, y: 5, dx: 1, dy: 1 });
+        setBall({ x: 13, y: 5, dx: 1, dy: 1 });
         setScore(0);
         setGameOver(false);
         return;
       }
-      if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
+      if (e.key === "ArrowUp" || key === "w") {
         setPaddleY((y) => Math.max(0, y - 1));
-      } else if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") {
+      } else if (e.key === "ArrowDown" || key === "s") {
         setPaddleY((y) => Math.min(height - 3, y + 1));
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [gameOver]);
@@ -254,19 +263,19 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
 
         return { x: nextX, y: nextY, dx: nextDx, dy: nextDy };
       });
-    }, 110);
+    }, 70);
 
     return () => clearInterval(timer);
   }, [paddleY, gameOver]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-3 font-mono text-xs select-none">
-      <div className="flex items-center justify-between w-full max-w-sm mb-2 text-[var(--accent)] font-bold">
-        <span>🏓 PONG ARCADE</span>
+    <div className="flex flex-col items-center justify-center p-2 font-mono text-xs select-none">
+      <div className="flex items-center justify-between w-full max-w-sm mb-1.5 text-[var(--accent)] font-bold">
+        <span>🏓 PONG ARCADE (FAST)</span>
         <span>SCORE: {score}</span>
       </div>
 
-      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl">
+      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-inner">
         {Array.from({ length: height }).map((_, y) => (
           <div key={y} className="flex">
             {Array.from({ length: width }).map((_, x) => {
@@ -275,14 +284,14 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
               const isRightWall = x === width - 1;
 
               let char = " ";
-              let colorClass = "text-[var(--muted)]/30";
+              let colorClass = "text-[var(--muted)]/20";
 
               if (isPaddle) {
                 char = "█";
-                colorClass = "text-[var(--accent)]";
+                colorClass = "text-[var(--accent)] font-bold";
               } else if (isBall) {
                 char = "●";
-                colorClass = "text-[var(--signal)] animate-ping";
+                colorClass = "text-amber-400 font-bold";
               } else if (isRightWall) {
                 char = "│";
                 colorClass = "text-[var(--muted)]";
@@ -299,12 +308,146 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
       </div>
 
       {gameOver ? (
-        <div className="mt-3 text-center text-red-400 font-bold">
-          GAME OVER! [ENTER] Restart | [Q] Quit
+        <div className="mt-2 text-center text-red-400 font-bold">
+          GAME OVER! Press [ENTER] to Restart | [Q] to Quit
         </div>
       ) : (
-        <div className="mt-2 text-center text-[10px] text-[var(--muted)]">
-          W/S or Up/Down to move paddle | [Q] to Quit
+        <div className="mt-1.5 text-center text-[10px] text-[var(--muted)]">
+          [W/S or Arrow Keys] Move Paddle | [Q] Quit
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- 3. Fast & Responsive Terminal Space Invaders Game ---
+function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
+  const width = 24;
+  const height = 11;
+  const [playerX, setPlayerX] = useState(12);
+  const [lasers, setLasers] = useState<{ x: number; y: number }[]>([]);
+  const [aliens, setAliens] = useState<{ x: number; y: number }[]>([
+    { x: 4, y: 1 }, { x: 8, y: 1 }, { x: 12, y: 1 }, { x: 16, y: 1 }, { x: 20, y: 1 },
+    { x: 4, y: 2 }, { x: 8, y: 2 }, { x: 12, y: 2 }, { x: 16, y: 2 }, { x: 20, y: 2 },
+  ]);
+  const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (key === "q") {
+        onQuit();
+        return;
+      }
+      if (gameOver && e.key === "Enter") {
+        setPlayerX(12);
+        setLasers([]);
+        setAliens([
+          { x: 4, y: 1 }, { x: 8, y: 1 }, { x: 12, y: 1 }, { x: 16, y: 1 }, { x: 20, y: 1 },
+          { x: 4, y: 2 }, { x: 8, y: 2 }, { x: 12, y: 2 }, { x: 16, y: 2 }, { x: 20, y: 2 },
+        ]);
+        setScore(0);
+        setGameOver(false);
+        return;
+      }
+
+      if (e.key === "ArrowLeft" || key === "a") {
+        setPlayerX((x) => Math.max(0, x - 1));
+      } else if (e.key === "ArrowRight" || key === "d") {
+        setPlayerX((x) => Math.min(width - 1, x + 1));
+      } else if (e.key === " " || key === "space") {
+        setLasers((prev) => [...prev, { x: playerX, y: height - 2 }]);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [playerX, gameOver]);
+
+  // Lasers & Alien Physics Loop
+  useEffect(() => {
+    if (gameOver) return;
+
+    const timer = setInterval(() => {
+      setLasers((prevLasers) => {
+        const next = prevLasers.map((l) => ({ ...l, y: l.y - 1 })).filter((l) => l.y >= 0);
+        return next;
+      });
+    }, 60);
+
+    return () => clearInterval(timer);
+  }, [gameOver]);
+
+  // Collision detection loop
+  useEffect(() => {
+    if (gameOver || aliens.length === 0) return;
+
+    setAliens((prevAliens) => {
+      let updatedAliens = [...prevAliens];
+      lasers.forEach((laser) => {
+        updatedAliens = updatedAliens.filter((alien) => {
+          if (alien.x === laser.x && alien.y === laser.y) {
+            setScore((s) => s + 20);
+            return false;
+          }
+          return true;
+        });
+      });
+      return updatedAliens;
+    });
+  }, [lasers, gameOver]);
+
+  return (
+    <div className="flex flex-col items-center justify-center p-2 font-mono text-xs select-none">
+      <div className="flex items-center justify-between w-full max-w-sm mb-1.5 text-[var(--accent)] font-bold">
+        <span>👾 SPACE INVADERS (FAST)</span>
+        <span>SCORE: {score}</span>
+      </div>
+
+      <div className="border border-[var(--line)] bg-[var(--background)] p-1 rounded-xl shadow-inner">
+        {Array.from({ length: height }).map((_, y) => (
+          <div key={y} className="flex">
+            {Array.from({ length: width }).map((_, x) => {
+              const isPlayer = y === height - 1 && x === playerX;
+              const isLaser = lasers.some((l) => l.x === x && l.y === y);
+              const isAlien = aliens.some((a) => a.x === x && a.y === y);
+
+              let char = " ";
+              let colorClass = "text-[var(--muted)]/20";
+
+              if (isPlayer) {
+                char = "▲";
+                colorClass = "text-[var(--accent)] font-bold";
+              } else if (isLaser) {
+                char = "│";
+                colorClass = "text-amber-400 font-bold";
+              } else if (isAlien) {
+                char = "W";
+                colorClass = "text-red-400 font-bold animate-pulse";
+              }
+
+              return (
+                <span key={x} className={`w-3.5 h-4 text-center leading-none ${colorClass}`}>
+                  {char}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {aliens.length === 0 ? (
+        <div className="mt-2 text-center text-emerald-400 font-bold">
+          VICTORY! ALL INVADERS DESTROYED! Press [ENTER] to Replay | [Q] to Quit
+        </div>
+      ) : gameOver ? (
+        <div className="mt-2 text-center text-red-400 font-bold">
+          GAME OVER! Press [ENTER] to Restart | [Q] to Quit
+        </div>
+      ) : (
+        <div className="mt-1.5 text-center text-[10px] text-[var(--muted)]">
+          [A/D or Arrows] Move | [SPACE] Shoot Lasers | [Q] Quit
         </div>
       )}
     </div>
@@ -314,7 +457,7 @@ function TerminalPongGame({ onQuit }: { onQuit: () => void }) {
 export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: TerminalModalProps) {
   const [input, setInput] = useState("");
   const [currentDir, setCurrentDir] = useState<string>("/home/anas");
-  const [activeGame, setActiveGame] = useState<"snake" | "pong" | null>(null);
+  const [activeGame, setActiveGame] = useState<"snake" | "pong" | "invaders" | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
@@ -398,6 +541,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
   skills      - Machine learning, systems & web tech ecosystem
   snake       - Launch 2D ASCII Snake Arcade game
   pong        - Launch 2D ASCII Pong Arcade game
+  invaders    - Launch 2D ASCII Space Invaders Arcade game
   ping <host> - Ping live telemetry server
   matrix      - Display Matrix digital rain
   history     - List terminal command history
@@ -529,6 +673,15 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
           id: Math.random().toString(),
           type: "system",
           text: "Launching 2D ASCII Pong Arcade...",
+        });
+        break;
+
+      case "invaders":
+        setActiveGame("invaders");
+        responses.push({
+          id: Math.random().toString(),
+          type: "system",
+          text: "Launching 2D ASCII Space Invaders Arcade...",
         });
         break;
 
@@ -731,6 +884,8 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
               <TerminalSnakeGame onQuit={() => setActiveGame(null)} />
             ) : activeGame === "pong" ? (
               <TerminalPongGame onQuit={() => setActiveGame(null)} />
+            ) : activeGame === "invaders" ? (
+              <TerminalInvadersGame onQuit={() => setActiveGame(null)} />
             ) : (
               output.map((line) => (
                 <div key={line.id}>
