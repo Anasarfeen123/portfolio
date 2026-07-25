@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ExternalLink, GitFork, Sparkles, Star } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Project } from "@/data/portfolio";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
 
@@ -21,8 +21,34 @@ interface Revolving3DCarouselProps {
 }
 
 export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCarouselProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAutoSpinning, setIsAutoSpinning] = useState(true);
+
+  // Connect scroll position of section to 3D project revolving index
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      // Calculate how far through the carousel viewport section we are (0 to 1)
+      const totalDist = windowHeight + rect.height;
+      const currentDist = windowHeight - rect.top;
+      const scrollRatio = Math.max(0, Math.min(1, currentDist / totalDist));
+
+      // Map ratio to 0, 1, 2 index
+      const targetIndex = Math.min(
+        projects.length - 1,
+        Math.floor(scrollRatio * projects.length)
+      );
+
+      setActiveIndex(targetIndex);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [projects.length]);
 
   const nextSlide = () => {
     setActiveIndex((prev) => (prev + 1) % projects.length);
@@ -32,23 +58,14 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
     setActiveIndex((prev) => (prev - 1 + projects.length) % projects.length);
   };
 
-  // Auto-rotate every 5 seconds if not paused
-  useEffect(() => {
-    if (!isAutoSpinning) return;
-    const interval = setInterval(nextSlide, 5000);
-    return () => clearInterval(interval);
-  }, [isAutoSpinning, activeIndex]);
-
   return (
     <div
+      ref={containerRef}
       className="relative w-full py-8 flex flex-col items-center select-none"
-      onMouseEnter={() => setIsAutoSpinning(false)}
-      onMouseLeave={() => setIsAutoSpinning(true)}
     >
       {/* 3D Carousel Stage */}
       <div className="relative w-full h-[380px] sm:h-[420px] flex items-center justify-center [perspective:1200px]">
         {projects.map((project, idx) => {
-          // Compute offset from active index (-1, 0, 1)
           let offset = idx - activeIndex;
           if (offset < -1) offset += projects.length;
           if (offset > 1) offset -= projects.length;
@@ -57,7 +74,6 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
           const isLeft = offset === -1;
           const isRight = offset === 1;
 
-          // 3D positioning parameters
           let rotateY = 0;
           let translateZ = 0;
           let translateX = "0%";
@@ -125,7 +141,7 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
         })}
       </div>
 
-      {/* 3D Navigation Controls & Indicator Dots */}
+      {/* Navigation Controls & Dots */}
       <div className="mt-6 flex items-center justify-between w-full max-w-xs">
         <button
           onClick={prevSlide}
