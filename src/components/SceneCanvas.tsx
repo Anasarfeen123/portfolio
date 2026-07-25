@@ -21,7 +21,6 @@ function latLonToVector(lat: number, lon: number, radius = 1.0) {
   );
 }
 
-// Global cached textures for fast loading
 let cachedSolarTextures: Record<string, THREE.CanvasTexture> | null = null;
 
 function getSolarTextures() {
@@ -39,7 +38,6 @@ function getSolarTextures() {
     return tex;
   };
 
-  // 1. Sun Texture
   const sunTex = createTexture(512, 256, (ctx) => {
     const grad = ctx.createLinearGradient(0, 0, 0, 256);
     grad.addColorStop(0, "#ffe066");
@@ -48,15 +46,14 @@ function getSolarTextures() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 512, 256);
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-    for (let i = 0; i < 20; i++) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+    for (let i = 0; i < 25; i++) {
       ctx.beginPath();
-      ctx.arc(Math.random() * 512, Math.random() * 256, 10 + Math.random() * 25, 0, Math.PI * 2);
+      ctx.arc(Math.random() * 512, Math.random() * 256, 8 + Math.random() * 20, 0, Math.PI * 2);
       ctx.fill();
     }
   });
 
-  // 2. Mercury Texture
   const mercuryTex = createTexture(256, 128, (ctx) => {
     ctx.fillStyle = "#8a8a8a";
     ctx.fillRect(0, 0, 256, 128);
@@ -68,7 +65,6 @@ function getSolarTextures() {
     }
   });
 
-  // 3. Venus Texture
   const venusTex = createTexture(256, 128, (ctx) => {
     const grad = ctx.createLinearGradient(0, 0, 0, 128);
     grad.addColorStop(0, "#e6c280");
@@ -78,7 +74,6 @@ function getSolarTextures() {
     ctx.fillRect(0, 0, 256, 128);
   });
 
-  // 4. Earth Texture
   const earthTex = createTexture(1024, 512, (ctx) => {
     const oceanGrad = ctx.createLinearGradient(0, 0, 0, 512);
     oceanGrad.addColorStop(0, "#061224");
@@ -112,7 +107,6 @@ function getSolarTextures() {
     drawLand([[32, 68], [28, 88], [22, 90], [15, 80], [8, 77], [13, 74], [20, 70]], "#40916c");
     drawLand([[35, -6], [37, 10], [32, 32], [12, 43], [10, 51], [-12, 40], [-34, 20], [-31, 16], [0, 9], [5, -4], [15, -17]], "#b79455");
 
-    // City Lights
     ctx.shadowColor = "#ffb703";
     ctx.shadowBlur = 6;
     ctx.fillStyle = "#ffb703";
@@ -124,7 +118,6 @@ function getSolarTextures() {
     });
   });
 
-  // Earth Clouds
   const cloudTex = createTexture(512, 256, (ctx) => {
     ctx.fillStyle = "rgba(0, 0, 0, 0)";
     ctx.fillRect(0, 0, 512, 256);
@@ -136,7 +129,6 @@ function getSolarTextures() {
     }
   });
 
-  // 5. Mars Texture
   const marsTex = createTexture(256, 128, (ctx) => {
     const grad = ctx.createLinearGradient(0, 0, 0, 128);
     grad.addColorStop(0, "#c1440e");
@@ -148,20 +140,17 @@ function getSolarTextures() {
     ctx.fillRect(0, 0, 256, 10);
   });
 
-  // 6. Jupiter Texture
   const jupiterTex = createTexture(512, 256, (ctx) => {
     for (let y = 0; y < 256; y += 16) {
       ctx.fillStyle = y % 32 === 0 ? "#c87d55" : "#e0a96d";
       ctx.fillRect(0, y, 512, 16);
     }
-    // Great Red Spot
     ctx.fillStyle = "#a83232";
     ctx.beginPath();
     ctx.ellipse(350, 160, 30, 18, 0, 0, Math.PI * 2);
     ctx.fill();
   });
 
-  // 7. Saturn Texture & Saturn Rings
   const saturnTex = createTexture(256, 128, (ctx) => {
     for (let y = 0; y < 128; y += 12) {
       ctx.fillStyle = y % 24 === 0 ? "#e2c97c" : "#c4ab65";
@@ -173,24 +162,12 @@ function getSolarTextures() {
     ctx.fillStyle = "rgba(0,0,0,0)";
     ctx.fillRect(0, 0, 256, 256);
     for (let r = 50; r < 120; r += 3) {
-      ctx.strokeStyle = r % 6 === 0 ? "rgba(226, 201, 124, 0.7)" : "rgba(196, 171, 101, 0.4)";
+      ctx.strokeStyle = r % 6 === 0 ? "rgba(226, 201, 124, 0.75)" : "rgba(196, 171, 101, 0.45)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(128, 128, r, 0, Math.PI * 2);
       ctx.stroke();
     }
-  });
-
-  // 8. Uranus Texture
-  const uranusTex = createTexture(256, 128, (ctx) => {
-    ctx.fillStyle = "#7de3f4";
-    ctx.fillRect(0, 0, 256, 128);
-  });
-
-  // 9. Neptune Texture
-  const neptuneTex = createTexture(256, 128, (ctx) => {
-    ctx.fillStyle = "#274687";
-    ctx.fillRect(0, 0, 256, 128);
   });
 
   cachedSolarTextures = {
@@ -203,8 +180,6 @@ function getSolarTextures() {
     jupiter: jupiterTex,
     saturn: saturnTex,
     saturnRing: saturnRingTex,
-    uranus: uranusTex,
-    neptune: neptuneTex,
   };
 
   return cachedSolarTextures;
@@ -249,19 +224,19 @@ export function SceneCanvas() {
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
         <color attach="background" args={[isDark ? "#02040a" : "#f8f1e5"]} />
-        <ambientLight intensity={isDark ? 0.6 : 0.85} />
-        <pointLight position={[0, 0, 0]} intensity={isDark ? 3.5 : 2.5} color="#ffe066" distance={30} />
-        <directionalLight position={[5, 5, 5]} intensity={isDark ? 2.2 : 1.8} color="#ffffff" />
+        <ambientLight intensity={isDark ? 0.65 : 0.9} />
+        <pointLight position={[0, 0, 0]} intensity={isDark ? 4.2 : 3.0} color="#ffe066" distance={35} />
+        <directionalLight position={[6, 6, 6]} intensity={isDark ? 2.5 : 2.0} color="#ffffff" />
         
-        {/* Twinkling Starfield in Space */}
+        {/* Twinkling Starfield in Deep Space */}
         <Stars
           radius={isDark ? 90 : 70}
           depth={isDark ? 50 : 30}
-          count={isDark ? 1400 : 400}
-          factor={isDark ? 4.5 : 2.5}
-          saturation={isDark ? 0.8 : 0.4}
+          count={isDark ? 1500 : 450}
+          factor={isDark ? 4.8 : 2.5}
+          saturation={isDark ? 0.85 : 0.4}
           fade
-          speed={isDark ? 0.2 : 0.08}
+          speed={isDark ? 0.35 : 0.1}
         />
 
         <SolarSystemAtlas />
@@ -290,67 +265,84 @@ function SolarSystemAtlas() {
   const marsRef = useRef<THREE.Group>(null);
   const jupiterRef = useRef<THREE.Group>(null);
   const saturnRef = useRef<THREE.Group>(null);
+  const cometRef = useRef<THREE.Group>(null);
 
   useFrame(({ camera, clock }) => {
     const progress = readProgress();
     const t = clock.elapsedTime;
 
-    // Smooth camera travel along the solar system scroll path
-    camera.position.x = THREE.MathUtils.lerp(camera.position.x, Math.sin(progress * Math.PI * 1.2) * 3.5, 0.05);
-    camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.8 + progress * 1.5, 0.05);
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, 9.5 - progress * 4.2, 0.05);
+    // Camera travel along solar system
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, Math.sin(progress * Math.PI * 1.3) * 3.8, 0.06);
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.8 + progress * 1.5, 0.06);
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, 9.5 - progress * 4.5, 0.06);
     camera.lookAt(0, progress * 0.4, 0);
 
+    // Fast, energetic system rotation
     if (root.current) {
-      root.current.rotation.y = t * 0.015;
+      root.current.rotation.y = t * 0.04;
     }
 
-    // Individual Planet Revolutions & Self-Rotations
-    if (sunRef.current) sunRef.current.rotation.y = t * 0.05;
-    if (mercuryRef.current) mercuryRef.current.rotation.y = t * 0.15;
-    if (venusRef.current) venusRef.current.rotation.y = -t * 0.1;
-    if (earthRef.current) earthRef.current.rotation.y = t * 0.2;
-    if (marsRef.current) marsRef.current.rotation.y = t * 0.18;
-    if (jupiterRef.current) jupiterRef.current.rotation.y = t * 0.25;
-    if (saturnRef.current) saturnRef.current.rotation.y = t * 0.22;
+    // Fast planet self-rotations
+    if (sunRef.current) sunRef.current.rotation.y = t * 0.12;
+    if (mercuryRef.current) mercuryRef.current.rotation.y = t * 0.45;
+    if (venusRef.current) venusRef.current.rotation.y = -t * 0.35;
+    if (earthRef.current) earthRef.current.rotation.y = t * 0.5;
+    if (marsRef.current) marsRef.current.rotation.y = t * 0.45;
+    if (jupiterRef.current) jupiterRef.current.rotation.y = t * 0.6;
+    if (saturnRef.current) saturnRef.current.rotation.y = t * 0.55;
+
+    // Fast-moving Comet orbit across space
+    if (cometRef.current) {
+      const cTime = t * 0.6;
+      cometRef.current.position.x = Math.sin(cTime) * 6.5;
+      cometRef.current.position.z = Math.cos(cTime * 0.8) * 6.5;
+      cometRef.current.position.y = Math.sin(cTime * 1.5) * 1.8;
+      cometRef.current.rotation.y = cTime;
+    }
   });
 
   return (
     <group ref={root}>
-      {/* 1. SUN (Center) */}
+      {/* 1. SUN */}
       <SunMesh ref={sunRef} />
 
-      {/* Orbital Ring Path Guides */}
+      {/* Orbital Ring Lines */}
       <OrbitRing radius={1.8} />
       <OrbitRing radius={2.8} />
       <OrbitRing radius={4.2} />
       <OrbitRing radius={5.6} />
-      <OrbitRing radius={7.5} />
+      <OrbitRing radius={6.5} color="#d97706" /> {/* Asteroid Belt Path */}
+      <OrbitRing radius={7.6} />
       <OrbitRing radius={9.6} />
 
       {/* 2. MERCURY */}
-      <PlanetMesh ref={mercuryRef} name="mercury" radius={0.16} distance={1.8} speed={0.4} />
+      <PlanetMesh ref={mercuryRef} name="mercury" radius={0.16} distance={1.8} />
 
       {/* 3. VENUS */}
-      <PlanetMesh ref={venusRef} name="venus" radius={0.28} distance={2.8} speed={0.3} />
+      <PlanetMesh ref={venusRef} name="venus" radius={0.28} distance={2.8} />
 
-      {/* 4. EARTH & MOON */}
+      {/* 4. EARTH & MOON & SATELLITES */}
       <EarthSystem ref={earthRef} distance={4.2} />
 
-      {/* 5. MARS & ASTEROID BELT */}
-      <MarsSystem ref={marsRef} distance={5.6} />
+      {/* 5. MARS */}
+      <PlanetMesh ref={marsRef} name="mars" radius={0.38} distance={5.6} />
 
-      {/* 6. JUPITER */}
-      <PlanetMesh ref={jupiterRef} name="jupiter" radius={0.8} distance={7.5} speed={0.12} />
+      {/* 6. 3D ASTEROID BELT (60 Spinning Rocks) */}
+      <AsteroidBelt radius={6.5} count={60} />
 
-      {/* 7. SATURN WITH 3D RINGS */}
+      {/* 7. JUPITER */}
+      <PlanetMesh ref={jupiterRef} name="jupiter" radius={0.82} distance={7.6} />
+
+      {/* 8. SATURN WITH 3D RINGS & PROBE */}
       <SaturnSystem ref={saturnRef} distance={9.6} />
+
+      {/* 9. FAST COMET WITH GLOW TAIL */}
+      <CometMesh ref={cometRef} />
     </group>
   );
 }
 
-// --- Orbital Ring Path Line ---
-function OrbitRing({ radius }: { radius: number }) {
+function OrbitRing({ radius, color = "#38edf8" }: { radius: number; color?: string }) {
   const points = useMemo(() => {
     const pts = [];
     for (let i = 0; i <= 64; i++) {
@@ -364,33 +356,30 @@ function OrbitRing({ radius }: { radius: number }) {
 
   return (
     <line geometry={lineGeo}>
-      <lineBasicMaterial color="#38edf8" transparent opacity={0.12} />
+      <lineBasicMaterial color={color} transparent opacity={0.15} />
     </line>
   );
 }
 
-// --- SUN MESH ---
 const SunMesh = ReactForwardGroup(function SunMesh(_, ref) {
   const textures = useMemo(() => getSolarTextures(), []);
 
   return (
     <group ref={ref} position={[0, 0, 0]}>
       <mesh>
-        <sphereGeometry args={[1.1, 32, 32]} />
+        <sphereGeometry args={[1.15, 32, 32]} />
         <meshBasicMaterial map={textures.sun ?? undefined} color="#ffe066" />
       </mesh>
-      {/* Sun Corona Glow */}
       <mesh>
-        <sphereGeometry args={[1.25, 24, 24]} />
-        <meshBasicMaterial color="#ff9900" transparent opacity={0.25} side={THREE.BackSide} />
+        <sphereGeometry args={[1.32, 24, 24]} />
+        <meshBasicMaterial color="#ff9900" transparent opacity={0.3} side={THREE.BackSide} />
       </mesh>
     </group>
   );
 });
 
-// --- GENERIC PLANET MESH ---
 const PlanetMesh = ReactForwardGroup(function PlanetMesh(
-  { name, radius, distance, speed }: { name: string; radius: number; distance: number; speed: number },
+  { name, radius, distance }: { name: string; radius: number; distance: number },
   ref
 ) {
   const textures = useMemo(() => getSolarTextures(), []);
@@ -408,15 +397,17 @@ const PlanetMesh = ReactForwardGroup(function PlanetMesh(
   );
 });
 
-// --- EARTH SYSTEM (Oceans, Clouds, Chennai Beacon & Moon) ---
+// --- EARTH WITH SATELLITES & MOON ---
 const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { distance: number }, ref) {
   const textures = useMemo(() => getSolarTextures(), []);
   const cloudRef = useRef<THREE.Mesh>(null);
+  const sat1Ref = useRef<THREE.Group>(null);
+  const sat2Ref = useRef<THREE.Group>(null);
 
   useFrame((_, delta) => {
-    if (cloudRef.current) {
-      cloudRef.current.rotation.y += delta * 0.03;
-    }
+    if (cloudRef.current) cloudRef.current.rotation.y += delta * 0.12;
+    if (sat1Ref.current) sat1Ref.current.rotation.y += delta * 0.8;
+    if (sat2Ref.current) sat2Ref.current.rotation.z += delta * 0.6;
   });
 
   return (
@@ -424,27 +415,62 @@ const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { dista
       <group ref={ref}>
         {/* Earth Globe */}
         <mesh>
-          <sphereGeometry args={[0.55, 32, 32]} />
+          <sphereGeometry args={[0.58, 32, 32]} />
           <meshStandardMaterial map={textures.earth ?? undefined} roughness={0.55} metalness={0.15} />
         </mesh>
 
         {/* Earth Clouds */}
         <mesh ref={cloudRef}>
-          <sphereGeometry args={[0.565, 32, 32]} />
-          <meshStandardMaterial map={textures.cloud ?? undefined} transparent opacity={0.4} depthWrite={false} />
+          <sphereGeometry args={[0.595, 32, 32]} />
+          <meshStandardMaterial map={textures.cloud ?? undefined} transparent opacity={0.45} depthWrite={false} />
         </mesh>
 
         {/* Chennai Origin Beacon */}
-        <mesh position={latLonToVector(13.08, 80.27, 0.56)}>
-          <sphereGeometry args={[0.025, 8, 8]} />
+        <mesh position={latLonToVector(13.08, 80.27, 0.59)}>
+          <sphereGeometry args={[0.03, 8, 8]} />
           <meshBasicMaterial color="#ffb703" />
         </mesh>
 
-        {/* Moon Orbit */}
-        <group position={[0.9, 0.2, 0]}>
+        {/* Orbiting Satellite 1 (GPS / Telemetry Satellite) */}
+        <group ref={sat1Ref}>
+          <group position={[0.82, 0.15, 0]}>
+            {/* Body */}
+            <mesh>
+              <boxGeometry args={[0.04, 0.04, 0.06]} />
+              <meshStandardMaterial color="#38edf8" metalness={0.8} />
+            </mesh>
+            {/* Solar Panels */}
+            <mesh position={[0.08, 0, 0]}>
+              <boxGeometry args={[0.1, 0.02, 0.005]} />
+              <meshBasicMaterial color="#1e293b" />
+            </mesh>
+            <mesh position={[-0.08, 0, 0]}>
+              <boxGeometry args={[0.1, 0.02, 0.005]} />
+              <meshBasicMaterial color="#1e293b" />
+            </mesh>
+            {/* Signal Beacon */}
+            <mesh position={[0, 0.03, 0]}>
+              <sphereGeometry args={[0.015, 6, 6]} />
+              <meshBasicMaterial color="#38edf8" />
+            </mesh>
+          </group>
+        </group>
+
+        {/* Orbiting Satellite 2 (Polar Orbit) */}
+        <group ref={sat2Ref}>
+          <group position={[0, 0.88, 0]}>
+            <mesh>
+              <boxGeometry args={[0.03, 0.05, 0.03]} />
+              <meshStandardMaterial color="#ffb703" metalness={0.9} />
+            </mesh>
+          </group>
+        </group>
+
+        {/* Moon */}
+        <group position={[1.1, 0.25, 0]}>
           <mesh>
-            <sphereGeometry args={[0.12, 16, 16]} />
-            <meshStandardMaterial color="#c4c4c4" roughness={0.8} />
+            <sphereGeometry args={[0.14, 16, 16]} />
+            <meshStandardMaterial color="#d1d5db" roughness={0.8} />
           </mesh>
         </group>
       </group>
@@ -452,41 +478,93 @@ const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { dista
   );
 });
 
-// --- MARS SYSTEM WITH ASTEROID BELT ---
-const MarsSystem = ReactForwardGroup(function MarsSystem({ distance }: { distance: number }, ref) {
-  const textures = useMemo(() => getSolarTextures(), []);
-
-  return (
-    <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
-      <group ref={ref}>
-        <mesh>
-          <sphereGeometry args={[0.38, 24, 24]} />
-          <meshStandardMaterial map={textures.mars ?? undefined} roughness={0.8} />
-        </mesh>
-      </group>
-    </group>
-  );
-});
-
-// --- SATURN SYSTEM WITH 3D RINGS ---
+// --- SATURN SYSTEM WITH 3D RINGS & VOYAGER PROBE ---
 const SaturnSystem = ReactForwardGroup(function SaturnSystem({ distance }: { distance: number }, ref) {
   const textures = useMemo(() => getSolarTextures(), []);
+  const probeRef = useRef<THREE.Group>(null);
+
+  useFrame((_, delta) => {
+    if (probeRef.current) {
+      probeRef.current.rotation.y += delta * 0.4;
+    }
+  });
 
   return (
     <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
       <group ref={ref}>
         {/* Saturn Sphere */}
         <mesh>
-          <sphereGeometry args={[0.65, 28, 28]} />
+          <sphereGeometry args={[0.68, 28, 28]} />
           <meshStandardMaterial map={textures.saturn ?? undefined} roughness={0.6} />
         </mesh>
 
         {/* 3D Saturn Rings */}
         <mesh rotation-x={Math.PI / 2.5}>
-          <ringGeometry args={[0.85, 1.45, 32]} />
-          <meshBasicMaterial map={textures.saturnRing ?? undefined} transparent opacity={0.7} side={THREE.DoubleSide} />
+          <ringGeometry args={[0.88, 1.52, 36]} />
+          <meshBasicMaterial map={textures.saturnRing ?? undefined} transparent opacity={0.75} side={THREE.DoubleSide} />
         </mesh>
+
+        {/* Space Probe Voyager */}
+        <group ref={probeRef} position={[1.4, 0.5, 0]}>
+          <mesh>
+            <coneGeometry args={[0.06, 0.08, 8]} />
+            <meshStandardMaterial color="#ffffff" metalness={0.7} />
+          </mesh>
+        </group>
       </group>
+    </group>
+  );
+});
+
+// --- 3D ASTEROID BELT (60 Spinning Rock Particles) ---
+function AsteroidBelt({ radius, count }: { radius: number; count: number }) {
+  const asteroids = useMemo(() => {
+    const rocks = [];
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+      const r = radius + (Math.random() - 0.5) * 0.6;
+      const y = (Math.random() - 0.5) * 0.3;
+      const scale = 0.02 + Math.random() * 0.04;
+      rocks.push({ x: Math.cos(angle) * r, y, z: Math.sin(angle) * r, scale });
+    }
+    return rocks;
+  }, [radius, count]);
+
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((_, delta) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.06;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {asteroids.map((rock, idx) => (
+        <mesh key={idx} position={[rock.x, rock.y, rock.z]} scale={rock.scale}>
+          <dodecahedronGeometry args={[1, 0]} />
+          <meshStandardMaterial color="#78716c" roughness={0.9} flatShading />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// --- COMET MESH WITH TAIL ---
+const CometMesh = ReactForwardGroup(function CometMesh(_, ref) {
+  return (
+    <group ref={ref}>
+      {/* Comet Head */}
+      <mesh>
+        <sphereGeometry args={[0.06, 10, 10]} />
+        <meshBasicMaterial color="#38edf8" />
+      </mesh>
+
+      {/* Glowing Tail */}
+      <mesh position={[-0.25, 0, 0]} rotation-z={Math.PI / 2}>
+        <coneGeometry args={[0.08, 0.5, 12]} />
+        <meshBasicMaterial color="#38edf8" transparent opacity={0.4} />
+      </mesh>
     </group>
   );
 });
