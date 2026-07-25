@@ -365,21 +365,20 @@ function TerminalInvadersGame({ onQuit }: { onQuit: () => void }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [playerX, gameOver]);
 
-  // Lasers & Alien Physics Loop
+  // Lasers Physics Loop
   useEffect(() => {
     if (gameOver) return;
 
     const timer = setInterval(() => {
       setLasers((prevLasers) => {
-        const next = prevLasers.map((l) => ({ ...l, y: l.y - 1 })).filter((l) => l.y >= 0);
-        return next;
+        return prevLasers.map((l) => ({ ...l, y: l.y - 1 })).filter((l) => l.y >= 0);
       });
     }, 60);
 
     return () => clearInterval(timer);
   }, [gameOver]);
 
-  // Collision detection loop
+  // Collision Loop
   useEffect(() => {
     if (gameOver || aliens.length === 0) return;
 
@@ -533,15 +532,21 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
   neofetch    - System hardware & specs summary
   whoami      - Display current shell user details
   uname -a    - Kernel architectural release string
+  uptime      - Display system uptime & load averages
+  date        - Current system timestamp
   pwd         - Print working directory
   ls          - List directory files & projects
   cd <dir>    - Change working directory (e.g. cd projects, cd ..)
   cat <file>  - Read file (e.g. cat bio.txt, cat stack.txt)
+  echo <msg>  - Print message string to terminal
   projects    - List all 11 flagship project repositories
   skills      - Machine learning, systems & web tech ecosystem
+  experience  - Leadership positions & experience nodes
+  contact     - Email, GitHub & LinkedIn handles
   snake       - Launch 2D ASCII Snake Arcade game
   pong        - Launch 2D ASCII Pong Arcade game
   invaders    - Launch 2D ASCII Space Invaders Arcade game
+  guess       - Play interactive number guessing game
   ping <host> - Ping live telemetry server
   matrix      - Display Matrix digital rain
   history     - List terminal command history
@@ -565,6 +570,32 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
           id: Math.random().toString(),
           type: "response",
           text: "Linux ANAS_OS 6.12.8-arch1-1 #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux",
+        });
+        break;
+
+      case "uptime":
+        const now = new Date();
+        const timeStr = now.toTimeString().split(" ")[0];
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: ` ${timeStr} up 842 days, 14:32, 1 user, load average: 0.14, 0.08, 0.05`,
+        });
+        break;
+
+      case "date":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: new Date().toString(),
+        });
+        break;
+
+      case "echo":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: args.join(" "),
         });
         break;
 
@@ -682,6 +713,31 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
           id: Math.random().toString(),
           type: "system",
           text: "Launching 2D ASCII Space Invaders Arcade...",
+        });
+        break;
+
+      case "guess":
+        const targetNum = Math.floor(Math.random() * 100) + 1;
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: `🎯 NUMBER GUESSING GAME: Target number generated between 1 and 100! (Target is ${targetNum})`,
+        });
+        break;
+
+      case "contact":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: `📧 Email: ${profile.email}\n🐙 GitHub: ${profile.github}\n💼 LinkedIn: ${profile.linkedin}`,
+        });
+        break;
+
+      case "experience":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: experience.map((e) => `▪ ${e.role} @ ${e.org} (${e.time})\n  ${e.notes.join("\n  ")}`).join("\n\n"),
         });
         break;
 
