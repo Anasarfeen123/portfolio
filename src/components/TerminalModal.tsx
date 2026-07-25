@@ -328,12 +328,26 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
     if (isOpen) {
       document.body.style.overflow = "hidden";
       setTimeout(() => inputRef.current?.focus(), 100);
+
+      const handleKeyScrollBlock = (e: KeyboardEvent) => {
+        const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "PageUp", "PageDown"];
+        if (keys.includes(e.key) || keys.includes(e.code)) {
+          const target = e.target as HTMLElement;
+          const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+          if (!isInput) {
+            e.preventDefault();
+          }
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyScrollBlock, { capture: true });
+      return () => {
+        document.body.style.overflow = "";
+        window.removeEventListener("keydown", handleKeyScrollBlock, { capture: true });
+      };
     } else {
       document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [isOpen]);
 
   useEffect(() => {

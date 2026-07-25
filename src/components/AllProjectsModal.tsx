@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Code2, ExternalLink, GitFork, Search, Sparkles, Star, Terminal, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { projects, type Project } from "@/data/portfolio";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
 
@@ -32,6 +32,30 @@ const categories = [
 export function AllProjectsModal({ isOpen, onClose, onSelectProject }: AllProjectsModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCat, setActiveCat] = useState("all");
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      const handleKeyScrollBlock = (e: KeyboardEvent) => {
+        const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "PageUp", "PageDown"];
+        if (keys.includes(e.key) || keys.includes(e.code)) {
+          const target = e.target as HTMLElement;
+          const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+          if (!isInput) {
+            e.preventDefault();
+          }
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyScrollBlock, { capture: true });
+      return () => {
+        document.body.style.overflow = "";
+        window.removeEventListener("keydown", handleKeyScrollBlock, { capture: true });
+      };
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

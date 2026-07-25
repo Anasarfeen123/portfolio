@@ -16,12 +16,21 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      const handleKeyScrollBlock = (e: KeyboardEvent) => {
+        const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "PageUp", "PageDown"];
+        if (keys.includes(e.key) || keys.includes(e.code)) {
+          e.preventDefault();
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyScrollBlock, { capture: true });
+      return () => {
+        document.body.style.overflow = "";
+        window.removeEventListener("keydown", handleKeyScrollBlock, { capture: true });
+      };
     } else {
       document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [isOpen]);
 
   if (!isOpen) return null;

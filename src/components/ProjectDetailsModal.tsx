@@ -26,12 +26,21 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
   useEffect(() => {
     if (project) {
       document.body.style.overflow = "hidden";
+      const handleKeyScrollBlock = (e: KeyboardEvent) => {
+        const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "PageUp", "PageDown"];
+        if (keys.includes(e.key) || keys.includes(e.code)) {
+          e.preventDefault();
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyScrollBlock, { capture: true });
+      return () => {
+        document.body.style.overflow = "";
+        window.removeEventListener("keydown", handleKeyScrollBlock, { capture: true });
+      };
     } else {
       document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [project]);
 
   if (!project) return null;
