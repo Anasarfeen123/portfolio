@@ -259,7 +259,6 @@ function FallbackScene() {
   );
 }
 
-// Developer HUD Telemetry Overlay Ticks
 function CanvasHUDTelemetry() {
   return (
     <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-4 font-mono text-[10px] text-[#38edf8]/40 select-none">
@@ -347,11 +346,11 @@ function SolarSystemAtlas({ isDark }: { isDark: boolean }) {
       {/* 3. VENUS */}
       <PlanetMesh ref={venusRef} name="venus" radius={0.28} distance={2.8} />
 
-      {/* 4. EARTH & MOON & SATELLITES */}
+      {/* 4. EARTH & MOON & DEV SATELLITES (CRT Computer & Laptop) */}
       <EarthSystem ref={earthRef} distance={4.2} />
 
-      {/* 5. MARS */}
-      <PlanetMesh ref={marsRef} name="mars" radius={0.38} distance={5.6} />
+      {/* 5. MARS & MICROCONTROLLER SATELLITE */}
+      <MarsSystem ref={marsRef} distance={5.6} />
 
       {/* 6. 3D ASTEROID BELT */}
       <AsteroidBelt radius={6.5} count={60} />
@@ -368,7 +367,6 @@ function SolarSystemAtlas({ isDark }: { isDark: boolean }) {
   );
 }
 
-// --- Data Packet Beams Between Planets ---
 function DataStreamLine({ from, to }: { from: [number, number, number]; to: [number, number, number] }) {
   const packetRef = useRef<THREE.Mesh>(null);
 
@@ -446,71 +444,131 @@ const PlanetMesh = ReactForwardGroup(function PlanetMesh(
   );
 });
 
+// --- EARTH WITH RETRO CRT COMPUTER & SATELLITES ---
 const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { distance: number }, ref) {
   const textures = useMemo(() => getSolarTextures(), []);
   const cloudRef = useRef<THREE.Mesh>(null);
-  const sat1Ref = useRef<THREE.Group>(null);
-  const sat2Ref = useRef<THREE.Group>(null);
+  const crtRef = useRef<THREE.Group>(null);
+  const laptopRef = useRef<THREE.Group>(null);
 
   useFrame((_, delta) => {
     if (cloudRef.current) cloudRef.current.rotation.y += delta * 0.12;
-    if (sat1Ref.current) sat1Ref.current.rotation.y += delta * 0.8;
-    if (sat2Ref.current) sat2Ref.current.rotation.z += delta * 0.6;
+    if (crtRef.current) crtRef.current.rotation.y += delta * 0.7;
+    if (laptopRef.current) laptopRef.current.rotation.z += delta * 0.5;
   });
 
   return (
     <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
       <group ref={ref}>
+        {/* Earth Globe */}
         <mesh>
           <sphereGeometry args={[0.58, 32, 32]} />
           <meshStandardMaterial map={textures.earth ?? undefined} roughness={0.55} metalness={0.15} />
         </mesh>
 
+        {/* Earth Clouds */}
         <mesh ref={cloudRef}>
           <sphereGeometry args={[0.595, 32, 32]} />
           <meshStandardMaterial map={textures.cloud ?? undefined} transparent opacity={0.45} depthWrite={false} />
         </mesh>
 
+        {/* Chennai Origin Beacon */}
         <mesh position={latLonToVector(13.08, 80.27, 0.59)}>
           <sphereGeometry args={[0.03, 8, 8]} />
           <meshBasicMaterial color="#ffb703" />
         </mesh>
 
-        <group ref={sat1Ref}>
-          <group position={[0.82, 0.15, 0]}>
+        {/* 💻 ORBITING 3D RETRO CRT COMPUTER MONITOR */}
+        <group ref={crtRef}>
+          <group position={[0.88, 0.2, 0]}>
+            {/* Monitor Chassis */}
             <mesh>
-              <boxGeometry args={[0.04, 0.04, 0.06]} />
-              <meshStandardMaterial color="#38edf8" metalness={0.8} />
+              <boxGeometry args={[0.1, 0.08, 0.08]} />
+              <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
             </mesh>
-            <mesh position={[0.08, 0, 0]}>
-              <boxGeometry args={[0.1, 0.02, 0.005]} />
-              <meshBasicMaterial color="#1e293b" />
-            </mesh>
-            <mesh position={[-0.08, 0, 0]}>
-              <boxGeometry args={[0.1, 0.02, 0.005]} />
-              <meshBasicMaterial color="#1e293b" />
-            </mesh>
-            <mesh position={[0, 0.03, 0]}>
-              <sphereGeometry args={[0.015, 6, 6]} />
+            {/* Glowing Green Terminal Screen */}
+            <mesh position={[0, 0, 0.041]}>
+              <planeGeometry args={[0.08, 0.06]} />
               <meshBasicMaterial color="#38edf8" />
             </mesh>
-          </group>
-        </group>
-
-        <group ref={sat2Ref}>
-          <group position={[0, 0.88, 0]}>
-            <mesh>
-              <boxGeometry args={[0.03, 0.05, 0.03]} />
-              <meshStandardMaterial color="#ffb703" metalness={0.9} />
+            {/* Base Stand */}
+            <mesh position={[0, -0.05, 0]}>
+              <boxGeometry args={[0.05, 0.02, 0.05]} />
+              <meshStandardMaterial color="#94a3b8" />
             </mesh>
           </group>
         </group>
 
-        <group position={[1.1, 0.25, 0]}>
+        {/* 💻 ORBITING 3D LAPTOP SATELLITE */}
+        <group ref={laptopRef}>
+          <group position={[-0.85, -0.2, 0]}>
+            {/* Base Keyboard */}
+            <mesh>
+              <boxGeometry args={[0.09, 0.01, 0.07]} />
+              <meshStandardMaterial color="#334155" metalness={0.8} />
+            </mesh>
+            {/* Screen Lid */}
+            <mesh position={[0, 0.04, -0.03]} rotation-x={-0.3}>
+              <boxGeometry args={[0.09, 0.07, 0.008]} />
+              <meshStandardMaterial color="#0f172a" />
+            </mesh>
+            {/* Glowing Code Screen */}
+            <mesh position={[0, 0.04, -0.025]} rotation-x={-0.3}>
+              <planeGeometry args={[0.08, 0.055]} />
+              <meshBasicMaterial color="#ffb703" />
+            </mesh>
+          </group>
+        </group>
+
+        {/* Moon */}
+        <group position={[1.15, 0.25, 0]}>
           <mesh>
             <sphereGeometry args={[0.14, 16, 16]} />
             <meshStandardMaterial color="#d1d5db" roughness={0.8} />
           </mesh>
+        </group>
+      </group>
+    </group>
+  );
+});
+
+// --- MARS SYSTEM WITH CIRCUIT BOARD SATELLITE ---
+const MarsSystem = ReactForwardGroup(function MarsSystem({ distance }: { distance: number }, ref) {
+  const textures = useMemo(() => getSolarTextures(), []);
+  const pcbRef = useRef<THREE.Group>(null);
+
+  useFrame((_, delta) => {
+    if (pcbRef.current) pcbRef.current.rotation.y += delta * 0.8;
+  });
+
+  return (
+    <group position={[Math.cos(distance * 0.8) * distance, 0, Math.sin(distance * 0.8) * distance]}>
+      <group ref={ref}>
+        {/* Mars Sphere */}
+        <mesh>
+          <sphereGeometry args={[0.38, 24, 24]} />
+          <meshStandardMaterial map={textures.mars ?? undefined} roughness={0.8} />
+        </mesh>
+
+        {/* 🤖 ORBITING 3D MICROCONTROLLER / CIRCUIT BOARD */}
+        <group ref={pcbRef}>
+          <group position={[0.65, 0.15, 0]}>
+            {/* Green PCB Board */}
+            <mesh>
+              <boxGeometry args={[0.12, 0.015, 0.08]} />
+              <meshStandardMaterial color="#1b4332" roughness={0.4} />
+            </mesh>
+            {/* Microchip Processor */}
+            <mesh position={[0, 0.01, 0]}>
+              <boxGeometry args={[0.04, 0.01, 0.04]} />
+              <meshStandardMaterial color="#0f172a" metalness={0.9} />
+            </mesh>
+            {/* Glowing LED Pin */}
+            <mesh position={[0.04, 0.012, 0.02]}>
+              <sphereGeometry args={[0.012, 6, 6]} />
+              <meshBasicMaterial color="#ef6f6c" />
+            </mesh>
+          </group>
         </group>
       </group>
     </group>
