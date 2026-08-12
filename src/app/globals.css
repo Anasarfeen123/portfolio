@@ -46,6 +46,21 @@ html {
   color-scheme: dark;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 body {
   min-height: 100vh;
   margin: 0;
@@ -846,6 +861,22 @@ a {
   color: var(--muted);
   text-align: center;
   font-size: 13px;
+}
+
+.rss-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.rss-link:hover {
+  color: var(--accent);
 }
 
 /* Blog Index */

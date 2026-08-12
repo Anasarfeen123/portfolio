@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowDown, ArrowRight, Check, Code2, FileText, Mail, Moon, Network, ScrollText, Send, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
@@ -86,6 +86,22 @@ const featuredProjects = projects.filter((p) => p.featured);
 export function ScrollExperience() {
   const rootRef = useRef<HTMLElement | null>(null);
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
+  // Section reveal animation — skips the 3D tilt/scale entrance and just fades in
+  // for anyone with prefers-reduced-motion set.
+  const reveal = prefersReducedMotion
+    ? {
+        initial: { opacity: 0 },
+        whileInView: { opacity: 1 },
+        viewport: { once: true },
+        transition: { duration: 0.2 },
+      }
+    : {
+        initial: { opacity: 0, y: 80, scale: 0.92, rotateX: 7 },
+        whileInView: { opacity: 1, y: 0, scale: 1, rotateX: 0 },
+        viewport: { once: false, amount: 0.15 },
+        transition: { duration: 0.75, ease: [0.215, 0.61, 0.355, 1] as const },
+      };
   const [booting, setBooting] = useState(true);
   const [theme, toggleThemeRaw] = useTheme();
   const [soundOn, setSoundOn] = useState(false);
@@ -96,6 +112,7 @@ export function ScrollExperience() {
   // Contact Form State
   const [contactEmail, setContactEmail] = useState("");
   const [contactMsg, setContactMsg] = useState("");
+  const [contactStatus, setContactStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -121,18 +138,28 @@ export function ScrollExperience() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contactEmail || !contactMsg) return;
-    
-    const mailtoUrl = `mailto:${profile.email}?subject=${encodeURIComponent(
-      `Portfolio Inquiry from ${contactEmail}`
-    )}&body=${encodeURIComponent(`Sender Email: ${contactEmail}\n\nMessage:\n${contactMsg}`)}`;
-    
-    window.location.href = mailtoUrl;
-    triggerToast(`Opening mail client to send to ${profile.email}!`);
-    setContactEmail("");
-    setContactMsg("");
+    if (!contactEmail || !contactMsg || contactStatus === "sending") return;
+
+    setContactStatus("sending");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: contactEmail, message: contactMsg }),
+      });
+
+      if (!res.ok) throw new Error("send failed");
+
+      setContactStatus("sent");
+      triggerToast(`Message sent — I'll get back to you at ${contactEmail}.`);
+      setContactEmail("");
+      setContactMsg("");
+    } catch {
+      setContactStatus("error");
+      triggerToast(`Couldn't send that — email me directly at ${profile.email} instead.`);
+    }
   };
 
   const handleSkillClick = (moduleName: string) => {
@@ -157,16 +184,20 @@ export function ScrollExperience() {
 
     gsap.registerPlugin(ScrollTrigger);
 
-    const lenis = new Lenis({
-      duration: 0.8,
-      lerp: 0.1,
-      smoothWheel: true,
-    });
+    // Skip Lenis's smoothed/lerped scroll entirely for reduced-motion — native
+    // instant scroll instead. The progress rail still works via ScrollTrigger.
+    const lenis = prefersReducedMotion
+      ? null
+      : new Lenis({
+          duration: 0.8,
+          lerp: 0.1,
+          smoothWheel: true,
+        });
 
-    lenis.on("scroll", ScrollTrigger.update);
+    lenis?.on("scroll", ScrollTrigger.update);
 
     const updateLenis = (time: number) => {
-      lenis.raf(time * 1000);
+      lenis?.raf(time * 1000);
     };
 
     gsap.ticker.add(updateLenis);
@@ -176,7 +207,7 @@ export function ScrollExperience() {
         trigger: rootRef.current,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.5,
+        scrub: prefersReducedMotion ? false : 0.5,
         onUpdate: (self) => {
           document.documentElement.style.setProperty("--stage-progress", self.progress.toFixed(4));
         },
@@ -186,9 +217,9 @@ export function ScrollExperience() {
     return () => {
       ctx.revert();
       gsap.ticker.remove(updateLenis);
-      lenis.destroy();
+      lenis?.destroy();
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   return (
     <main ref={rootRef} className="journey">
@@ -308,10 +339,7 @@ export function ScrollExperience() {
         {/* Section 1: Hero & Profile (Centered Main Card) */}
         <section className="chapter-section is-center">
           <motion.div
-            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            viewport={{ once: false, amount: 0.15 }}
-            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            {...reveal}
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
@@ -374,10 +402,7 @@ export function ScrollExperience() {
         {/* Section 2: Origin & Education (Right) */}
         <section className="chapter-section is-right" id="origin">
           <motion.div
-            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            viewport={{ once: false, amount: 0.15 }}
-            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            {...reveal}
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
@@ -405,10 +430,7 @@ export function ScrollExperience() {
         {/* Section 3: Skill Ecosystem (Left) */}
         <section className="chapter-section is-left" id="skills">
           <motion.div
-            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            viewport={{ once: false, amount: 0.15 }}
-            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            {...reveal}
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
@@ -443,10 +465,7 @@ export function ScrollExperience() {
         {/* Section 4: Projects Showcase (3D Revolving Cylindrical Carousel) */}
         <section className="chapter-section is-right" id="projects">
           <motion.div
-            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            viewport={{ once: false, amount: 0.15 }}
-            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            {...reveal}
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
@@ -479,10 +498,7 @@ export function ScrollExperience() {
         {/* Section 5: Experience & Leadership (Left) */}
         <section className="chapter-section is-left" id="experience">
           <motion.div
-            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            viewport={{ once: false, amount: 0.15 }}
-            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            {...reveal}
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
@@ -517,10 +533,7 @@ export function ScrollExperience() {
         {/* Section 6: Contact Form (Right) */}
         <section className="chapter-section is-right" id="contact">
           <motion.div
-            initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            viewport={{ once: false, amount: 0.15 }}
-            transition={{ duration: 0.75, ease: [0.215, 0.61, 0.355, 1] }}
+            {...reveal}
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
@@ -553,10 +566,20 @@ export function ScrollExperience() {
               </div>
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                disabled={contactStatus === "sending"}
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <Send size={13} /> Send
+                <Send size={13} /> {contactStatus === "sending" ? "Sending…" : "Send"}
               </button>
+              {contactStatus === "error" && (
+                <p className="text-xs text-[var(--muted)]">
+                  Couldn&apos;t send that — email me directly at{" "}
+                  <a href={`mailto:${profile.email}`} className="text-[var(--accent)] underline">
+                    {profile.email}
+                  </a>{" "}
+                  instead.
+                </p>
+              )}
             </form>
 
             <div className="contact-vector">

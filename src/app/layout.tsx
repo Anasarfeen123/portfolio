@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
       "AI/ML Co-Lead at Microsoft Innovations Club, VIT Chennai — reinforcement learning, LLM agents, computer vision, and full-stack platforms used by real students.",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Anas Arfeen | AI Engineer",
     description:
       "AI/ML Co-Lead at Microsoft Innovations Club, VIT Chennai — reinforcement learning, LLM agents, computer vision, and full-stack platforms used by real students.",
@@ -47,7 +48,10 @@ export default function RootLayout({
         {/* Runs before hydration so a stored theme preference applies with zero flash on any route. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

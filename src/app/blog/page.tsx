@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Rss } from "lucide-react";
 import { blogPosts } from "@/data/blog";
 import { SiteHeader } from "@/components/SiteHeader";
 
@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Blog",
   description:
     "Notes from building reinforcement-learning robotics, LLM-driven agents, and full-stack platforms — the parts that don't fit in a README.",
+  alternates: {
+    types: { "application/rss+xml": "/blog/rss.xml" },
+  },
 };
 
 function formatDate(iso: string) {
@@ -32,6 +35,9 @@ export default function BlogIndexPage() {
           <p className="site-hero-copy">
             The design decisions, the dead ends, and the stuff that doesn&apos;t fit in a README.
           </p>
+          <a href="/blog/rss.xml" className="rss-link">
+            <Rss size={13} /> RSS feed
+          </a>
         </div>
 
         <div className="blog-list">
