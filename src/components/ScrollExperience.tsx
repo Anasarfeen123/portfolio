@@ -1,19 +1,20 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowDown, ArrowRight, Check, Code2, ExternalLink, FileText, GitFork, Layers, Mail, MapPin, Moon, Network, ScrollText, Send, Sparkles, Star, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Code2, FileText, Layers, Mail, MapPin, Moon, Network, ScrollText, Send, Sparkles, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { experience, journey, profile, projects, skillClusters, type Project } from "@/data/portfolio";
-import { AllProjectsModal } from "@/components/AllProjectsModal";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
 import { Revolving3DCarousel } from "@/components/Revolving3DCarousel";
 import { TerminalModal } from "@/components/TerminalModal";
-import { useGitHubRepo } from "@/hooks/useGitHubRepo";
+import { useTheme } from "@/hooks/useTheme";
 import { playChimeSound, playClickSound, setSoundEnabled } from "@/lib/audio";
 
 function GithubIcon({ size = 16 }: { size?: number }) {
@@ -79,20 +80,18 @@ const SceneCanvas = dynamic(() => import("@/components/SceneCanvas").then((mod) 
   loading: () => <div className="scene-canvas" />,
 });
 
-// Top 3 Featured Projects
-const featuredProjectIds = ["rover", "amazecc", "ascii_cam"];
-const top3Projects = projects.filter((p) => featuredProjectIds.includes(p.id));
+// Featured Projects for the homepage 3D carousel — see `featured: true` in data/portfolio.ts
+const featuredProjects = projects.filter((p) => p.featured);
 
 export function ScrollExperience() {
   const rootRef = useRef<HTMLElement | null>(null);
+  const router = useRouter();
   const [booting, setBooting] = useState(true);
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, toggleThemeRaw] = useTheme();
   const [soundOn, setSoundOn] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isResumeOpen, setIsResumeOpen] = useState(false);
-  const [isAllProjectsOpen, setIsAllProjectsOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [techFilter, setTechFilter] = useState<string | null>(null);
 
   // Contact Form State
   const [contactEmail, setContactEmail] = useState("");
@@ -100,18 +99,13 @@ export function ScrollExperience() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", "dark");
     const timeout = window.setTimeout(() => setBooting(false), 1200);
     return () => window.clearTimeout(timeout);
   }, []);
 
   const toggleTheme = () => {
     playClickSound();
-    setTheme((prev) => {
-      const next = prev === "light" ? "dark" : "light";
-      document.documentElement.setAttribute("data-theme", next);
-      return next;
-    });
+    toggleThemeRaw();
   };
 
   const toggleSound = () => {
@@ -143,8 +137,7 @@ export function ScrollExperience() {
 
   const handleSkillClick = (moduleName: string) => {
     playClickSound();
-    setTechFilter(moduleName);
-    setIsAllProjectsOpen(true);
+    router.push(`/projects?tech=${encodeURIComponent(moduleName)}`);
   };
 
   useEffect(() => {
@@ -228,6 +221,10 @@ export function ScrollExperience() {
         onClose={() => setIsTerminalOpen(false)}
         onToggleTheme={toggleTheme}
         onOpenResume={() => setIsResumeOpen(true)}
+        onNavigate={(path) => {
+          setIsTerminalOpen(false);
+          router.push(path);
+        }}
       />
 
       {/* Embedded Resume Viewer Modal */}
@@ -240,16 +237,6 @@ export function ScrollExperience() {
       <ProjectDetailsModal
         project={selectedProject}
         onClose={() => setSelectedProject(null)}
-      />
-
-      {/* All Projects Catalog Modal */}
-      <AllProjectsModal
-        isOpen={isAllProjectsOpen}
-        onClose={() => setIsAllProjectsOpen(false)}
-        onSelectProject={(p) => {
-          playClickSound();
-          setSelectedProject(p);
-        }}
       />
 
       {/* HUD Navigation Header */}
@@ -290,9 +277,12 @@ export function ScrollExperience() {
           <a className="hud-link hud-hide-mobile" href="#skills">
             <Network size={13} /> Skills
           </a>
-          <a className="hud-link hud-hide-mobile" href="#projects">
+          <Link className="hud-link hud-hide-mobile" href="/projects" onClick={() => playClickSound()}>
             <Code2 size={13} /> Projects
-          </a>
+          </Link>
+          <Link className="hud-link hud-hide-mobile" href="/blog" onClick={() => playClickSound()}>
+            <ScrollText size={13} /> Blog
+          </Link>
           <button
             onClick={() => {
               playClickSound();
@@ -476,21 +466,19 @@ export function ScrollExperience() {
                 <h2 className="chapter-title">Featured Systems Orbit.</h2>
               </div>
 
-              <button
-                onClick={() => {
-                  playClickSound();
-                  setIsAllProjectsOpen(true);
-                }}
+              <Link
+                href="/projects"
+                onClick={() => playClickSound()}
                 className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2 font-mono text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white transition-all shadow-md shrink-0 cursor-pointer"
               >
-                <Layers size={14} /> View All 11 Projects Catalog <ArrowRight size={12} />
-              </button>
+                <Layers size={14} /> View All {projects.length} Projects Catalog <ArrowRight size={12} />
+              </Link>
             </div>
 
             {/* 3D Revolving Cylindrical Carousel */}
             <div className="mt-4">
               <Revolving3DCarousel
-                projects={top3Projects}
+                projects={featuredProjects}
                 onOpenDetails={(p) => {
                   playClickSound();
                   setSelectedProject(p);
@@ -500,15 +488,13 @@ export function ScrollExperience() {
 
             {/* Explore All Projects CTA Button */}
             <div className="mt-6 text-center border-t border-[var(--line)] pt-6">
-              <button
-                onClick={() => {
-                  playClickSound();
-                  setIsAllProjectsOpen(true);
-                }}
+              <Link
+                href="/projects"
+                onClick={() => playClickSound()}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-6 py-3 font-mono text-xs font-bold text-white shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer"
               >
-                <Layers size={15} /> Explore Full Catalog of All 11 Projects <ArrowRight size={14} />
-              </button>
+                <Layers size={15} /> Explore Full Catalog of All {projects.length} Projects <ArrowRight size={14} />
+              </Link>
             </div>
           </motion.div>
         </section>
@@ -619,6 +605,9 @@ export function ScrollExperience() {
               <a href={profile.linkedin} target="_blank" rel="noreferrer">
                 <LinkedinIcon size={16} /> LinkedIn
               </a>
+              <Link href="/blog" onClick={() => playClickSound()}>
+                <ScrollText size={16} /> Read the Blog
+              </Link>
             </div>
           </motion.div>
         </section>

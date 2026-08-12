@@ -16,6 +16,7 @@ interface TerminalModalProps {
   onClose: () => void;
   onToggleTheme: () => void;
   onOpenResume: () => void;
+  onNavigate: (path: string) => void;
 }
 
 const availableCommands = [
@@ -35,6 +36,8 @@ const availableCommands = [
   "uptime",
   "ping",
   "projects",
+  "catalog",
+  "blog",
   "skills",
   "experience",
   "snake",
@@ -677,7 +680,7 @@ function TerminalGuessGame({ onQuit }: { onQuit: () => void }) {
   );
 }
 
-export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: TerminalModalProps) {
+export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, onNavigate }: TerminalModalProps) {
   const [input, setInput] = useState("");
   const [currentDir, setCurrentDir] = useState<string>("/home/anas");
   const [activeGame, setActiveGame] = useState<"snake" | "pong" | "invaders" | "guess" | null>(null);
@@ -763,7 +766,9 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
   cd <dir>    - Change working directory (e.g. cd projects, cd ..)
   cat <file>  - Read file (e.g. cat bio.txt, cat stack.txt)
   echo <msg>  - Print message string to terminal
-  projects    - List all 11 flagship project repositories
+  projects    - List all ${projects.length} project repositories
+  catalog     - Open the full /projects catalog page
+  blog        - Open the /blog field-notes page
   skills      - Machine learning, systems & web tech ecosystem
   experience  - Leadership positions & experience nodes
   contact     - Email, GitHub & LinkedIn handles
@@ -1019,6 +1024,16 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume }: 
       case "resume":
         onOpenResume();
         responses.push({ id: Math.random().toString(), type: "system", text: "Opening Resume modal..." });
+        break;
+
+      case "catalog":
+        onNavigate("/projects");
+        responses.push({ id: Math.random().toString(), type: "system", text: "Navigating to /projects..." });
+        break;
+
+      case "blog":
+        onNavigate("/blog");
+        responses.push({ id: Math.random().toString(), type: "system", text: "Navigating to /blog..." });
         break;
 
       case "matrix":

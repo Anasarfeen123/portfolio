@@ -172,6 +172,17 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
                 Launch Live Demo <ExternalLink size={12} />
               </a>
             )}
+            {project.links?.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-[#1e293b] bg-[#0d1527] px-5 py-2 font-mono text-xs font-semibold text-[#cbd5e1] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
+              >
+                {link.label} <ExternalLink size={12} />
+              </a>
+            ))}
           </div>
         </motion.div>
       </div>
