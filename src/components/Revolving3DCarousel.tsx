@@ -127,13 +127,13 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
                 ease: [0.25, 1, 0.5, 1],
               }}
               style={{ zIndex }}
-              className={`absolute top-0 w-[min(480px,86vw)] h-full cursor-pointer rounded-2xl border p-5 backdrop-blur-xl shadow-xl transition-colors flex flex-col justify-between ${
+              className={`absolute top-0 w-[min(480px,86vw)] h-full cursor-pointer rounded-2xl border p-5 backdrop-blur-lg shadow-xl transition-colors flex flex-col justify-between ${
                 isActive
                   ? "border-[var(--accent)] bg-[var(--card-hover)] shadow-[0_0_30px_rgba(0,230,168,0.18)]"
                   : "border-[var(--line)] bg-[var(--card-bg)] hover:border-[var(--line-strong)]"
               }`}
             >
-              <CarouselCardContent project={project} index={idx} isActive={isActive} onOpenDetails={onOpenDetails} />
+              <CarouselCardContent project={project} onOpenDetails={onOpenDetails} />
             </motion.div>
           );
         })}
@@ -176,13 +176,9 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
 
 function CarouselCardContent({
   project,
-  index,
-  isActive,
   onOpenDetails,
 }: {
   project: Project;
-  index: number;
-  isActive: boolean;
   onOpenDetails: (p: Project) => void;
 }) {
   const ghStats = useGitHubRepo(project.repoName);
@@ -192,7 +188,7 @@ function CarouselCardContent({
       <div>
         <div className="flex items-center justify-between gap-2">
           <span className="font-mono text-xs font-bold text-[var(--accent)] tracking-wider uppercase">
-            3D REVOLVER // 0{index + 1}
+            {project.category}
           </span>
 
           {!ghStats.loading && (

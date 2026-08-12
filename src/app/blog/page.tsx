@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ScrollText } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { blogPosts } from "@/data/blog";
 import { SiteHeader } from "@/components/SiteHeader";
 
@@ -27,13 +27,10 @@ export default function BlogIndexPage() {
 
       <div className="site-page-inner">
         <div className="site-hero">
-          <div className="kicker">
-            <ScrollText size={12} /> Field Notes
-          </div>
-          <h1 className="site-hero-title">Writing about what actually happened.</h1>
+          <div className="kicker">Blog</div>
+          <h1 className="site-hero-title">Notes on the projects above.</h1>
           <p className="site-hero-copy">
-            Longer-form notes on the projects above — the design decisions, the dead ends, and the parts that don&apos;t
-            fit in a README.
+            The design decisions, the dead ends, and the stuff that doesn&apos;t fit in a README.
           </p>
         </div>
 

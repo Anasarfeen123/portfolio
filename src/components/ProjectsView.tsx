@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Layers, Search, Sparkles } from "lucide-react";
+import { Layers, Search } from "lucide-react";
 import { projectCategories, projects, type Project, type ProjectCategory } from "@/data/portfolio";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
@@ -44,29 +44,12 @@ export function ProjectsView() {
 
       <div className="site-page-inner">
         <div className="site-hero">
-          <div className="kicker">
-            <Sparkles size={12} /> Full Catalog
-          </div>
-          <h1 className="site-hero-title">{projects.length} real, shipped systems.</h1>
+          <div className="kicker">Projects</div>
+          <h1 className="site-hero-title">Everything I&apos;ve built, {projects.length} repos deep.</h1>
           <p className="site-hero-copy">
-            Every project here is a real repository under active or completed development — reinforcement-learning
-            robotics, LLM-driven agents, computer vision, and full-stack platforms with actual users. No filler.
+            Some of these are polished, some are weekend builds I never went back to clean up. All of them are real
+            and I wrote all the code. Search or filter by category below.
           </p>
-
-          <div className="site-hero-stats">
-            {Array.from(counts.entries()).map(([cat, count]) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory((prev) => (prev === cat ? "all" : cat))}
-                className={`stat-badge stat-badge-button ${activeCategory === cat ? "stat-badge-active" : ""}`}
-              >
-                <div>
-                  <div className="stat-badge-value">{count}</div>
-                  <div className="stat-badge-label">{cat}</div>
-                </div>
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="filter-bar">

@@ -28,7 +28,7 @@ export function SiteHeader({ active }: SiteHeaderProps) {
     <header className="hud">
       <Link className="hud-mark" href="/" aria-label="Anas Arfeen portfolio home">
         <span className="hud-status-dot" />
-        ANAS_OS / EVOLUTION
+        Anas Arfeen
       </Link>
       <nav className="hud-actions" aria-label="Primary links">
         <Link href="/" className="hud-link hud-hide-mobile">

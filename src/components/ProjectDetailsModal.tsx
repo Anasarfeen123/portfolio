@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ExternalLink, GitFork, Sparkles, Star, X } from "lucide-react";
+import { ExternalLink, GitFork, Star, X } from "lucide-react";
 import { useEffect } from "react";
 import { type Project } from "@/data/portfolio";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
@@ -65,7 +65,7 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
           <div className="flex items-start justify-between gap-4 border-b border-[#1e293b] pb-4">
             <div>
               <div className="flex items-center gap-2 font-mono text-xs text-[var(--accent)] font-semibold">
-                <Sparkles size={13} /> {project.repoName}
+                <GithubIcon size={13} /> {project.repoName}
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-white mt-1">{project.title}</h2>
             </div>
@@ -121,7 +121,7 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
 
           {/* Architecture Pipeline */}
           <div className="mt-4">
-            <h3 className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] font-semibold">Engineering Pipeline & Architecture</h3>
+            <h3 className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] font-semibold">How It's Built</h3>
             <div className="mt-2 space-y-2">
               {project.architecture.map((line, idx) => (
                 <div key={idx} className="flex items-start gap-2.5 rounded-lg border border-[#1e293b] bg-[#0d1527] p-3 text-xs font-mono text-[#e2e8f0]">
@@ -134,7 +134,7 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
 
           {/* Impact */}
           <div className="mt-4 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/10 p-4">
-            <h3 className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] font-semibold">Impact & Results</h3>
+            <h3 className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] font-semibold">Why It Matters</h3>
             <p className="mt-1 text-xs text-white font-medium">{project.impact}</p>
           </div>
 
@@ -143,7 +143,7 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
             <h3 className="font-mono text-xs uppercase tracking-wider text-[#94a3b8] font-semibold mb-2">Technologies Used</h3>
             <div className="flex flex-wrap gap-1.5">
               {project.technologies.map((tech) => (
-                <span key={tech} className="rounded-full border border-[#1e293b] bg-[#1e293b] px-3 py-1 font-mono text-xs text-[#cbd5e1]">
+                <span key={tech} className="rounded-md border border-[#1e293b] bg-[#1e293b] px-3 py-1 font-mono text-xs text-[#cbd5e1]">
                   {tech}
                 </span>
               ))}

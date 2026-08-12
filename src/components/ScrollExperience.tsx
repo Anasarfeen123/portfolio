@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowDown, ArrowRight, Check, Code2, FileText, Layers, Mail, MapPin, Moon, Network, ScrollText, Send, Sparkles, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Code2, FileText, Mail, Moon, Network, ScrollText, Send, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -243,7 +243,7 @@ export function ScrollExperience() {
       <header className="hud">
         <a className="hud-mark" href="#top" aria-label="Anas Arfeen portfolio home">
           <span className="hud-status-dot" />
-          ANAS_OS / EVOLUTION
+          Anas Arfeen
         </a>
         <nav className="hud-actions" aria-label="Primary links">
           <button
@@ -327,9 +327,7 @@ export function ScrollExperience() {
               </div>
 
               <div className="flex-1">
-                <div className="kicker">
-                  <Sparkles size={12} /> AI Engineer & Systems Developer
-                </div>
+                <div className="kicker">AI Engineer & Systems Developer</div>
                 <h1 className="mega-title">
                   {profile.name.split(" ")[0]}
                   <span>{profile.name.split(" ")[1]}</span>
@@ -343,10 +341,8 @@ export function ScrollExperience() {
             <div className="hero-stats">
               {profile.highlights.map((h) => (
                 <div className="stat-badge" key={h.label}>
-                  <div>
-                    <div className="stat-badge-label">{h.label}</div>
-                    <div className="stat-badge-value">{h.value}</div>
-                  </div>
+                  <div className="stat-badge-label">{h.label}</div>
+                  <div className="stat-badge-value">{h.value}</div>
                 </div>
               ))}
             </div>
@@ -385,12 +381,10 @@ export function ScrollExperience() {
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
-            <div className="kicker">
-              <MapPin size={12} /> Origin Trace
-            </div>
-            <h2 className="chapter-title">From systems curiosity to intelligent agents.</h2>
+            <div className="kicker">Background</div>
+            <h2 className="chapter-title">How I got here.</h2>
             <p className="chapter-copy">
-              {profile.education}. The path moves from Linux systems and core data structures to dynamic reinforcement learning and AI communities.
+              {profile.education}. Started with Linux and the C++/DSA basics, then drifted into reinforcement learning and the AI/ML club scene — that&apos;s the short version of the timeline below.
             </p>
 
             <div className="timeline-stream">
@@ -418,12 +412,10 @@ export function ScrollExperience() {
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
-            <div className="kicker">
-              <Network size={12} /> Tech Ecosystem
-            </div>
-            <h2 className="chapter-title">Skills as a connected neural map.</h2>
+            <div className="kicker">Skills</div>
+            <h2 className="chapter-title">What I actually use.</h2>
             <p className="chapter-copy">
-              Organized by reinforcing systems: machine learning models, low-level systems, web engines, research habits, and developer tools. <span className="text-[var(--accent)] font-semibold">(Click any skill pill to filter matching projects!)</span>
+              Roughly grouped into ML/RL, full-stack, systems, and general tooling. Click a pill to see which projects used it.
             </p>
 
             <div className="skill-system">
@@ -458,22 +450,8 @@ export function ScrollExperience() {
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <div className="kicker">
-                  <Terminal size={12} /> 3D Revolving Flagships
-                </div>
-                <h2 className="chapter-title">Featured Systems Orbit.</h2>
-              </div>
-
-              <Link
-                href="/projects"
-                onClick={() => playClickSound()}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2 font-mono text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white transition-all shadow-md shrink-0 cursor-pointer"
-              >
-                <Layers size={14} /> View All {projects.length} Projects Catalog <ArrowRight size={12} />
-              </Link>
-            </div>
+            <h2 className="chapter-title">A few things I&apos;ve built.</h2>
+            <p className="chapter-copy">A handful of the projects I&apos;m most likely to talk your ear off about.</p>
 
             {/* 3D Revolving Cylindrical Carousel */}
             <div className="mt-4">
@@ -486,14 +464,13 @@ export function ScrollExperience() {
               />
             </div>
 
-            {/* Explore All Projects CTA Button */}
             <div className="mt-6 text-center border-t border-[var(--line)] pt-6">
               <Link
                 href="/projects"
                 onClick={() => playClickSound()}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-6 py-3 font-mono text-xs font-bold text-white shadow-xl hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full border border-[var(--line-strong)] px-6 py-3 font-mono text-xs font-bold text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] active:scale-95 transition-all cursor-pointer"
               >
-                <Layers size={15} /> Explore Full Catalog of All {projects.length} Projects <ArrowRight size={14} />
+                See all {projects.length} projects <ArrowRight size={14} />
               </Link>
             </div>
           </motion.div>
@@ -509,10 +486,8 @@ export function ScrollExperience() {
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
-            <div className="kicker">
-              <ScrollText size={12} /> Leadership & Community Impact
-            </div>
-            <h2 className="chapter-title">Clubs and ecosystem leadership.</h2>
+            <div className="kicker">Experience</div>
+            <h2 className="chapter-title">Clubs & leadership.</h2>
 
             <div className="mission-log">
               {experience.map((item) => (
@@ -539,7 +514,7 @@ export function ScrollExperience() {
           </motion.div>
         </section>
 
-        {/* Section 6: Convergence & Contact Form (Right) */}
+        {/* Section 6: Contact Form (Right) */}
         <section className="chapter-section is-right" id="contact">
           <motion.div
             initial={{ opacity: 0, y: 80, scale: 0.92, rotateX: 7 }}
@@ -549,21 +524,18 @@ export function ScrollExperience() {
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
-            <div className="kicker">
-              <Sparkles size={12} /> Convergence
-            </div>
-            <h2 className="chapter-title">Ready to build the next system.</h2>
+            <div className="kicker">Contact</div>
+            <h2 className="chapter-title">Get in touch.</h2>
             <p className="chapter-copy">
-              Operating from Chennai, India. Let&apos;s collaborate on intelligent agents, machine learning applications, or developer infrastructure.
+              Based in Chennai. Happy to talk about a project, a role, or just RL/CV/systems stuff in general.
             </p>
 
-            {/* Interactive Contact Dispatcher Form */}
             <form onSubmit={handleContactSubmit} className="mt-4 space-y-3">
               <div>
                 <input
                   type="email"
                   required
-                  placeholder="Your Email Address (e.g. alex@company.com)"
+                  placeholder="you@email.com"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   className="w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-4 py-2.5 text-xs text-[var(--heading)] placeholder:text-[var(--muted)] outline-none focus:border-[var(--accent)] transition-all font-mono"
@@ -573,7 +545,7 @@ export function ScrollExperience() {
                 <textarea
                   required
                   rows={3}
-                  placeholder="Your Message / Technical Inquiry..."
+                  placeholder="What's up?"
                   value={contactMsg}
                   onChange={(e) => setContactMsg(e.target.value)}
                   className="w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-4 py-2.5 text-xs text-[var(--heading)] placeholder:text-[var(--muted)] outline-none focus:border-[var(--accent)] transition-all font-mono resize-none"
@@ -583,7 +555,7 @@ export function ScrollExperience() {
                 type="submit"
                 className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer"
               >
-                <Send size={13} /> Dispatch Message
+                <Send size={13} /> Send
               </button>
             </form>
 
@@ -632,8 +604,8 @@ function BootSequence({ visible }: { visible: boolean }) {
       transition={{ delay: 0.9, duration: 0.45, ease: "easeInOut" }}
       aria-hidden="true"
     >
-      <div className="w-[min(500px,88vw)] rounded-2xl border border-[var(--line-strong)] bg-[var(--card-bg)] p-6 sm:p-8 backdrop-blur-2xl shadow-2xl">
-        {/* Animated Loading Bar */}
+      <div className="w-[min(500px,88vw)] rounded-2xl border border-[var(--line-strong)] bg-[var(--card-bg)] p-6 sm:p-8 backdrop-blur-md shadow-2xl">
+        {/* Loading Bar */}
         <motion.div
           className="mb-4 h-[2px] bg-[var(--accent)]"
           initial={{ scaleX: 0, transformOrigin: "left" }}
@@ -641,20 +613,11 @@ function BootSequence({ visible }: { visible: boolean }) {
           transition={{ duration: 0.7, ease: "easeInOut" }}
         />
 
-        <motion.p
-          className="font-mono text-xs font-semibold uppercase tracking-wider text-[var(--accent)]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-        >
-          ANAS ARFEEN // PORTFOLIO
-        </motion.p>
-
         <motion.div
-          className="mt-1 text-3xl sm:text-5xl font-extrabold text-[var(--heading)] tracking-tight"
+          className="text-3xl sm:text-5xl font-extrabold text-[var(--heading)] tracking-tight"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
         >
           Anas <span className="text-[var(--signal)]">Arfeen</span>
         </motion.div>
@@ -663,9 +626,9 @@ function BootSequence({ visible }: { visible: boolean }) {
           className="mt-2 text-xs sm:text-sm font-medium text-[var(--muted)]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.35 }}
+          transition={{ delay: 0.3 }}
         >
-          Autonomous Agents • Computer Vision • Linux Systems
+          Robots, models, and a bit too much time in the terminal.
         </motion.p>
       </div>
     </motion.div>
