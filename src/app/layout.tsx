@@ -1,18 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { ShortcutsOverlay } from "@/components/ShortcutsOverlay";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// IBM Plex, not Geist — Geist is the literal default font of create-next-app
+// and every v0/shadcn scaffold, which is exactly the "looks AI-generated"
+// tell this swap is fixing. Plex is a real, deliberately-designed type
+// family (IBM's own, built for technical/engineering contexts) rather than
+// a trendy default, and using one family for both sans and mono is itself
+// a considered choice rather than grabbing an unrelated "pairing" off a list.
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: "variable",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -44,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" data-theme="dark" className={`${plexSans.variable} ${plexMono.variable}`}>
       <head>
         {/* Runs before hydration so a stored theme preference applies with zero flash on any route. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />

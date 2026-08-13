@@ -226,7 +226,7 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
             initial={{ opacity: 0, y: -20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            className="fixed top-20 left-1/2 z-50 flex items-center gap-2 -translate-x-1/2 rounded-full border border-[var(--accent)] bg-[#0c1017] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-2xl backdrop-blur-md"
+            className="fixed top-20 left-1/2 z-50 flex items-center gap-2 -translate-x-1/2 rounded-lg border border-[var(--accent)] bg-[#0c1017] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-2xl backdrop-blur-sm"
           >
             <Check size={14} className="text-[var(--accent)]" />
             <span>{toastMessage}</span>
@@ -518,7 +518,7 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
               <Link
                 href="/projects"
                 onClick={() => playClickSound()}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-full border border-[var(--line-strong)] px-6 py-3 font-mono text-xs font-bold text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] active:scale-95 transition-all cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-lg border border-[var(--line-strong)] px-6 py-3 font-mono text-xs font-bold text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] active:scale-95 transition-all cursor-pointer"
               >
                 See all {projects.length} projects <ArrowRight size={14} />
               </Link>
@@ -601,7 +601,7 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
               <button
                 type="submit"
                 disabled={contactStatus === "sending"}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent)] px-5 py-2.5 font-mono text-xs font-semibold text-white shadow-md hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Send size={13} /> {contactStatus === "sending" ? "Sending…" : "Send"}
               </button>

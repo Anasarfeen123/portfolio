@@ -1207,7 +1207,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
         onTouchMove={(e) => e.stopPropagation()}
       >
         <motion.div
-          className="relative w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] text-[var(--foreground)] backdrop-blur-[40px] shadow-2xl"
+          className="relative w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] text-[var(--foreground)] backdrop-blur-[5px] shadow-2xl"
           initial={{ opacity: 0, scale: 0.94, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
@@ -1280,7 +1280,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
               <button
                 key={pill}
                 onClick={() => handleCommand(pill)}
-                className="shrink-0 rounded-full border border-[var(--line)] bg-[var(--card-bg)] px-2.5 py-0.5 text-[var(--accent)] hover:border-[var(--accent)] transition-all cursor-pointer font-semibold"
+                className="shrink-0 rounded-md border border-[var(--line)] bg-[var(--card-bg)] px-2.5 py-0.5 text-[var(--accent)] hover:border-[var(--accent)] transition-all cursor-pointer font-semibold"
               >
                 {pill}
               </button>

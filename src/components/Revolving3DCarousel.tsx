@@ -119,9 +119,9 @@ export function Revolving3DCarousel({ projects, onOpenDetails }: Revolving3DCaro
                 ease: [0.25, 1, 0.5, 1],
               }}
               style={{ zIndex }}
-              className={`absolute top-0 w-[min(480px,86vw)] h-full cursor-pointer rounded-2xl border p-5 backdrop-blur-lg shadow-xl transition-colors flex flex-col justify-between ${
+              className={`absolute top-0 w-[min(480px,86vw)] h-full cursor-pointer rounded-2xl border p-5 backdrop-blur-sm shadow-xl transition-colors flex flex-col justify-between ${
                 isActive
-                  ? "border-[var(--accent)] bg-[var(--card-hover)] shadow-[0_0_30px_rgba(0,230,168,0.18)]"
+                  ? "border-[var(--accent)] bg-[var(--card-hover)] shadow-[0_0_30px_rgba(224,130,20,0.18)]"
                   : "border-[var(--line)] bg-[var(--card-bg)] hover:border-[var(--line-strong)]"
               }`}
             >

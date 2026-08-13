@@ -75,7 +75,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
         onTouchMove={(e) => e.stopPropagation()}
       >
         <motion.div
-          className="relative flex flex-col w-full max-w-4xl h-[88vh] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] text-[var(--foreground)] backdrop-blur-[40px] shadow-2xl"
+          className="relative flex flex-col w-full max-w-4xl h-[88vh] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] text-[var(--foreground)] backdrop-blur-[5px] shadow-2xl"
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -119,7 +119,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePrint}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--card-bg)] px-3 py-1.5 font-mono text-xs font-medium text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--card-bg)] px-3 py-1.5 font-mono text-xs font-medium text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer"
                 title="Print Resume"
               >
                 <Printer size={13} /> Print
@@ -128,7 +128,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
               <a
                 href={profile.resume}
                 download="Anas_Arfeen_Resume.pdf"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--card-bg)] px-3 py-1.5 font-mono text-xs font-medium text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--card-bg)] px-3 py-1.5 font-mono text-xs font-medium text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
               >
                 <Download size={13} /> PDF
               </a>
@@ -137,7 +137,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
                 href={profile.resume}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--card-bg)] px-3 py-1.5 font-mono text-xs font-medium text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--card-bg)] px-3 py-1.5 font-mono text-xs font-medium text-[var(--heading)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
               >
                 <ExternalLink size={13} /> Open
               </a>

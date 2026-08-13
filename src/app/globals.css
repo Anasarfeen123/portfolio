@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Accent/signal: a warm burnt-orange + forest-green duotone, not the
+   mint-teal + amber pairing this started with — that combination (cool SaaS
+   accent + amber warning color) is close to the default palette of a lot of
+   AI-generated/templated sites. Deliberately tuned to slightly different
+   values per theme (not one hex reused identically in both, like before)
+   since a value bright enough to read well on near-black falls flat against
+   a pale background and vice versa — checked directly against WCAG
+   contrast math for both surfaces rather than picked by eye. */
 :root {
   --background: #fbf8f3;
   --foreground: #1c1917;
@@ -7,8 +15,8 @@
   --muted: #57534e;
   --line: rgba(255, 255, 255, 0.7);
   --line-strong: rgba(120, 113, 108, 0.4);
-  --accent: #00e6a8;
-  --signal: #f59e0b;
+  --accent: #b8541f;
+  --signal: #2f6b3a;
   --card-bg: rgba(255, 255, 255, 0.94);
   --card-hover: rgba(255, 255, 255, 0.99);
   --stage-progress: 0;
@@ -22,8 +30,8 @@
   --muted: #9ca3af;
   --line: rgba(255, 255, 255, 0.14);
   --line-strong: rgba(255, 255, 255, 0.3);
-  --accent: #00e6a8;
-  --signal: #f59e0b;
+  --accent: #e08214;
+  --signal: #5a9c5e;
   --card-bg: rgba(11, 11, 13, 0.92);
   --card-hover: rgba(18, 18, 20, 0.96);
 }
@@ -78,7 +86,7 @@ body {
   margin: 0;
   overflow-x: hidden;
   background: linear-gradient(180deg, #fffcf7 0%, #fbf8f3 48%, #f3eee3 100%);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   letter-spacing: -0.01em;
   transition: background 300ms ease;
   -webkit-tap-highlight-color: transparent;
@@ -86,8 +94,8 @@ body {
 
 [data-theme="dark"] body {
   background:
-    radial-gradient(circle at 50% 18%, rgba(0, 230, 168, 0.07), transparent 35vw),
-    radial-gradient(circle at 82% 55%, rgba(245, 158, 11, 0.06), transparent 32vw),
+    radial-gradient(circle at 50% 18%, rgba(224, 130, 20, 0.07), transparent 35vw),
+    radial-gradient(circle at 82% 55%, rgba(90, 156, 94, 0.06), transparent 32vw),
     #030712;
 }
 
@@ -98,12 +106,12 @@ a {
 }
 
 ::selection {
-  background: rgba(245, 158, 11, 0.32);
+  background: rgba(47, 107, 58, 0.32);
   color: #1c1917;
 }
 
 [data-theme="dark"] ::selection {
-  background: rgba(0, 230, 168, 0.35);
+  background: rgba(224, 130, 20, 0.35);
   color: #ffffff;
 }
 
@@ -122,7 +130,7 @@ a {
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: rgba(0, 230, 168, 0.35);
+  background: rgba(224, 130, 20, 0.35);
 }
 
 /* Overall Container */
@@ -183,16 +191,16 @@ a {
   align-items: center;
   gap: 8px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 6px 14px;
   color: var(--heading);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
   background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   white-space: nowrap;
 }
@@ -203,7 +211,7 @@ a {
    640px via .hud-hide-mobile to keep the decluttered mobile header decluttered. */
 .hud-build-badge {
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   text-decoration: none;
   white-space: nowrap;
@@ -225,10 +233,10 @@ a {
   margin-top: 14px;
   padding: 7px 14px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--card-bg);
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   text-decoration: none;
   transition: border-color 150ms ease, color 150ms ease;
@@ -274,16 +282,16 @@ a {
   justify-content: center;
   gap: 6px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 6px 12px;
   color: var(--foreground);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 550;
   text-decoration: none;
   background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
   min-height: 36px;
@@ -320,8 +328,8 @@ a {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 
@@ -334,7 +342,7 @@ a {
   padding: 12px 14px;
   min-height: 44px;
   color: var(--foreground);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -420,8 +428,8 @@ a {
   border-radius: 20px;
   padding: clamp(20px, 3.5vw, 42px);
   background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -434,7 +442,7 @@ a {
   display: block;
   margin: 0 0 6px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -508,7 +516,7 @@ a {
 
 .stat-badge-label {
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -557,7 +565,7 @@ a {
 .node-year,
 .log-time {
   color: var(--signal);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   font-weight: 600;
 }
@@ -581,7 +589,7 @@ a {
   display: inline-block;
   margin-top: 6px;
   color: var(--accent);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
 }
@@ -617,7 +625,7 @@ a {
 
 .cluster-name {
   color: var(--heading);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -668,10 +676,10 @@ a {
   justify-content: center;
   gap: 8px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 10px 16px;
   color: var(--heading);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
@@ -723,23 +731,23 @@ a {
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 550;
   text-transform: uppercase;
   transform: translateX(-50%);
   pointer-events: none;
   background: var(--card-bg);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(3px);
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: 8px;
   border: 1px solid var(--line);
 }
 
 .hud-link-active {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(0, 230, 168, 0.1);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 /* ============================================================
@@ -809,7 +817,7 @@ a {
   align-items: center;
   gap: 8px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 9px 16px;
   color: var(--muted);
   background: var(--card-bg);
@@ -822,7 +830,7 @@ a {
   outline: none;
   background: transparent;
   color: var(--heading);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
 }
 
@@ -838,11 +846,11 @@ a {
 
 .filter-pill {
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 7px 14px;
   color: var(--muted);
   background: var(--card-bg);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -900,7 +908,7 @@ a {
 }
 
 .project-card-category {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -962,7 +970,7 @@ a {
   border: 1px solid var(--line);
   border-radius: 5px;
   padding: 2px 8px;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   color: var(--muted);
 }
@@ -974,7 +982,7 @@ a {
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
 }
@@ -1018,7 +1026,7 @@ a {
   gap: 6px;
   margin-top: 16px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
   text-decoration: none;
@@ -1056,7 +1064,7 @@ a {
   align-items: center;
   gap: 8px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1097,7 +1105,7 @@ a {
   border: 1px solid var(--line);
   border-radius: 5px;
   padding: 3px 9px;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   color: var(--muted);
 }
@@ -1107,7 +1115,7 @@ a {
   align-items: center;
   gap: 4px;
   color: var(--accent);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
 }
@@ -1118,7 +1126,7 @@ a {
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
@@ -1140,7 +1148,7 @@ a {
 
 .post-tags span {
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -1168,7 +1176,7 @@ a {
   gap: 8px;
   margin-top: 12px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
 }
 
@@ -1245,7 +1253,7 @@ a {
 
 .post-code code {
   color: #d1fae5;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12.5px;
   line-height: 1.6;
   white-space: pre;
@@ -1253,14 +1261,14 @@ a {
 
 .post-callout {
   margin: 8px 0 22px;
-  border: 1px solid rgba(0, 230, 168, 0.3);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   border-radius: 14px;
   padding: 16px 18px;
-  background: rgba(0, 230, 168, 0.07);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
 .post-callout-label {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -1284,7 +1292,7 @@ a {
 }
 
 .post-project-label {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -1372,7 +1380,7 @@ a {
 .link-preview-card-domain {
   margin-top: 6px;
   color: var(--accent);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
 }
 
@@ -1381,10 +1389,10 @@ a {
   align-items: center;
   gap: 6px;
   border: 1px solid var(--accent);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 8px 16px;
   color: var(--accent);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
@@ -1428,7 +1436,7 @@ a {
 }
 
 .post-nav-label {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1470,7 +1478,7 @@ a {
 }
 
 .not-found-code {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1547,11 +1555,11 @@ a {
   width: 100%;
   margin-top: 20px;
   border: 1px solid var(--accent);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 11px 20px;
   background: var(--accent);
   color: #04120d;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -1580,12 +1588,12 @@ a {
   padding: 14px max(3vw, 16px);
   border-bottom: 1px solid var(--line);
   background: var(--card-bg);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(4px);
 }
 
 .admin-header-mark {
   color: var(--heading);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -1604,10 +1612,10 @@ a {
   align-items: center;
   gap: 6px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 6px 12px;
   color: var(--foreground);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   font-weight: 600;
   text-decoration: none;
@@ -1649,11 +1657,11 @@ a {
   align-items: center;
   gap: 6px;
   border: 1px solid var(--accent);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 9px 16px;
   background: var(--accent);
   color: #04120d;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
@@ -1705,12 +1713,12 @@ a {
 .admin-badge {
   display: inline-block;
   margin-left: 6px;
-  border: 1px solid rgba(0, 230, 168, 0.35);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
   border-radius: 5px;
   padding: 1px 6px;
   color: var(--accent);
-  background: rgba(0, 230, 168, 0.08);
-  font-family: var(--font-geist-mono), monospace;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 600;
   vertical-align: middle;
@@ -1719,7 +1727,7 @@ a {
 .admin-post-row-meta {
   margin-top: 2px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
 }
 
@@ -1769,7 +1777,7 @@ a {
 
 .admin-field label {
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -1785,7 +1793,7 @@ a {
   background: var(--background);
   padding: 10px 12px;
   color: var(--heading);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12.5px;
   outline: none;
   transition: border-color 150ms ease;
@@ -1846,7 +1854,7 @@ a {
 }
 
 .admin-status {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
 }
 
@@ -1978,7 +1986,7 @@ a {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   color: var(--muted);
 }
@@ -2004,7 +2012,7 @@ a {
 
 .viz-tooltip-date {
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   margin-bottom: 4px;
 }
@@ -2060,7 +2068,7 @@ a {
 .viz-stat-label {
   margin-top: 2px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -2109,7 +2117,7 @@ a {
 
 .viz-bar-value {
   color: #fff;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -2125,7 +2133,7 @@ a {
   text-align: left;
   padding: 6px 8px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   text-transform: uppercase;
   border-bottom: 1px solid var(--line);
@@ -2169,7 +2177,7 @@ a {
   gap: 10px;
   margin-bottom: 8px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
 }
 
@@ -2221,10 +2229,10 @@ a {
   flex-shrink: 0;
   margin-top: 1px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 2px 9px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -2260,7 +2268,7 @@ a {
   gap: 10px;
   margin-top: 4px;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
 }
 
@@ -2305,7 +2313,7 @@ a {
     padding: 0.4in 0;
     color: #111;
     background: #fff;
-    font-family: var(--font-geist-mono), monospace;
+    font-family: var(--font-mono), monospace;
   }
 
   .resume-print-sheet h1 {
@@ -2450,7 +2458,7 @@ a {
   height: 380px;
   border-radius: 12px;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 30%, rgba(0, 230, 168, 0.08), transparent 65%), #060a14;
+  background: radial-gradient(circle at 50% 30%, rgba(224, 130, 20, 0.08), transparent 65%), #060a14;
   border: 1px solid #1e293b;
   touch-action: none;
 }
@@ -2468,9 +2476,9 @@ a {
   border-radius: 10px;
   border: 1px solid #1e293b;
   background: rgba(13, 21, 39, 0.94);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  font-family: var(--font-geist-mono), monospace;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  font-family: var(--font-mono), monospace;
   text-align: left;
 }
 
@@ -2495,7 +2503,7 @@ a {
   justify-content: center;
   height: 100%;
   color: #64748b;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 12px;
 }
 
@@ -2505,7 +2513,7 @@ a {
   background: none;
   padding: 0;
   color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: 11px;
   text-decoration: underline;
   cursor: pointer;

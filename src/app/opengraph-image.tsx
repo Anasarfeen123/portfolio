@@ -15,7 +15,7 @@ export default function OpengraphImage() {
           justifyContent: "center",
           padding: "80px",
           background:
-            "radial-gradient(circle at 15% 15%, rgba(0,230,168,0.16), transparent 45%), radial-gradient(circle at 85% 85%, rgba(245,158,11,0.12), transparent 40%), #030712",
+            "radial-gradient(circle at 15% 15%, rgba(224,130,20,0.16), transparent 45%), radial-gradient(circle at 85% 85%, rgba(90,156,94,0.12), transparent 40%), #030712",
           fontFamily: "sans-serif",
         }}
       >
@@ -24,14 +24,14 @@ export default function OpengraphImage() {
             display: "flex",
             alignItems: "center",
             gap: 10,
-            color: "#00e6a8",
+            color: "#e08214",
             fontSize: 22,
             fontWeight: 700,
             letterSpacing: 1,
             textTransform: "uppercase",
           }}
         >
-          <div style={{ width: 10, height: 10, borderRadius: 999, background: "#00e6a8", display: "flex" }} />
+          <div style={{ width: 10, height: 10, borderRadius: 999, background: "#e08214", display: "flex" }} />
           AI Engineer &amp; Systems Developer
         </div>
         <div style={{ display: "flex", color: "#ffffff", fontSize: 88, fontWeight: 800, marginTop: 24, letterSpacing: -3 }}>

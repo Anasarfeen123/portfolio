@@ -51,10 +51,21 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 | 3D | Three.js via `@react-three/fiber` + `@react-three/drei` |
 | Animation | GSAP (ScrollTrigger), native CSS scroll-snap, Framer Motion |
 | Styling | Tailwind CSS v4 + a small hand-written design-token system in `globals.css` |
+| Type | IBM Plex Sans + IBM Plex Mono (`next/font/google`) — not Geist, deliberately; see "Design identity" below |
 | Content | Markdown + frontmatter (`gray-matter`, `react-markdown`, `remark-gfm`) under `content/blog/` |
 | Email | Resend (`/api/contact`) |
 | Auth | Auth.js v5 (`next-auth@beta`), GitHub OAuth, JWT sessions — no database |
 | Analytics | Vercel Web Analytics (`@vercel/analytics` collector + `src/lib/vercel-analytics.ts` query API in `/admin/analytics`) |
+
+## Design identity
+
+A deliberate pass to move away from a handful of choices that read as "AI-generated template" regardless of intent — none of these were bugs, just defaults that are now extremely common:
+
+- **Type**: IBM Plex Sans + IBM Plex Mono, not Geist. Geist is the literal default of `create-next-app`/v0/shadcn scaffolds; using one real type family for both prose and code is a considered choice, not a trendy pairing off a list.
+- **Color**: a warm burnt-orange + forest-green duotone (`--accent`/`--signal` in `globals.css`), not the mint-teal + amber combination this started with — that pairing is close to the default palette of a lot of AI-tool landing pages. The two colors are tuned to *different* hex values per theme (not one value reused identically in light and dark, like before), checked directly against WCAG contrast math for both surfaces rather than picked by eye.
+- **Shape**: `border-radius: 999px` pill buttons and heavy `backdrop-filter: blur()` glass cards — both a shadcn/Tailwind-UI signature — are toned down sitewide (smaller radii, lighter blur) rather than removed outright, since the 3D scene behind the cards still benefits from some frosting for legibility.
+
+Scoped deliberately: this didn't touch the underlying structure (3D scene, terminal, scroll-snap layout) — just the specific choices that made it read as templated regardless of how much real functionality sits underneath.
 
 ## Project Structure
 

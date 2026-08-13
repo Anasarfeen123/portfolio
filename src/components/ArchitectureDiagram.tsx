@@ -9,11 +9,10 @@ import type { ArchitectureLayer, Project } from "@/data/portfolio";
 import { getTechIcon } from "@/lib/tech-icons";
 
 // ProjectDetailsModal is always rendered dark regardless of the site theme
-// (its own deliberate "terminal" aesthetic) — --accent/--signal happen to be
-// identical in both light and dark globals.css anyway, so these are plain
-// constants rather than a runtime theme read.
-const ACCENT = "#00e6a8";
-const SIGNAL = "#f59e0b";
+// (its own deliberate "terminal" aesthetic), so these match globals.css's
+// dark-mode --accent/--signal specifically, not a runtime theme read.
+const ACCENT = "#e08214";
+const SIGNAL = "#5a9c5e";
 const PANEL_BG = "rgba(13, 21, 39, 0.94)";
 const PANEL_BORDER = "rgba(30, 41, 59, 0.95)";
 const LAYER_SPACING = 3.4;

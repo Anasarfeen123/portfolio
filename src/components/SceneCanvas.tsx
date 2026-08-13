@@ -252,7 +252,7 @@ function FallbackScene() {
 
 function CanvasHUDTelemetry() {
   return (
-    <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-4 font-mono text-[10px] text-[#38edf8]/40 select-none">
+    <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-4 font-mono text-[10px] text-[#e08214]/40 select-none">
       <div className="flex justify-between items-center">
         <span>SYS_INIT // 0x7FFF</span>
         <span>LAT: 13.08°N LON: 80.27°E</span>
@@ -311,7 +311,7 @@ function SolarSystemAtlas({ isDark }: { isDark: boolean }) {
       {/* 3D Cyber Wireframe Grid Floor */}
       <mesh position={[0, -2.5, 0]} rotation-x={-Math.PI / 2}>
         <planeGeometry args={[40, 40, 30, 30]} />
-        <meshBasicMaterial color={isDark ? "#38edf8" : "#d97706"} wireframe transparent opacity={isDark ? 0.06 : 0.04} />
+        <meshBasicMaterial color={isDark ? "#e08214" : "#b8541f"} wireframe transparent opacity={isDark ? 0.06 : 0.04} />
       </mesh>
 
       {/* 1. SUN */}
@@ -322,7 +322,7 @@ function SolarSystemAtlas({ isDark }: { isDark: boolean }) {
       <OrbitRing radius={2.8} />
       <OrbitRing radius={4.2} />
       <OrbitRing radius={5.6} />
-      <OrbitRing radius={6.5} color="#d97706" />
+      <OrbitRing radius={6.5} color="#5a9c5e" />
       <OrbitRing radius={7.6} />
       <OrbitRing radius={9.6} />
 
@@ -374,13 +374,13 @@ function DataStreamLine({ from, to }: { from: [number, number, number]; to: [num
     <group>
       <mesh ref={packetRef}>
         <sphereGeometry args={[0.035, 8, 8]} />
-        <meshBasicMaterial color="#38edf8" />
+        <meshBasicMaterial color="#e08214" />
       </mesh>
     </group>
   );
 }
 
-function OrbitRing({ radius, color = "#38edf8" }: { radius: number; color?: string }) {
+function OrbitRing({ radius, color = "#e08214" }: { radius: number; color?: string }) {
   const points = useMemo(() => {
     const pts = [];
     for (let i = 0; i <= 64; i++) {
@@ -480,7 +480,7 @@ const EarthSystem = ReactForwardGroup(function EarthSystem({ distance }: { dista
             {/* Glowing Green Terminal Screen */}
             <mesh position={[0, 0, 0.041]}>
               <planeGeometry args={[0.08, 0.06]} />
-              <meshBasicMaterial color="#38edf8" />
+              <meshBasicMaterial color="#e08214" />
             </mesh>
             {/* Base Stand */}
             <mesh position={[0, -0.05, 0]}>
@@ -638,12 +638,12 @@ const CometMesh = ReactForwardGroup(function CometMesh(_, ref) {
     <group ref={ref}>
       <mesh>
         <sphereGeometry args={[0.06, 10, 10]} />
-        <meshBasicMaterial color="#38edf8" />
+        <meshBasicMaterial color="#e08214" />
       </mesh>
 
       <mesh position={[-0.25, 0, 0]} rotation-z={Math.PI / 2}>
         <coneGeometry args={[0.08, 0.5, 12]} />
-        <meshBasicMaterial color="#38edf8" transparent opacity={0.4} />
+        <meshBasicMaterial color="#e08214" transparent opacity={0.4} />
       </mesh>
     </group>
   );
