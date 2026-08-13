@@ -1,12 +1,17 @@
 ---
-title: "A Hybrid Brain for Competitive Pokémon: Heuristics First, LLM Second"
-excerpt: "Pure heuristics miss deep strategy. Pure LLMs are too slow for every turn. Here's why poke-ai splits the decision loop between the two instead of picking one."
-date: "2026-07-25"
-tags: ["LLM Integration", "Game AI", "Docker"]
-readingTime: "5 min read"
-projectId: "poke_ai"
+title: 'A Hybrid Brain for Competitive Pokémon: Heuristics First, LLM Second'
+excerpt: >-
+  Pure heuristics miss deep strategy. Pure LLMs are too slow for every turn.
+  Here's why poke-ai splits the decision loop between the two instead of picking
+  one.
+date: '2026-07-25'
+tags:
+  - LLM Integration
+  - Game AI
+  - Docker
+readingTime: 5 min read
+projectId: poke_ai
 ---
-
 Competitive Pokémon (Gen 9 National Dex OU) is a surprisingly good benchmark for decision-making AI: every turn has a large but bounded action space, correctness is partly computable (type effectiveness, speed tiers, damage ranges) and partly about longer-horizon strategy (win conditions, prediction, resource trading) that's much harder to hand-code.
 
 That split is exactly why a single-approach agent struggles. A pure heuristic scorer is fast and consistent but shallow — it can rank "this move deals more damage" but not "this move sets up a win condition three turns from now." A pure LLM agent can reason about the latter, but re-prompting a language model for every single decision point in a battle is far too slow and expensive to be practical.
