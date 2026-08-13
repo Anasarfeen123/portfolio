@@ -6,6 +6,7 @@ import { blogPosts, getAdjacentPosts, getPostBySlug } from "@/data/blog";
 import { projects } from "@/data/portfolio";
 import { BlogContent } from "@/components/BlogContent";
 import { GithubIcon } from "@/components/GithubIcon";
+import { ReadingProgressBar } from "@/components/ReadingProgressBar";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export function generateStaticParams() {
@@ -41,6 +42,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="site-page">
+      <ReadingProgressBar />
       <SiteHeader active="blog" />
 
       <div className="site-page-inner site-page-inner-narrow">

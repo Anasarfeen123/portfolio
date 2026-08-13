@@ -39,7 +39,11 @@ export function SiteHeader({ active }: SiteHeaderProps) {
         <Link href="/changelog" className={`hud-link hud-hide-mobile ${active === "changelog" ? "hud-link-active" : ""}`}>
           <Clock size={13} /> Changelog
         </Link>
-        <button onClick={toggleTheme} className="hud-link hud-button" title="Toggle Light / Dark Theme">
+        <button
+          onClick={(e) => toggleTheme({ x: e.clientX, y: e.clientY })}
+          className="hud-link hud-button"
+          title="Toggle Light / Dark Theme"
+        >
           {theme === "light" ? <Moon size={13} /> : <Sun size={13} className="text-amber-400" />}
         </button>
         <a className="hud-link hud-hide-mobile" href={profile.github} target="_blank" rel="noreferrer">

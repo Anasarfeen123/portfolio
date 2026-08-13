@@ -114,9 +114,9 @@ export function ScrollExperience() {
     return () => window.clearTimeout(timeout);
   }, []);
 
-  const toggleTheme = () => {
+  const toggleTheme = (origin?: { x: number; y: number }) => {
     playClickSound();
-    toggleThemeRaw();
+    toggleThemeRaw(origin);
   };
 
   const toggleSound = () => {
@@ -280,7 +280,7 @@ export function ScrollExperience() {
           </button>
 
           <button
-            onClick={toggleTheme}
+            onClick={(e) => toggleTheme({ x: e.clientX, y: e.clientY })}
             className="hud-link hud-button"
             title="Toggle Light / Dark Theme"
           >
