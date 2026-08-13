@@ -1786,6 +1786,14 @@ a {
   --viz-series-2: #eb6834; /* visitors */
   --viz-grid: #e1e0d9;
   --viz-axis: #c3c2b7;
+  /* Sequential blue ramp for the contribution graph — an ordinal scale
+     (discrete levels, not continuous), so per the palette's ordinal-ramp
+     rule the lightest non-zero step stays >= step 250 on a light surface. */
+  --viz-seq-0: #e1e0d9;
+  --viz-seq-1: #86b6ef;
+  --viz-seq-2: #5598e7;
+  --viz-seq-3: #2a78d6;
+  --viz-seq-4: #184f95;
 }
 
 [data-theme="dark"] .viz {
@@ -1793,6 +1801,15 @@ a {
   --viz-series-2: #d95926;
   --viz-grid: #2c2c2a;
   --viz-axis: #383835;
+  /* On dark, the ordinal ramp rule caps the darkest step at step 600 — used
+     here for the top level rather than as a floor, since the direction is
+     reversed (higher contribution = darker step reads wrong on a dark
+     surface otherwise, so the ramp still runs light-to-more-saturated). */
+  --viz-seq-0: #2c2c2a;
+  --viz-seq-1: #6da7ec;
+  --viz-seq-2: #3987e5;
+  --viz-seq-3: #256abf;
+  --viz-seq-4: #184f95;
 }
 
 .viz-card {

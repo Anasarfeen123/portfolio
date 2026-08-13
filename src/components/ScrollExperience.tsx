@@ -10,7 +10,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { experience, journey, profile, projects, skillClusters, type Project } from "@/data/portfolio";
+import { ContributionGraph } from "@/components/ContributionGraph";
 import { GithubIcon } from "@/components/GithubIcon";
+import { GitHubActivityFeed } from "@/components/GitHubActivityFeed";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
 import { Revolving3DCarousel } from "@/components/Revolving3DCarousel";
@@ -519,6 +521,9 @@ export function ScrollExperience() {
                 </div>
               ))}
             </div>
+
+            <GitHubActivityFeed />
+            <ContributionGraph />
           </motion.div>
         </section>
 

@@ -45,6 +45,8 @@ const availableCommands = [
   "invaders",
   "guess",
   "matrix",
+  "quote",
+  "stats",
   "sudo",
   "theme",
   "resume",
@@ -56,6 +58,19 @@ const availableFiles = ["bio.txt", "contact.txt", "resume.txt", "stack.txt", "pr
 const projectFiles = projects.map((p) => `${p.id}.json`);
 
 const quickPills = ["neofetch", "projects", "skills", "snake", "pong", "invaders", "guess", "matrix", "clear", "help"];
+
+const DEV_QUOTES = [
+  '"Talk is cheap. Show me the code." — Linus Torvalds',
+  '"Premature optimization is the root of all evil." — Donald Knuth',
+  '"Any fool can write code that a computer can understand. Good programmers write code that humans can understand." — Martin Fowler',
+  '"There are only two hard things in Computer Science: cache invalidation and naming things." — Phil Karlton',
+  '"Simplicity is prerequisite for reliability." — Edsger W. Dijkstra',
+  '"The best error message is the one that never shows up." — Thomas Fuchs',
+  '"Weeks of coding can save you hours of planning." — unknown, painfully true',
+  '"It works on my machine." — every developer, at some point',
+  '"Programs must be written for people to read, and only incidentally for machines to execute." — Harold Abelson',
+  '"First, solve the problem. Then, write the code." — John Johnson',
+];
 
 // --- 1. Rock-Solid Responsive Snake Game ---
 function TerminalSnakeGame({ onQuit }: { onQuit: () => void }) {
@@ -731,7 +746,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
 
   const promptPrefix = `anas@ANAS_OS:${currentDir.replace("/home/anas", "~")}$`;
 
-  const handleCommand = (rawCmd: string) => {
+  const handleCommand = async (rawCmd: string) => {
     const trimmed = rawCmd.trim();
     if (!trimmed) return;
 
@@ -778,6 +793,8 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
   guess       - Launch interactive Number Guessing game
   ping <host> - Ping live telemetry server
   matrix      - Display Matrix digital rain
+  quote       - Print a random dev quote
+  stats       - Fetch live GitHub profile stats
   history     - List terminal command history
   theme       - Toggle Light / Dark color theme
   resume      - Open embedded PDF Resume viewer
@@ -1042,6 +1059,45 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
           type: "response",
           text: "01000001 01001110 01000001 01010011 00100000 01000001 01010010 01000110 01000101 01000101 01001110\nSystem state nominal. Follow the white rabbit...",
         });
+        break;
+
+      case "quote":
+      case "fortune":
+        responses.push({
+          id: Math.random().toString(),
+          type: "response",
+          text: DEV_QUOTES[Math.floor(Math.random() * DEV_QUOTES.length)],
+        });
+        break;
+
+      case "stats":
+      case "github":
+        responses.push({
+          id: Math.random().toString(),
+          type: "system",
+          text: "Fetching live GitHub stats...",
+        });
+        try {
+          const res = await fetch(`https://api.github.com/users/${profile.handle}`);
+          if (!res.ok) throw new Error("fetch failed");
+          const data = await res.json();
+          responses.push({
+            id: Math.random().toString(),
+            type: "response",
+            text: `GitHub // @${data.login}
+  Public repos:  ${data.public_repos}
+  Followers:     ${data.followers}
+  Following:     ${data.following}
+  Joined:        ${new Date(data.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+  Profile:       ${data.html_url}`,
+          });
+        } catch {
+          responses.push({
+            id: Math.random().toString(),
+            type: "error",
+            text: "Couldn't reach GitHub's API right now — try again in a bit.",
+          });
+        }
         break;
 
       case "clear":
