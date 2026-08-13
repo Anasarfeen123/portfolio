@@ -299,24 +299,7 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [inView, setInView] = useState(false);
   const points = useMemo(() => fibonacciSpherePoints(projects.length, PROJECT_RADIUS), [projects.length]);
-
-  // The homepage already runs one continuously-animating WebGL canvas as a
-  // fixed background (SceneCanvas); this is a second, independent one. Two
-  // simultaneous R3F render loops is real, sustained GPU load — running
-  // this one at full tilt even while scrolled far away from it is what was
-  // actually causing "THREE.WebGLRenderer: Context Lost" (confirmed live —
-  // when the context drops mid-rotation, the cards freeze wherever they
-  // were, which reads exactly as "random cards" rather than a sphere).
-  // Pausing the frameloop when the section isn't in view fixes the root
-  // cause, not just this one symptom.
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.05 });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
 
   // Same scroll-linked index as the CSS carousel this replaces — scrolling
   // through the section turns the sphere. No free drag-to-rotate on top of
@@ -324,19 +307,43 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   // session (Lenis vs. native scroll-snap), and a second pointer-capturing
   // surface competing with page scroll isn't worth the risk for a feature
   // that doesn't need it — buttons + scroll cover the interaction fine.
+  //
+  // rAF-throttled rather than recomputing on every raw scroll event: the
+  // homepage's own wheel-driven "magnetic" section paging (ScrollExperience)
+  // animates scroll with ~60 window.scrollTo() calls/second during a jump,
+  // each one firing a native scroll event — without throttling, this
+  // listener (and the setActiveIndex re-renders it triggers) ran that often
+  // too, and that scroll-event storm turned out to be the actual trigger
+  // for the "THREE.WebGLRenderer: Context Lost" crashes reproduced live:
+  // enough simultaneous main-thread work to blow through the GPU process's
+  // watchdog. Once frozen mid-rotation, cards sit wherever they were —
+  // which reads exactly as "random cards," not a sphere.
   useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current) return;
+    let ticking = false;
+
+    const updateIndex = () => {
+      if (!containerRef.current) {
+        ticking = false;
+        return;
+      }
       const rect = containerRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
       const totalDist = windowHeight + rect.height;
       const currentDist = windowHeight - rect.top;
       const scrollRatio = Math.max(0, Math.min(1, currentDist / totalDist));
       const targetIndex = Math.min(projects.length - 1, Math.floor(scrollRatio * projects.length));
-      setActiveIndex(targetIndex);
+      setActiveIndex((prev) => (prev === targetIndex ? prev : targetIndex));
+      ticking = false;
     };
+
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateIndex);
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
+    updateIndex();
     return () => window.removeEventListener("scroll", handleScroll);
   }, [projects.length]);
 
@@ -358,7 +365,6 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
           camera={{ position: [0, 0.8, 8.5], fov: 40 }}
           dpr={1}
           gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
-          frameloop={inView ? "always" : "never"}
         >
           <SphereScene
             projects={projects}
