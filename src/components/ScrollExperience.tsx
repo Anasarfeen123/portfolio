@@ -209,6 +209,108 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
     };
   }, [prefersReducedMotion]);
 
+  // Desktop/trackpad "magnetic" section paging — one wheel gesture decisively
+  // pulls you to the next/previous section instead of free-scrolling until
+  // you happen to land near a snap point. Deliberately scoped to
+  // `pointer: fine` (mouse/trackpad) only: touch runs on its own native
+  // scroll-snap (see globals.css's `proximity` override under
+  // `@media (pointer: coarse)`) precisely because a JS scroll layer fighting
+  // native touch scrolling is the exact bug this site already had once this
+  // session (Lenis vs. CSS scroll-snap) — not reopening that on purpose.
+  // Skipped entirely under prefers-reduced-motion, same as everything else
+  // scroll-driven on this page.
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+
+    let isAnimating = false;
+    let rafId: number | null = null;
+
+    const getSections = () => Array.from(document.querySelectorAll<HTMLElement>(".chapter-section"));
+
+    // Sections can be taller than the viewport (a long section's card grows
+    // past 100vh — see the min-height-only rule in globals.css), so "closest
+    // to the top edge" isn't reliable: deep inside a tall section, its own
+    // top can be further from 0 than the *next* section's top, which would
+    // misidentify "current" as one section ahead. Instead: the current
+    // section is the last one we've actually scrolled into — walk forward
+    // while a section's top has crossed the midline, stop at the first one
+    // that hasn't.
+    const getCurrentIndex = (sections: HTMLElement[]) => {
+      const threshold = window.innerHeight * 0.5;
+      let current = 0;
+      for (let i = 0; i < sections.length; i++) {
+        if (sections[i].getBoundingClientRect().top <= threshold) {
+          current = i;
+        } else {
+          break;
+        }
+      }
+      return current;
+    };
+
+    // Strong ease-out, no overshoot — decisive and weighted without risking
+    // a bounce-back on a full viewport-height scroll (an overshoot that's
+    // pleasant on a small UI element can read as nauseating at this scale).
+    const easeOutQuint = (t: number) => 1 - Math.pow(1 - t, 5);
+
+    const animateScrollTo = (targetY: number, duration: number, onDone: () => void) => {
+      const startY = window.scrollY;
+      const distance = targetY - startY;
+      const startTime = performance.now();
+
+      // behavior: "instant" on every frame is deliberate, not redundant —
+      // html has CSS scroll-behavior: smooth (globals.css), which by spec
+      // also applies to plain scrollTo() calls unless a call explicitly
+      // overrides it. Without this, the browser would smooth each of these
+      // per-frame jumps on top of the easing curve already driving them,
+      // doubling up into a mushy, imprecise result instead of the exact,
+      // decisive motion this is for.
+      const step = (now: number) => {
+        const elapsed = now - startTime;
+        const t = Math.min(1, elapsed / duration);
+        window.scrollTo({ top: startY + distance * easeOutQuint(t), behavior: "instant" });
+        if (t < 1) {
+          rafId = requestAnimationFrame(step);
+        } else {
+          window.scrollTo({ top: targetY, behavior: "instant" });
+          rafId = null;
+          onDone();
+        }
+      };
+      rafId = requestAnimationFrame(step);
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      // Ignore mostly-horizontal gestures (shift+wheel, trackpad side-swipe)
+      // — this page never scrolls sideways, no reason to hijack those.
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      if (Math.abs(e.deltaY) < 2) return;
+
+      e.preventDefault();
+      if (isAnimating) return; // swallow the rest of a trackpad flick's burst of events
+
+      const sections = getSections();
+      if (sections.length === 0) return;
+
+      const currentIndex = getCurrentIndex(sections);
+      const direction = e.deltaY > 0 ? 1 : -1;
+      const targetIndex = Math.min(sections.length - 1, Math.max(0, currentIndex + direction));
+      if (targetIndex === currentIndex) return; // already at the top/bottom boundary
+
+      isAnimating = true;
+      animateScrollTo(sections[targetIndex].offsetTop, 650, () => {
+        isAnimating = false;
+      });
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [prefersReducedMotion]);
+
   return (
     <main ref={rootRef} className="journey">
       {/* Fixed 3D WebGL Canvas Stage */}
