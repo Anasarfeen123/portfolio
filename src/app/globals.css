@@ -1550,6 +1550,20 @@ a {
   font-weight: 650;
 }
 
+.admin-badge {
+  display: inline-block;
+  margin-left: 6px;
+  border: 1px solid rgba(0, 230, 168, 0.35);
+  border-radius: 5px;
+  padding: 1px 6px;
+  color: var(--accent);
+  background: rgba(0, 230, 168, 0.08);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
 .admin-post-row-meta {
   margin-top: 2px;
   color: var(--muted);

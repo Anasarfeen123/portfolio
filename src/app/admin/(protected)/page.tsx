@@ -3,7 +3,7 @@ import Link from "next/link";
 import matter from "gray-matter";
 import { Pencil, Plus } from "lucide-react";
 import { listBlogFiles, getFile } from "@/lib/github-content";
-import { DeletePostButton } from "@/components/admin/DeletePostButton";
+import { DeleteButton } from "@/components/admin/DeleteButton";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
 // Always fresh from GitHub, never cached — this reflects a publish instantly,
@@ -54,7 +54,7 @@ export default async function AdminDashboardPage() {
                 <Link href={`/admin/${post.slug}/edit`} className="admin-icon-link" title={`Edit ${post.slug}`}>
                   <Pencil size={14} />
                 </Link>
-                <DeletePostButton slug={post.slug} />
+                <DeleteButton endpoint={`/api/admin/posts/${post.slug}`} label={post.slug} />
               </div>
             </div>
           ))}
