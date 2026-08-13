@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { buildInfo } from "@/data/build-info";
 import { changelog } from "@/data/changelog";
+import { BuildBadge } from "@/components/BuildBadge";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
@@ -32,7 +34,7 @@ function formatDate(iso: string) {
 export default function ChangelogPage() {
   return (
     <div className="site-page">
-      <SiteHeader active="changelog" />
+      <SiteHeader active="changelog" buildInfo={buildInfo} />
 
       <div className="site-page-inner site-page-inner-narrow">
         <div className="site-hero">
@@ -42,6 +44,7 @@ export default function ChangelogPage() {
             Generated straight from this site&apos;s own git history at build time — no separate log to
             keep up to date, no editorializing. Every real commit shows up here automatically.
           </p>
+          <BuildBadge buildInfo={buildInfo} variant="page" />
         </div>
 
         {changelog.length === 0 ? (

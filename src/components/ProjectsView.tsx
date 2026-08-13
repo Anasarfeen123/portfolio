@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Layers, Search } from "lucide-react";
+import type { BuildInfo } from "@/data/build-info";
 import { projectCategories, projects, type Project, type ProjectCategory } from "@/data/portfolio";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
@@ -10,7 +11,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 
 type CategoryFilter = "all" | ProjectCategory;
 
-export function ProjectsView() {
+export function ProjectsView({ buildInfo = null }: { buildInfo?: BuildInfo | null }) {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("tech") ?? "");
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
@@ -40,7 +41,7 @@ export function ProjectsView() {
 
   return (
     <div className="site-page">
-      <SiteHeader active="projects" />
+      <SiteHeader active="projects" buildInfo={buildInfo} />
 
       <div className="site-page-inner">
         <div className="site-hero">

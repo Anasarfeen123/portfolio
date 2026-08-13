@@ -8,7 +8,9 @@ import { ArrowDown, ArrowRight, Check, Clock, Code2, FileText, Lightbulb, Mail, 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type { BuildInfo } from "@/data/build-info";
 import { experience, journey, profile, projects, skillClusters, type Project } from "@/data/portfolio";
+import { BuildBadge } from "@/components/BuildBadge";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { GithubIcon } from "@/components/GithubIcon";
 import { GitHubActivityFeed } from "@/components/GitHubActivityFeed";
@@ -77,7 +79,11 @@ const SceneCanvas = dynamic(() => import("@/components/SceneCanvas").then((mod) 
 // Featured Projects for the homepage 3D carousel — see `featured: true` in data/portfolio.ts
 const featuredProjects = projects.filter((p) => p.featured);
 
-export function ScrollExperience() {
+interface ScrollExperienceProps {
+  buildInfo?: BuildInfo | null;
+}
+
+export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
   const rootRef = useRef<HTMLElement | null>(null);
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
@@ -254,10 +260,13 @@ export function ScrollExperience() {
 
       {/* HUD Navigation Header */}
       <header className="hud">
-        <a className="hud-mark" href="#top" aria-label="Anas Arfeen portfolio home">
-          <span className="hud-status-dot" />
-          Anas Arfeen
-        </a>
+        <div className="hud-mark-group">
+          <a className="hud-mark" href="#top" aria-label="Anas Arfeen portfolio home">
+            <span className="hud-status-dot" />
+            Anas Arfeen
+          </a>
+          <BuildBadge buildInfo={buildInfo} />
+        </div>
         <nav className="hud-actions" aria-label="Primary links">
           <button
             onClick={toggleSound}

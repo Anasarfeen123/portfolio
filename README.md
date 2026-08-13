@@ -35,6 +35,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 - `TerminalModal` — an interactive terminal easter egg with real commands (`catalog`/`blog`/`til` to jump to those pages, `stats`/`github` for a live fetch of real GitHub profile stats, `quote` for a random dev quote) and a couple of playable ASCII arcade games
 - `ShortcutsOverlay` — press `?` anywhere (outside a text input) for a shortcuts modal, mounted once in the root layout
 - `GitHubActivityFeed` + `ContributionGraph` — real, live GitHub data on the homepage (recent public activity, the contribution heatmap). Both are public-facing and fail *silently* (render nothing) if the API is unreachable or unconfigured, unlike the admin-side "fail closed with a message" pattern — a site visitor isn't operating a tool
+- `BuildBadge` — a small "commit · deployed Xh ago" line trailing the HUD logo on every page (hidden on mobile), plus a fuller "currently live" version at the top of `/changelog`. Sourced from `src/data/build-info.ts` (`git rev-parse HEAD` at build time, same server-only pattern as `changelog.ts`), threaded down to `ScrollExperience`/`SiteHeader` as a prop since both are client components that can't run `execSync` themselves. The relative-time string is computed client-side after mount against the real current clock, not the build's — otherwise a static page viewed days after a deploy would freeze at whatever "Xh ago" was true at build time
 - `ResumeModal` for viewing/downloading the résumé in-page. Printing actually works cleanly: the PDF tab delegates to the embedded viewer's own `contentWindow.print()`, and the Quick Summary tab prints a dedicated `.resume-print-sheet` (portaled to `<body>`) instead of the modal's dark UI chrome
 - Contact form backed by `/api/contact` (Resend) — falls back to a clear error + mailto link if `RESEND_API_KEY` isn't set; see `.env.example`
 - `sitemap.xml`, `robots.txt`, `icon.svg`, a generated `opengraph-image`, and `/blog/rss.xml` via Next.js metadata/route conventions
@@ -88,6 +89,7 @@ portfolio/
 │   ├── data/portfolio.ts        # Profile, skills, experience, projects
 │   ├── data/blog.ts             # Reads content/blog/*.md at build time (public pages)
 │   ├── data/changelog.ts        # /changelog's data — `git log` at build time, server-only
+│   ├── data/build-info.ts       # HEAD commit hash + date at build time, server-only — feeds BuildBadge
 │   ├── lib/tech-icons.ts        # Hand-picked simple-icons extract (path + brand hex) for ArchitectureDiagram
 │   ├── lib/admin.ts             # ADMIN_GITHUB_LOGIN — the one allowed account
 │   ├── lib/admin-auth.ts        # requireAdminSession() — re-checked in every /api/admin/** handler

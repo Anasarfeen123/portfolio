@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Rss } from "lucide-react";
 import { blogPosts } from "@/data/blog";
+import { buildInfo } from "@/data/build-info";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function BlogIndexPage() {
 
   return (
     <div className="site-page">
-      <SiteHeader active="blog" />
+      <SiteHeader active="blog" buildInfo={buildInfo} />
 
       <div className="site-page-inner">
         <div className="site-hero">

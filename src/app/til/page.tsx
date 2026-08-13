@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildInfo } from "@/data/build-info";
 import { tilEntries } from "@/data/til";
 import { BlogContent } from "@/components/BlogContent";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -19,7 +20,7 @@ function formatDate(iso: string) {
 export default function TilPage() {
   return (
     <div className="site-page">
-      <SiteHeader active="til" />
+      <SiteHeader active="til" buildInfo={buildInfo} />
 
       <div className="site-page-inner site-page-inner-narrow">
         <div className="site-hero">

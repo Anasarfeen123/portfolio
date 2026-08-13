@@ -171,6 +171,13 @@ a {
   pointer-events: auto;
 }
 
+.hud-mark-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .hud-mark {
   display: flex;
   align-items: center;
@@ -188,6 +195,61 @@ a {
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   white-space: nowrap;
+}
+
+/* Deploy/build badge — trails the mark pill, deliberately understated (no
+   border/pill of its own) so it reads as a version string, not another
+   clickable action competing with the hamburger's contents. Hidden below
+   640px via .hud-hide-mobile to keep the decluttered mobile header decluttered. */
+.hud-build-badge {
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  opacity: 0.75;
+  transition: opacity 150ms ease;
+}
+
+.hud-build-badge:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Fuller "currently deployed" line — /changelog only, sits right above the
+   history it's summarizing. */
+.build-badge-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  text-decoration: none;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.build-badge-page:hover {
+  border-color: var(--accent);
+  color: var(--foreground);
+}
+
+.build-badge-page strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.build-badge-page-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
 }
 
 .hud-status-dot {

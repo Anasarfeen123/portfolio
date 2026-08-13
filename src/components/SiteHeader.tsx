@@ -2,27 +2,33 @@
 
 import Link from "next/link";
 import { Clock, Code2, Home, Lightbulb, Moon, ScrollText, Sun } from "lucide-react";
+import type { BuildInfo } from "@/data/build-info";
 import { profile } from "@/data/portfolio";
+import { BuildBadge } from "@/components/BuildBadge";
 import { GithubIcon } from "@/components/GithubIcon";
 import { HudMobileMenu } from "@/components/HudMobileMenu";
 import { useTheme } from "@/hooks/useTheme";
 
 interface SiteHeaderProps {
   active: "projects" | "blog" | "til" | "changelog";
+  buildInfo?: BuildInfo | null;
 }
 
 /** Persistent header for standalone pages (/projects, /blog, /blog/[slug], /til).
  * The homepage keeps its own richer header (terminal, sound, resume) inline in ScrollExperience,
  * but shares the same .hud visual language and the same Home / Projects / Blog / TIL links. */
-export function SiteHeader({ active }: SiteHeaderProps) {
+export function SiteHeader({ active, buildInfo = null }: SiteHeaderProps) {
   const [theme, toggleTheme] = useTheme();
 
   return (
     <header className="hud">
-      <Link className="hud-mark" href="/" aria-label="Anas Arfeen portfolio home">
-        <span className="hud-status-dot" />
-        Anas Arfeen
-      </Link>
+      <div className="hud-mark-group">
+        <Link className="hud-mark" href="/" aria-label="Anas Arfeen portfolio home">
+          <span className="hud-status-dot" />
+          Anas Arfeen
+        </Link>
+        <BuildBadge buildInfo={buildInfo} />
+      </div>
       <nav className="hud-actions" aria-label="Primary links">
         <Link href="/" className="hud-link hud-hide-mobile">
           Home

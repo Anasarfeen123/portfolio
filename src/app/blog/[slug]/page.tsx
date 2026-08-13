@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { blogPosts, getAdjacentPosts, getPostBySlug } from "@/data/blog";
+import { buildInfo } from "@/data/build-info";
 import { projects } from "@/data/portfolio";
 import { BlogContent } from "@/components/BlogContent";
 import { GithubIcon } from "@/components/GithubIcon";
@@ -43,7 +44,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   return (
     <div className="site-page">
       <ReadingProgressBar />
-      <SiteHeader active="blog" />
+      <SiteHeader active="blog" buildInfo={buildInfo} />
 
       <div className="site-page-inner site-page-inner-narrow">
         <Link href="/blog" className="back-link">
