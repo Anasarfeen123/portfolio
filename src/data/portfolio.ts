@@ -1,5 +1,8 @@
-// Some of the data below (currently: projects) lives in content/*.json,
-// git-backed and editable via /admin, same pattern as src/data/blog.ts —
+// Some of the data below (projects, profile, experience) lives in
+// content/*.json, git-backed and editable via /admin, same pattern as
+// src/data/blog.ts — `journey` and `skillClusters` are deliberately NOT
+// migrated (change rarely, more structural) and stay hardcoded below.
+// Unlike blog.ts —
 // except unlike blog.ts, this module is imported by client components too
 // (ScrollExperience, ProjectsView, etc.), so it can't do an fs.readFileSync
 // at module scope: bundlers can't ship node:fs to the browser. A static
@@ -11,6 +14,8 @@
 // not a new one. The admin dashboard itself doesn't use this static import
 // at all — it reads live from the GitHub API instead (src/lib/github-content.ts).
 import projectsData from "../../content/projects.json";
+import profileData from "../../content/profile.json";
+import experienceData from "../../content/experience.json";
 
 export type ProjectCategory =
   | "AI & Machine Learning"
@@ -54,6 +59,7 @@ export type LogEntry = {
 };
 
 export type ExperienceEntry = {
+  id: string;
   role: string;
   org: string;
   icon: "microsoft" | "linux" | "hackclub";
@@ -61,27 +67,24 @@ export type ExperienceEntry = {
   notes: string[];
 };
 
-export const profile = {
-  name: "Anas Arfeen",
-  handle: "Anasarfeen123",
-  avatar: "/Photo.jpg",
-  role: "AI Engineer & Systems Developer",
-  statement: "I build things that make their own decisions — RL agents, LLM tools, computer vision — and the occasional full-stack app people actually use.",
-  bio: "CS undergrad at VIT Chennai. Most of what's on this site started as \"I wonder if I can make this\" — a rover that teaches itself not to hit shelves, an LLM that plays competitive Pokémon, a student dashboard a few thousand people use instead of the university's actual portal. I spend a lot of time in a terminal, which probably explains the easter egg.",
-  location: "Chennai, Tamil Nadu, India",
-  email: "codecrusader07@gmail.com",
-  github: "https://github.com/Anasarfeen123",
-  linkedin: "https://linkedin.com/in/anas-arfeen",
-  portfolio: "https://anasarfeen.dev",
-  resume: "/Resume.pdf",
-  education: "B.Tech Computer Science & Engineering, VIT Chennai (2025 – 2029)",
-  highlights: [
-    { label: "AI/ML Co-Lead", value: "Microsoft Innovations Club" },
-    { label: "Focus Areas", value: "RL, Vision & Systems" },
-    { label: "Location", value: "VIT Chennai, India" },
-    { label: "Open Source", value: "GitHub @Anasarfeen123" },
-  ],
+export type Profile = {
+  name: string;
+  handle: string;
+  avatar: string;
+  role: string;
+  statement: string;
+  bio: string;
+  location: string;
+  email: string;
+  github: string;
+  linkedin: string;
+  portfolio: string;
+  resume: string;
+  education: string;
+  highlights: { label: string; value: string }[];
 };
+
+export const profile: Profile = profileData as Profile;
 
 export const journey: LogEntry[] = [
   {
@@ -135,43 +138,4 @@ export const skillClusters = [
 
 export const projects: Project[] = projectsData as Project[];
 
-export const experience: ExperienceEntry[] = [
-  {
-    role: "AI/ML Co-Lead",
-    org: "Microsoft Innovations Club, VIT Chennai",
-    icon: "microsoft",
-    time: "2026 – Present",
-    notes: [
-      "Directs AI/ML technical projects, hands-on workshops, and developer bootcamps for student engineers.",
-      "Mentors peers in machine learning workflows, PyTorch model training, and project development.",
-      "Automates technical event operations and streamlines collaborative coding initiatives.",
-    ],
-  },
-  {
-    role: "AI/ML Member",
-    org: "Microsoft Innovations Club, VIT Chennai",
-    icon: "microsoft",
-    time: "2025 – 2026",
-    notes: [
-      "Contributed to collaborative machine learning projects and advanced deep learning study groups.",
-    ],
-  },
-  {
-    role: "Technical Member",
-    org: "Linux User Group, VIT Chennai",
-    icon: "linux",
-    time: "2025 – 2026",
-    notes: [
-      "Advocated open-source software, Linux systems customization, and command-line efficiency tools.",
-    ],
-  },
-  {
-    role: "AI/ML Member",
-    org: "Hack Club, VIT Chennai",
-    icon: "hackclub",
-    time: "2025 – Present",
-    notes: [
-      "Participated in student-led rapid prototyping events, hackathons, and open-source hack nights.",
-    ],
-  },
-];
+export const experience: ExperienceEntry[] = experienceData as ExperienceEntry[];

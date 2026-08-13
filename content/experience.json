@@ -1,0 +1,44 @@
+[
+  {
+    "id": "mic-ai-ml-colead",
+    "role": "AI/ML Co-Lead",
+    "org": "Microsoft Innovations Club, VIT Chennai",
+    "icon": "microsoft",
+    "time": "2026 – Present",
+    "notes": [
+      "Directs AI/ML technical projects, hands-on workshops, and developer bootcamps for student engineers.",
+      "Mentors peers in machine learning workflows, PyTorch model training, and project development.",
+      "Automates technical event operations and streamlines collaborative coding initiatives."
+    ]
+  },
+  {
+    "id": "mic-ai-ml-member",
+    "role": "AI/ML Member",
+    "org": "Microsoft Innovations Club, VIT Chennai",
+    "icon": "microsoft",
+    "time": "2025 – 2026",
+    "notes": [
+      "Contributed to collaborative machine learning projects and advanced deep learning study groups."
+    ]
+  },
+  {
+    "id": "lug-technical-member",
+    "role": "Technical Member",
+    "org": "Linux User Group, VIT Chennai",
+    "icon": "linux",
+    "time": "2025 – 2026",
+    "notes": [
+      "Advocated open-source software, Linux systems customization, and command-line efficiency tools."
+    ]
+  },
+  {
+    "id": "hackclub-ai-ml-member",
+    "role": "AI/ML Member",
+    "org": "Hack Club, VIT Chennai",
+    "icon": "hackclub",
+    "time": "2025 – Present",
+    "notes": [
+      "Participated in student-led rapid prototyping events, hackathons, and open-source hack nights."
+    ]
+  }
+]
