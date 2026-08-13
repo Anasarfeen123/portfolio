@@ -232,9 +232,6 @@ export function SceneCanvas() {
 
         <SolarSystemAtlas isDark={isDark} />
       </Canvas>
-
-      {/* Developer HUD Telemetry Overlay on Canvas */}
-      <CanvasHUDTelemetry />
     </div>
   );
 }
@@ -245,21 +242,6 @@ function FallbackScene() {
       <div className="fallback-globe">
         <span className="fallback-land fallback-land-eurasia" />
         <span className="fallback-land fallback-land-americas" />
-      </div>
-    </div>
-  );
-}
-
-function CanvasHUDTelemetry() {
-  return (
-    <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-4 font-mono text-[10px] text-[#e08214]/40 select-none">
-      <div className="flex justify-between items-center">
-        <span>SYS_INIT // 0x7FFF</span>
-        <span>LAT: 13.08°N LON: 80.27°E</span>
-      </div>
-      <div className="flex justify-between items-center">
-        <span>FRAME_LATENCY: 1.8ms</span>
-        <span>NODE: CHENNAI_SOLAR_V2</span>
       </div>
     </div>
   );

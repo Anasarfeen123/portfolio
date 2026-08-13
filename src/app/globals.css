@@ -1916,6 +1916,14 @@ a {
   .progress-rail {
     display: none;
   }
+
+  /* The 3D diagram's fixed 380px height (sized for desktop) eats most of a
+     small phone's viewport inside a modal that already scrolls — shorter
+     here still gives OrbitControls real room to work with, just doesn't
+     dominate the screen before you've even reached the rest of the modal. */
+  .arch-diagram-canvas {
+    height: 260px;
+  }
 }
 
 /* ============================================================
