@@ -1773,3 +1773,221 @@ a {
     display: none;
   }
 }
+
+/* ============================================================
+   Analytics charts (/admin/analytics) — validated categorical
+   palette (dataviz skill), not the site's brand accent: the
+   brand green/amber pair fails the palette validator's lightness
+   band and light-mode contrast checks when run against it, so
+   charts get their own small, separately-validated color scope.
+   ============================================================ */
+.viz {
+  --viz-series-1: #2a78d6; /* pageviews */
+  --viz-series-2: #eb6834; /* visitors */
+  --viz-grid: #e1e0d9;
+  --viz-axis: #c3c2b7;
+}
+
+[data-theme="dark"] .viz {
+  --viz-series-1: #3987e5;
+  --viz-series-2: #d95926;
+  --viz-grid: #2c2c2a;
+  --viz-axis: #383835;
+}
+
+.viz-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  background: var(--card-bg);
+}
+
+.viz-card-title {
+  color: var(--heading);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.viz-card-hint {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.viz-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.viz-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.viz-legend-swatch {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.viz-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 5;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--card-hover);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.viz-tooltip-date {
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.viz-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.viz-tooltip-row + .viz-tooltip-row {
+  margin-top: 2px;
+}
+
+.viz-tooltip-key {
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.viz-tooltip-value {
+  color: var(--heading);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.viz-tooltip-label {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.viz-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 640px) {
+  .viz-stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.viz-stat-value {
+  color: var(--heading);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 650;
+  font-variant-numeric: normal;
+}
+
+.viz-stat-label {
+  margin-top: 2px;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.viz-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.viz-bar-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground);
+  font-size: 12px;
+}
+
+.viz-bar-track {
+  position: relative;
+  grid-column: 1 / -1;
+  height: 20px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+[data-theme="light"] .viz-bar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.viz-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--viz-series-1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  min-width: 2px;
+}
+
+.viz-bar-value {
+  color: #fff;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.viz-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.viz-table th {
+  text-align: left;
+  padding: 6px 8px;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+}
+
+.viz-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.viz-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}

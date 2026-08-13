@@ -21,7 +21,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 - **`/`** — the scroll-driven homepage: hero, origin timeline, skill map, a 3D revolving carousel of featured projects, leadership/experience log, and a contact form.
 - **`/projects`** — the full project catalog (every project, not just the homepage's featured picks), with search and category filtering. Reachable from the homepage's "View All Projects" links and from clicking any skill pill (which deep-links here with a pre-filled search).
 - **`/blog`** and **`/blog/[slug]`** — longer-form field notes on specific projects (design decisions, dead ends, what changed), separate from the project case-study modals.
-- **`/admin`** — a git-backed blog CMS, gated to one GitHub account via "Sign in with GitHub." Not linked from anywhere public and excluded from `robots.txt`. See "Admin / blog authoring" below.
+- **`/admin`** — a git-backed CMS for blog posts, the projects catalog, experience, profile, and the resume PDF, gated to one GitHub account via "Sign in with GitHub." Not linked from anywhere public and excluded from `robots.txt`. See "Admin" below.
 
 ## Features
 
@@ -33,7 +33,8 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 - Contact form backed by `/api/contact` (Resend) — falls back to a clear error + mailto link if `RESEND_API_KEY` isn't set; see `.env.example`
 - `sitemap.xml`, `robots.txt`, `icon.svg`, a generated `opengraph-image`, and `/blog/rss.xml` via Next.js metadata/route conventions
 - Vercel Web Analytics (`@vercel/analytics`)
-- **Admin blog CMS** (`/admin`) — Auth.js v5, GitHub OAuth, restricted to one account (`ADMIN_GITHUB_LOGIN` in `src/lib/admin.ts`). Publishing commits a Markdown file straight to `content/blog/` on `main` via GitHub's Contents API (`src/lib/github-content.ts`, plain `fetch`, no Octokit) — no database. See "Admin / blog authoring" below.
+- **Admin CMS** (`/admin`) — Auth.js v5, GitHub OAuth, restricted to one account (`ADMIN_GITHUB_LOGIN` in `src/lib/admin.ts`). Full CRUD for blog posts (with inline image uploads and link-preview cards), the projects catalog, and experience, plus profile editing and a resume-PDF replace control. Every write is a real commit to `main` — no database. See "Admin" below.
+- **Analytics** (`/admin/analytics`) — queries Vercel's Web Analytics API directly (`src/lib/vercel-analytics.ts`, plain `fetch`) for a daily trend chart, top pages/referrers/countries/devices, and per-post pageviews.
 
 ## Tech Stack
 
@@ -46,7 +47,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 | Content | Markdown + frontmatter (`gray-matter`, `react-markdown`, `remark-gfm`) under `content/blog/` |
 | Email | Resend (`/api/contact`) |
 | Auth | Auth.js v5 (`next-auth@beta`), GitHub OAuth, JWT sessions — no database |
-| Analytics | Vercel Web Analytics |
+| Analytics | Vercel Web Analytics (`@vercel/analytics` collector + `src/lib/vercel-analytics.ts` query API in `/admin/analytics`) |
 
 ## Project Structure
 
@@ -99,13 +100,21 @@ npm run build && npm run start   # production build
 
 Copy `.env.example` to `.env.local` and set `RESEND_API_KEY` (from [resend.com](https://resend.com)) to enable the contact form. Without it, the form fails with a clear message pointing at the mailto: fallback instead of silently doing nothing.
 
-## Admin / blog authoring
+## Admin
 
-`/admin` is a small git-backed CMS for writing blog posts without hand-editing files: sign in with GitHub, write Markdown, hit Publish, and it commits `content/blog/<slug>.md` straight to `main` (which redeploys automatically, live in ~30–90s). Full CRUD (new/edit/delete), a live preview toggle, and it's excluded from `robots.txt` / not linked anywhere public.
+`/admin` is a git-backed CMS: sign in with GitHub, edit content, hit Save, and it commits straight to `main` (which redeploys automatically, live in ~30–90s). No database anywhere.
+
+**What's editable:**
+- **Posts** (`/admin`, `/admin/new`, `/admin/[slug]/edit`) — Markdown with a live preview, inline image uploads, and "Add link preview" cards (server-fetches a URL's OG tags at write time, stores the result as a fenced ` ```linkpreview ` JSON block — no raw HTML, no new rendering dependency).
+- **Projects** (`/admin/projects/*`) — full CRUD over `content/projects.json`, including a screenshot upload.
+- **Experience** (`/admin/experience/*`) — full CRUD over `content/experience.json`.
+- **Profile** (`/admin/profile`) — single-object edit form over `content/profile.json`.
+- **Resume** (`/admin/resume`) — replaces `public/Resume.pdf` directly.
+- **Analytics** (`/admin/analytics`) — read-only, queries Vercel directly (see `.env.example` for the token setup).
 
 **Security model** — no database, no custom password/session code:
 - Identity is 100% delegated to GitHub OAuth. `callbacks.signIn` in `src/auth.ts` rejects any account that isn't `ADMIN_GITHUB_LOGIN` (`src/lib/admin.ts`) *before* a session is ever issued — GitHub authenticates anyone, only that one account gets in.
-- Write access uses a **separate** fine-grained GitHub PAT (`GITHUB_CONTENT_TOKEN`), scoped to only this repo with Contents: Read-and-write — independent from the OAuth login, so each is separately revocable.
+- Write access uses a **separate** fine-grained GitHub PAT (`GITHUB_CONTENT_TOKEN`), scoped to only this repo with Contents: Read-and-write — independent from the OAuth login, so each is separately revocable. Text files (Markdown, JSON) go through GitHub's simple Contents API (`src/lib/github-content.ts`); binaries (images, the resume PDF) go through the lower-level Git Data API instead (`src/lib/github-binary.ts`) since the Contents API has a practical ~1MB reliability ceiling for a single write.
 - Every `/api/admin/**` route independently re-checks the session (`requireAdminSession()` in `src/lib/admin-auth.ts`) rather than trusting `src/proxy.ts` alone, since the proxy's route matcher is just a string list that's easy to forget to extend later.
 
 **Setup** (you do this yourself — see the full walkthrough in `.env.example`):
@@ -113,8 +122,9 @@ Copy `.env.example` to `.env.local` and set `RESEND_API_KEY` (from [resend.com](
 2. Generate `AUTH_SECRET`: `npx auth secret`
 3. Create a fine-grained PAT scoped to just this repo, `Contents: Read and write` only, at [github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new)
 4. Set `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` / `AUTH_SECRET` / `GITHUB_CONTENT_TOKEN` in both `.env.local` (dev OAuth app) and the Vercel dashboard (prod OAuth app)
+5. Optional, for `/admin/analytics`: a Vercel personal access token + this project's Project ID (Team ID too, if it's under a Team) — see `.env.example`
 
-Until those are set, `/admin` fails closed with a clear "not configured" error rather than silently misbehaving.
+Until those are set, `/admin` (and, separately, `/admin/analytics`) fails closed with a clear "not configured" error rather than silently misbehaving.
 
 ## License
 
