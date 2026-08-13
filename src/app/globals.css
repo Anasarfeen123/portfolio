@@ -2132,3 +2132,196 @@ a {
 .til-entry .post-body p:last-child {
   margin-bottom: 0;
 }
+
+/* Changelog — one row per real commit, sourced straight from git history at
+   build time (src/data/changelog.ts). Deliberately plain: a type badge, the
+   commit subject, and a date + short hash linking back to GitHub. */
+.changelog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 32px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.changelog-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--card-bg);
+}
+
+.changelog-entry-type {
+  flex-shrink: 0;
+  margin-top: 1px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 9px;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.changelog-entry-type-feat {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.changelog-entry-type-fix {
+  border-color: var(--signal);
+  color: var(--signal);
+}
+
+.changelog-entry-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.changelog-entry-subject {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.changelog-entry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+}
+
+.changelog-entry-meta a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.changelog-entry-meta a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* ============================================================
+   Resume print view (ResumeModal's "Print" button, Quick Summary
+   tab). .resume-print-sheet is portaled straight to <body> so it's
+   never nested inside the modal's fixed/overflow-hidden ancestors;
+   normally hidden, it's only ever shown while body carries
+   .printing-resume (set right before window.print(), cleared on the
+   browser's "afterprint" event — see ResumeModal.tsx). The PDF tab
+   prints via the embedded iframe's own contentWindow.print() instead
+   and never touches this.
+   ============================================================ */
+.resume-print-sheet {
+  display: none;
+}
+
+@media print {
+  body.printing-resume > *:not(.resume-print-sheet) {
+    display: none !important;
+  }
+
+  body.printing-resume {
+    background: #fff;
+  }
+
+  body.printing-resume .resume-print-sheet {
+    display: block;
+    position: static;
+    max-width: 7.5in;
+    margin: 0 auto;
+    padding: 0.4in 0;
+    color: #111;
+    background: #fff;
+    font-family: var(--font-geist-mono), monospace;
+  }
+
+  .resume-print-sheet h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #000;
+  }
+
+  .resume-print-role {
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #333;
+  }
+
+  .resume-print-contact {
+    margin: 0 0 10px;
+    font-size: 11px;
+    color: #444;
+  }
+
+  .resume-print-bio {
+    margin: 0 0 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #ccc;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #222;
+  }
+
+  .resume-print-sheet h2 {
+    margin: 16px 0 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #000;
+    break-after: avoid;
+  }
+
+  .resume-print-entry {
+    margin-bottom: 10px;
+    break-inside: avoid;
+  }
+
+  .resume-print-entry-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    color: #000;
+  }
+
+  .resume-print-entry p {
+    margin: 3px 0 0;
+    font-size: 11px;
+    color: #333;
+  }
+
+  .resume-print-entry ul {
+    margin: 4px 0 0;
+    padding-left: 16px;
+    font-size: 11px;
+    color: #333;
+  }
+
+  .resume-print-entry li {
+    margin-bottom: 2px;
+  }
+
+  .resume-print-skills {
+    margin: 0 0 4px;
+    font-size: 11px;
+    color: #333;
+  }
+
+  @page {
+    margin: 0.5in;
+  }
+}

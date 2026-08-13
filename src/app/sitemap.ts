@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/projects`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/blog`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/til`, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${BASE_URL}/changelog`, changeFrequency: "weekly", priority: 0.4 },
   ];
 
   const postRoutes: MetadataRoute.Sitemap = blogPosts.map((post) => ({

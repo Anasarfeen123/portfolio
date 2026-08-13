@@ -14,7 +14,7 @@
 
 ## Overview
 
-anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (Three.js) for the 3D scene, native CSS scroll-snap + **GSAP ScrollTrigger** for scroll-linked animation, and **Framer Motion** for UI transitions — plus standalone pages (`/projects`, `/blog`, `/til`) for the parts that don't fit a single scroll journey. There's also a hidden **interactive terminal** overlay (`Cmd+K`) you can open to explore the site command-line-style, including a couple of playable ASCII arcade games — and pressing `?` anywhere shows a shortcuts overlay.
+anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (Three.js) for the 3D scene, native CSS scroll-snap + **GSAP ScrollTrigger** for scroll-linked animation, and **Framer Motion** for UI transitions — plus standalone pages (`/projects`, `/blog`, `/til`, `/changelog`) for the parts that don't fit a single scroll journey. There's also a hidden **interactive terminal** overlay (`Cmd+K`) you can open to explore the site command-line-style, including a couple of playable ASCII arcade games — and pressing `?` anywhere shows a shortcuts overlay.
 
 ## Pages
 
@@ -22,6 +22,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 - **`/projects`** — the full project catalog (every project, not just the homepage's featured picks), with search and category filtering. Reachable from the homepage's "View All Projects" links and from clicking any skill pill (which deep-links here with a pre-filled search).
 - **`/blog`** and **`/blog/[slug]`** — longer-form field notes on specific projects (design decisions, dead ends, what changed), separate from the project case-study modals.
 - **`/til`** — short, no-title notes (a sentence or two each) on one page in reverse-chronological order, each individually linkable via `#slug`. A lighter-weight cousin of `/blog` for things too small to be a full post.
+- **`/changelog`** — a running log of real commits to this site, generated straight from git history at build time (`src/data/changelog.ts`, `execSync("git log …")`). No separate content to maintain — every well-formed Conventional-Commit-style commit shows up automatically on the next deploy.
 - **`/admin`** — a git-backed CMS for blog posts, TIL notes, the projects catalog, experience, profile, and the resume PDF, gated to one GitHub account via "Sign in with GitHub." Not linked from anywhere public and excluded from `robots.txt`. See "Admin" below.
 
 ## Features
@@ -33,7 +34,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 - `TerminalModal` — an interactive terminal easter egg with real commands (`catalog`/`blog`/`til` to jump to those pages, `stats`/`github` for a live fetch of real GitHub profile stats, `quote` for a random dev quote) and a couple of playable ASCII arcade games
 - `ShortcutsOverlay` — press `?` anywhere (outside a text input) for a shortcuts modal, mounted once in the root layout
 - `GitHubActivityFeed` + `ContributionGraph` — real, live GitHub data on the homepage (recent public activity, the contribution heatmap). Both are public-facing and fail *silently* (render nothing) if the API is unreachable or unconfigured, unlike the admin-side "fail closed with a message" pattern — a site visitor isn't operating a tool
-- `ResumeModal` for viewing/downloading the résumé in-page
+- `ResumeModal` for viewing/downloading the résumé in-page. Printing actually works cleanly: the PDF tab delegates to the embedded viewer's own `contentWindow.print()`, and the Quick Summary tab prints a dedicated `.resume-print-sheet` (portaled to `<body>`) instead of the modal's dark UI chrome
 - Contact form backed by `/api/contact` (Resend) — falls back to a clear error + mailto link if `RESEND_API_KEY` isn't set; see `.env.example`
 - `sitemap.xml`, `robots.txt`, `icon.svg`, a generated `opengraph-image`, and `/blog/rss.xml` via Next.js metadata/route conventions
 - Vercel Web Analytics (`@vercel/analytics`)
@@ -80,9 +81,11 @@ portfolio/
 │   │   ├── BlogContent.tsx           # Renders Markdown post bodies (react-markdown + remark-gfm)
 │   │   ├── admin/PostEditor.tsx      # New/edit post form + Write/Preview toggle
 │   │   ├── TerminalModal.tsx         # Terminal easter egg + arcade games
-│   │   └── ResumeModal.tsx
+│   │   ├── HudMobileMenu.tsx         # Shared mobile hamburger panel (homepage HUD + SiteHeader)
+│   │   └── ResumeModal.tsx           # PDF/summary viewer with a real print path for both
 │   ├── data/portfolio.ts        # Profile, skills, experience, projects
 │   ├── data/blog.ts             # Reads content/blog/*.md at build time (public pages)
+│   ├── data/changelog.ts        # /changelog's data — `git log` at build time, server-only
 │   ├── lib/admin.ts             # ADMIN_GITHUB_LOGIN — the one allowed account
 │   ├── lib/admin-auth.ts        # requireAdminSession() — re-checked in every /api/admin/** handler
 │   ├── lib/github-content.ts    # Reads/writes content/blog/*.md via GitHub's Contents API

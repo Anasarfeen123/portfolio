@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowDown, ArrowRight, Check, Code2, FileText, Lightbulb, Mail, Moon, Network, ScrollText, Send, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
+import { ArrowDown, ArrowRight, Check, Clock, Code2, FileText, Lightbulb, Mail, Moon, Network, ScrollText, Send, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -299,6 +299,9 @@ export function ScrollExperience() {
           <Link className="hud-link hud-hide-mobile" href="/til" onClick={() => playClickSound()}>
             <Lightbulb size={13} /> TIL
           </Link>
+          <Link className="hud-link hud-hide-mobile" href="/changelog" onClick={() => playClickSound()}>
+            <Clock size={13} /> Changelog
+          </Link>
           <button
             onClick={() => {
               playClickSound();
@@ -332,6 +335,7 @@ export function ScrollExperience() {
               { key: "projects", label: "Projects", href: "/projects", icon: <Code2 size={15} />, onClick: () => playClickSound() },
               { key: "blog", label: "Blog", href: "/blog", icon: <ScrollText size={15} />, onClick: () => playClickSound() },
               { key: "til", label: "TIL", href: "/til", icon: <Lightbulb size={15} />, onClick: () => playClickSound() },
+              { key: "changelog", label: "Changelog", href: "/changelog", icon: <Clock size={15} />, onClick: () => playClickSound() },
               {
                 key: "resume",
                 label: "Resume",

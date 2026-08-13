@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Code2, Home, Lightbulb, Moon, ScrollText, Sun } from "lucide-react";
+import { Clock, Code2, Home, Lightbulb, Moon, ScrollText, Sun } from "lucide-react";
 import { profile } from "@/data/portfolio";
 import { GithubIcon } from "@/components/GithubIcon";
 import { HudMobileMenu } from "@/components/HudMobileMenu";
 import { useTheme } from "@/hooks/useTheme";
 
 interface SiteHeaderProps {
-  active: "projects" | "blog" | "til";
+  active: "projects" | "blog" | "til" | "changelog";
 }
 
 /** Persistent header for standalone pages (/projects, /blog, /blog/[slug], /til).
@@ -36,6 +36,9 @@ export function SiteHeader({ active }: SiteHeaderProps) {
         <Link href="/til" className={`hud-link hud-hide-mobile ${active === "til" ? "hud-link-active" : ""}`}>
           <Lightbulb size={13} /> TIL
         </Link>
+        <Link href="/changelog" className={`hud-link hud-hide-mobile ${active === "changelog" ? "hud-link-active" : ""}`}>
+          <Clock size={13} /> Changelog
+        </Link>
         <button onClick={toggleTheme} className="hud-link hud-button" title="Toggle Light / Dark Theme">
           {theme === "light" ? <Moon size={13} /> : <Sun size={13} className="text-amber-400" />}
         </button>
@@ -48,6 +51,7 @@ export function SiteHeader({ active }: SiteHeaderProps) {
             { key: "projects", label: "Projects", href: "/projects", icon: <Code2 size={15} />, active: active === "projects" },
             { key: "blog", label: "Blog", href: "/blog", icon: <ScrollText size={15} />, active: active === "blog" },
             { key: "til", label: "TIL", href: "/til", icon: <Lightbulb size={15} />, active: active === "til" },
+            { key: "changelog", label: "Changelog", href: "/changelog", icon: <Clock size={15} />, active: active === "changelog" },
             { key: "github", label: "GitHub", href: profile.github, external: true, icon: <GithubIcon size={15} /> },
           ]}
         />

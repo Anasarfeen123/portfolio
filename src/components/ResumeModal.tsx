@@ -2,7 +2,8 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, ExternalLink, FileText, Layers, Printer, Sparkles, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { experience, profile, projects, skillClusters } from "@/data/portfolio";
 
 interface ResumeModalProps {
@@ -12,6 +13,7 @@ interface ResumeModalProps {
 
 export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
   const [activeTab, setActiveTab] = useState<"pdf" | "summary">("pdf");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,10 +38,35 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
   if (!isOpen) return null;
 
   const handlePrint = () => {
+    if (activeTab === "pdf") {
+      // Printing window.print() here would print the surrounding app chrome
+      // (dark modal, buttons, backdrop) instead of the actual PDF — delegate
+      // to the embedded viewer's own print instead, which browsers' built-in
+      // PDF renderer handles natively and cleanly.
+      const pdfWindow = iframeRef.current?.contentWindow;
+      if (pdfWindow) {
+        pdfWindow.focus();
+        pdfWindow.print();
+      } else {
+        window.open(profile.resume, "_blank");
+      }
+      return;
+    }
+
+    // Quick Summary tab: print the dedicated .resume-print-sheet below
+    // (portaled to document.body) instead of this modal's UI chrome — see
+    // the "printing-resume" rule in globals.css.
+    document.body.classList.add("printing-resume");
+    const cleanup = () => {
+      document.body.classList.remove("printing-resume");
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
     window.print();
   };
 
   return (
+    <>
     <AnimatePresence>
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md"
@@ -129,6 +156,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
           {activeTab === "pdf" ? (
             <div className="flex-1 w-full h-full bg-[var(--background)]/30">
               <iframe
+                ref={iframeRef}
                 src={`${profile.resume}#toolbar=0`}
                 title={`${profile.name} Resume PDF`}
                 className="w-full h-full border-none"
@@ -217,5 +245,68 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
         </motion.div>
       </div>
     </AnimatePresence>
+
+    {/* Print-only sheet, portaled straight to <body> so it's not nested
+       inside this modal's fixed/overflow-hidden ancestors — @media print
+       hides everything else under body.printing-resume and shows only
+       this, so the printed page is a clean one-column resume instead of
+       the modal chrome, dark background, or a clipped fixed-height div. */}
+    {createPortal(
+      <div className="resume-print-sheet">
+        <h1>{profile.name}</h1>
+        <p className="resume-print-role">{profile.role}</p>
+        <p className="resume-print-contact">
+          {profile.location} · {profile.email} · {profile.education}
+        </p>
+        <p className="resume-print-bio">{profile.bio}</p>
+
+        <h2>Education</h2>
+        <div className="resume-print-entry">
+          <div className="resume-print-entry-head">
+            <strong>{profile.education}</strong>
+            <span>2025 – 2029</span>
+          </div>
+          <p>Specialization in Computer Science &amp; Artificial Intelligence</p>
+        </div>
+
+        <h2>Leadership &amp; Positions</h2>
+        {experience.map((item) => (
+          <div key={item.org} className="resume-print-entry">
+            <div className="resume-print-entry-head">
+              <strong>
+                {item.role} — {item.org}
+              </strong>
+              <span>{item.time}</span>
+            </div>
+            <ul>
+              {item.notes.map((note, idx) => (
+                <li key={idx}>{note}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        <h2>Tech Ecosystem</h2>
+        {skillClusters.map((cluster) => (
+          <p key={cluster.label} className="resume-print-skills">
+            <strong>{cluster.label}:</strong> {cluster.modules.join(", ")}
+          </p>
+        ))}
+
+        <h2>Selected Projects</h2>
+        {projects
+          .filter((p) => p.featured)
+          .map((p) => (
+            <div key={p.id} className="resume-print-entry">
+              <div className="resume-print-entry-head">
+                <strong>{p.title}</strong>
+              </div>
+              <p>{p.signal}</p>
+            </div>
+          ))}
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
