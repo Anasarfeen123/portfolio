@@ -2375,3 +2375,76 @@ a {
   background: var(--accent);
   will-change: transform;
 }
+
+/* ============================================================
+   3D exploded architecture diagram (ArchitectureDiagram.tsx, mounted
+   inside ProjectDetailsModal's "How It's Built" section). Fixed height —
+   sized to sit inside the modal's existing max-h-[88vh] scroll area
+   rather than take it over.
+   ============================================================ */
+.arch-diagram-canvas {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, rgba(0, 230, 168, 0.08), transparent 65%), #060a14;
+  border: 1px solid #1e293b;
+  touch-action: none;
+}
+
+.arch-diagram-canvas canvas {
+  display: block;
+}
+
+/* Rendered via drei's <Html> inside the WebGL scene — plain markup styled
+   to match the modal's own hardcoded dark palette (it isn't theme-aware,
+   see ArchitectureDiagram.tsx's constants comment). */
+.arch-diagram-panel {
+  width: 190px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+  background: rgba(13, 21, 39, 0.94);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-family: var(--font-geist-mono), monospace;
+  text-align: left;
+}
+
+.arch-diagram-panel-label {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.arch-diagram-panel-desc {
+  margin-top: 4px;
+  color: #cbd5e1;
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.arch-diagram-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #64748b;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+}
+
+.arch-diagram-fallback-toggle {
+  margin-top: 8px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}

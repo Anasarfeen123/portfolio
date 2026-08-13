@@ -4,6 +4,7 @@ import { Stars } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { forwardRef, type ReactElement, type Ref, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { useCanRenderWebGL } from "@/hooks/useCanRenderWebGL";
 
 function readProgress() {
   if (typeof window === "undefined") return 0;
@@ -186,18 +187,8 @@ function getSolarTextures() {
 }
 
 export function SceneCanvas() {
-  const [canRenderWebGL, setCanRenderWebGL] = useState<boolean | null>(null);
+  const canRenderWebGL = useCanRenderWebGL();
   const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      setCanRenderWebGL(Boolean(context) && !reducedMotion);
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
 
   useEffect(() => {
     const checkTheme = () => {

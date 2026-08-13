@@ -2,10 +2,19 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, GitFork, Star, X } from "lucide-react";
-import { useEffect } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import { type Project } from "@/data/portfolio";
 import { GithubIcon } from "@/components/GithubIcon";
+import { useCanRenderWebGL } from "@/hooks/useCanRenderWebGL";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
+
+// Real WebGL + Three.js — code-split out of the modal's own chunk, and only
+// ever requested when a project modal that can actually render it opens.
+const ArchitectureDiagram = dynamic(() => import("@/components/ArchitectureDiagram").then((m) => m.ArchitectureDiagram), {
+  ssr: false,
+  loading: () => <div className="arch-diagram-canvas arch-diagram-loading">Loading diagram…</div>,
+});
 
 interface ProjectDetailsModalProps {
   project: Project | null;
@@ -14,6 +23,15 @@ interface ProjectDetailsModalProps {
 
 export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalProps) {
   const ghStats = useGitHubRepo(project?.repoName);
+  const canRenderWebGL = useCanRenderWebGL();
+  const [showText, setShowText] = useState(false);
+
+  // A fresh project should always open on the 3D view (if available) — a
+  // "view as text" choice from a previously-viewed project shouldn't carry
+  // over to the next one.
+  useEffect(() => {
+    setShowText(false);
+  }, [project?.id]);
 
   useEffect(() => {
     if (project) {
@@ -110,16 +128,29 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
             <p className="mt-1 text-sm text-[#cbd5e1] leading-relaxed">{project.problem}</p>
           </div>
 
-          {/* Architecture Pipeline */}
+          {/* Architecture — 3D exploded diagram by default, plain text as the fallback */}
           <div className="mt-4">
-            <h3 className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] font-semibold">How It's Built</h3>
-            <div className="mt-2 space-y-2">
-              {project.architecture.map((line, idx) => (
-                <div key={idx} className="flex items-start gap-2.5 rounded-lg border border-[#1e293b] bg-[#0d1527] p-3 text-xs font-mono text-[#e2e8f0]">
-                  <span className="text-[var(--accent)] font-bold">0{idx + 1}.</span>
-                  <span>{line}</span>
+            <div className="flex items-center justify-between">
+              <h3 className="font-mono text-xs uppercase tracking-wider text-[var(--accent)] font-semibold">How It's Built</h3>
+              {canRenderWebGL && (
+                <button type="button" className="arch-diagram-fallback-toggle" onClick={() => setShowText((v) => !v)}>
+                  {showText ? "View in 3D" : "View as text"}
+                </button>
+              )}
+            </div>
+            <div className="mt-2">
+              {canRenderWebGL && !showText ? (
+                <ArchitectureDiagram project={project} />
+              ) : (
+                <div className="space-y-2">
+                  {project.architecture.map((line, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 rounded-lg border border-[#1e293b] bg-[#0d1527] p-3 text-xs font-mono text-[#e2e8f0]">
+                      <span className="text-[var(--accent)] font-bold">0{idx + 1}.</span>
+                      <span>{line}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

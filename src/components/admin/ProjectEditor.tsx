@@ -20,6 +20,7 @@ export type EditorInitialProject = {
   demo: string;
   image: string;
   links: string; // "Label | https://url" per line
+  architectureLayers: string; // "Label | Description | Tech1, Tech2" per line, tech segment optional
 };
 
 const EMPTY: EditorInitialProject = {
@@ -37,6 +38,7 @@ const EMPTY: EditorInitialProject = {
   demo: "",
   image: "",
   links: "",
+  architectureLayers: "",
 };
 
 function slugify(text: string) {
@@ -57,6 +59,21 @@ function parseLinks(text: string): { label: string; href: string }[] {
       return { label: label ?? "", href: href ?? "" };
     })
     .filter((l) => l.label && l.href);
+}
+
+function parseArchitectureLayers(text: string): { label: string; description: string; technologies?: string[] }[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [label, description, techs] = line.split("|").map((s) => s.trim());
+      const technologies = techs
+        ? techs.split(",").map((t) => t.trim()).filter(Boolean)
+        : undefined;
+      return { label: label ?? "", description: description ?? "", ...(technologies && technologies.length > 0 ? { technologies } : {}) };
+    })
+    .filter((l) => l.label && l.description);
 }
 
 interface ProjectEditorProps {
@@ -128,6 +145,7 @@ export function ProjectEditor({ mode, initialProject }: ProjectEditorProps) {
       demo: project.demo.trim() || undefined,
       image: project.image.trim() || undefined,
       links: parseLinks(project.links),
+      architectureLayers: parseArchitectureLayers(project.architectureLayers),
     };
 
     try {
@@ -238,6 +256,20 @@ export function ProjectEditor({ mode, initialProject }: ProjectEditorProps) {
           <div className="admin-field">
             <label htmlFor="links">Related repos/links (optional, one &ldquo;Label | https://url&rdquo; per line)</label>
             <textarea id="links" rows={2} value={project.links} onChange={(e) => setProject((p) => ({ ...p, links: e.target.value }))} />
+          </div>
+
+          <div className="admin-field">
+            <label htmlFor="architectureLayers">
+              3D diagram layers (optional, one &ldquo;Label | Description | Tech1, Tech2&rdquo; per line — tech
+              segment optional). Leave blank and the diagram auto-builds itself from Architecture + Technologies above.
+            </label>
+            <textarea
+              id="architectureLayers"
+              rows={4}
+              value={project.architectureLayers}
+              onChange={(e) => setProject((p) => ({ ...p, architectureLayers: e.target.value }))}
+              placeholder={"Frontend | Next.js UI rendering the dashboard | Next.js, TypeScript, Tailwind CSS"}
+            />
           </div>
 
           <div className="admin-field">

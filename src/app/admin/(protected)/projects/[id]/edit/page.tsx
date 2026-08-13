@@ -33,6 +33,9 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
         demo: project.demo ?? "",
         image: project.image ?? "",
         links: (project.links ?? []).map((l) => `${l.label} | ${l.href}`).join("\n"),
+        architectureLayers: (project.architectureLayers ?? [])
+          .map((l) => `${l.label} | ${l.description}${l.technologies?.length ? ` | ${l.technologies.join(", ")}` : ""}`)
+          .join("\n"),
       }}
     />
   );

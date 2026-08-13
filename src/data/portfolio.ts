@@ -32,6 +32,18 @@ export const projectCategories: ProjectCategory[] = [
   "Data Science",
 ];
 
+/** One labeled layer/component of a project's architecture, used by the 3D
+ * exploded-diagram view in ProjectDetailsModal. Optional and additive — when
+ * absent, the diagram auto-derives generic layers from `architecture`
+ * instead (see ArchitectureDiagram.tsx), so every project already has a
+ * usable diagram without needing this filled in. */
+export interface ArchitectureLayer {
+  label: string;
+  description: string;
+  /** Subset of the project's full `technologies` list, scoped to this layer specifically. */
+  technologies?: string[];
+}
+
 export type Project = {
   id: string;
   repoName: string;
@@ -49,6 +61,8 @@ export type Project = {
   image?: string;
   /** Extra repos/services that belong to the same product (API, admin, mobile client, sibling repos). */
   links?: { label: string; href: string }[];
+  /** Optional richer breakdown for the 3D architecture diagram — see ArchitectureLayer. */
+  architectureLayers?: ArchitectureLayer[];
 };
 
 export type LogEntry = {

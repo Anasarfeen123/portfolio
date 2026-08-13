@@ -24,6 +24,23 @@ export function validateProject(body: ProjectBody): { project: Project } | { err
           !!l && typeof l === "object" && typeof (l as { label?: unknown }).label === "string" && typeof (l as { href?: unknown }).href === "string"
       )
     : undefined;
+  const architectureLayers = Array.isArray(body.architectureLayers)
+    ? (body.architectureLayers as unknown[])
+        .filter(
+          (l): l is { label: string; description: string; technologies?: unknown } =>
+            !!l &&
+            typeof l === "object" &&
+            typeof (l as { label?: unknown }).label === "string" &&
+            typeof (l as { description?: unknown }).description === "string"
+        )
+        .map((l) => ({
+          label: l.label,
+          description: l.description,
+          ...(Array.isArray(l.technologies) && l.technologies.length > 0
+            ? { technologies: l.technologies.map(String).filter(Boolean) }
+            : {}),
+        }))
+    : undefined;
 
   if (!PROJECT_ID_RE.test(id)) return { error: "Id must be lowercase letters, numbers, and hyphens." };
   if (!title) return { error: "Title is required." };
@@ -52,6 +69,7 @@ export function validateProject(body: ProjectBody): { project: Project } | { err
       ...(demo ? { demo } : {}),
       ...(image ? { image } : {}),
       ...(links && links.length > 0 ? { links } : {}),
+      ...(architectureLayers && architectureLayers.length > 0 ? { architectureLayers } : {}),
     },
   };
 }
