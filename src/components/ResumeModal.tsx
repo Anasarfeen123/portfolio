@@ -202,7 +202,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
                 </h3>
                 <div className="space-y-3">
                   {experience.map((item) => (
-                    <div key={item.org} className="rounded-xl border border-[var(--line)] bg-[var(--card-hover)] p-4">
+                    <div key={item.id} className="rounded-xl border border-[var(--line)] bg-[var(--card-hover)] p-4">
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="font-bold text-[var(--heading)] text-sm">{item.role}</div>
@@ -271,7 +271,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
 
         <h2>Leadership &amp; Positions</h2>
         {experience.map((item) => (
-          <div key={item.org} className="resume-print-entry">
+          <div key={item.id} className="resume-print-entry">
             <div className="resume-print-entry-head">
               <strong>
                 {item.role} — {item.org}

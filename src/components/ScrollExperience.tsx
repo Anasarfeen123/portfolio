@@ -640,7 +640,7 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
 
             <div className="mission-log">
               {experience.map((item) => (
-                <div className="log-row" key={`${item.role}-${item.org}`}>
+                <div className="log-row" key={item.id}>
                   <div className="log-time">{item.time}</div>
                   <div>
                     <div className="flex items-center gap-3">
