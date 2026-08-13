@@ -24,6 +24,9 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
           <Link href="/admin" className="admin-header-link">
             Posts
           </Link>
+          <Link href="/admin/til" className="admin-header-link">
+            TIL
+          </Link>
           <Link href="/admin/projects" className="admin-header-link">
             Projects
           </Link>

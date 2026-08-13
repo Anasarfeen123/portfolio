@@ -14,26 +14,29 @@
 
 ## Overview
 
-anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (Three.js) for the 3D scene, **GSAP** + **Lenis** for smooth-scroll-linked animation, and **Framer Motion** for UI transitions — plus two standalone pages, `/projects` and `/blog`, for the parts that don't fit a single scroll journey. There's also a hidden **interactive terminal** overlay (`Cmd+K`) you can open to explore the site command-line-style, including a couple of playable ASCII arcade games.
+anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (Three.js) for the 3D scene, **GSAP** + **Lenis** for smooth-scroll-linked animation, and **Framer Motion** for UI transitions — plus standalone pages (`/projects`, `/blog`, `/til`) for the parts that don't fit a single scroll journey. There's also a hidden **interactive terminal** overlay (`Cmd+K`) you can open to explore the site command-line-style, including a couple of playable ASCII arcade games — and pressing `?` anywhere shows a shortcuts overlay.
 
 ## Pages
 
 - **`/`** — the scroll-driven homepage: hero, origin timeline, skill map, a 3D revolving carousel of featured projects, leadership/experience log, and a contact form.
 - **`/projects`** — the full project catalog (every project, not just the homepage's featured picks), with search and category filtering. Reachable from the homepage's "View All Projects" links and from clicking any skill pill (which deep-links here with a pre-filled search).
 - **`/blog`** and **`/blog/[slug]`** — longer-form field notes on specific projects (design decisions, dead ends, what changed), separate from the project case-study modals.
-- **`/admin`** — a git-backed CMS for blog posts, the projects catalog, experience, profile, and the resume PDF, gated to one GitHub account via "Sign in with GitHub." Not linked from anywhere public and excluded from `robots.txt`. See "Admin" below.
+- **`/til`** — short, no-title notes (a sentence or two each) on one page in reverse-chronological order, each individually linkable via `#slug`. A lighter-weight cousin of `/blog` for things too small to be a full post.
+- **`/admin`** — a git-backed CMS for blog posts, TIL notes, the projects catalog, experience, profile, and the resume PDF, gated to one GitHub account via "Sign in with GitHub." Not linked from anywhere public and excluded from `robots.txt`. See "Admin" below.
 
 ## Features
 
 - Scroll-driven 3D scene (`SceneCanvas`) synced to page scroll via Lenis + GSAP, with a `prefers-reduced-motion`-aware fallback (no Lenis smoothing, plain fades instead of the 3D tilt/scale reveal)
 - `Revolving3DCarousel` for browsing featured projects in 3D on the homepage; `ProjectCard` grid + `ProjectDetailsModal` for the full catalog on `/projects`
 - Shared light/dark theme (`useTheme`, `lib/theme.ts`) that persists across the homepage and standalone pages, with a no-flash inline init script
-- `TerminalModal` — an interactive terminal easter egg with real commands (including `catalog`/`blog` to jump to those pages) and a couple of playable ASCII arcade games
+- `TerminalModal` — an interactive terminal easter egg with real commands (`catalog`/`blog`/`til` to jump to those pages, `stats`/`github` for a live fetch of real GitHub profile stats, `quote` for a random dev quote) and a couple of playable ASCII arcade games
+- `ShortcutsOverlay` — press `?` anywhere (outside a text input) for a shortcuts modal, mounted once in the root layout
+- `GitHubActivityFeed` + `ContributionGraph` — real, live GitHub data on the homepage (recent public activity, the contribution heatmap). Both are public-facing and fail *silently* (render nothing) if the API is unreachable or unconfigured, unlike the admin-side "fail closed with a message" pattern — a site visitor isn't operating a tool
 - `ResumeModal` for viewing/downloading the résumé in-page
 - Contact form backed by `/api/contact` (Resend) — falls back to a clear error + mailto link if `RESEND_API_KEY` isn't set; see `.env.example`
 - `sitemap.xml`, `robots.txt`, `icon.svg`, a generated `opengraph-image`, and `/blog/rss.xml` via Next.js metadata/route conventions
 - Vercel Web Analytics (`@vercel/analytics`)
-- **Admin CMS** (`/admin`) — Auth.js v5, GitHub OAuth, restricted to one account (`ADMIN_GITHUB_LOGIN` in `src/lib/admin.ts`). Full CRUD for blog posts (with inline image uploads and link-preview cards), the projects catalog, and experience, plus profile editing and a resume-PDF replace control. Every write is a real commit to `main` — no database. See "Admin" below.
+- **Admin CMS** (`/admin`) — Auth.js v5, GitHub OAuth, restricted to one account (`ADMIN_GITHUB_LOGIN` in `src/lib/admin.ts`). Full CRUD for blog posts (with inline image uploads and link-preview cards), TIL notes, the projects catalog, and experience, plus profile editing and a resume-PDF replace control. Every write is a real commit to `main` — no database. See "Admin" below.
 - **Analytics** (`/admin/analytics`) — queries Vercel's Web Analytics API directly (`src/lib/vercel-analytics.ts`, plain `fetch`) for a daily trend chart, top pages/referrers/countries/devices, and per-post pageviews.
 
 ## Tech Stack
@@ -106,6 +109,7 @@ Copy `.env.example` to `.env.local` and set `RESEND_API_KEY` (from [resend.com](
 
 **What's editable:**
 - **Posts** (`/admin`, `/admin/new`, `/admin/[slug]/edit`) — Markdown with a live preview, inline image uploads, and "Add link preview" cards (server-fetches a URL's OG tags at write time, stores the result as a fenced ` ```linkpreview ` JSON block — no raw HTML, no new rendering dependency).
+- **TIL** (`/admin/til`) — a quick-add box right on the list page (no separate "new" page — the whole point is low friction), auto-generated slug (date + random suffix, no title to base it on).
 - **Projects** (`/admin/projects/*`) — full CRUD over `content/projects.json`, including a screenshot upload.
 - **Experience** (`/admin/experience/*`) — full CRUD over `content/experience.json`.
 - **Profile** (`/admin/profile`) — single-object edit form over `content/profile.json`.
@@ -123,8 +127,9 @@ Copy `.env.example` to `.env.local` and set `RESEND_API_KEY` (from [resend.com](
 3. Create a fine-grained PAT scoped to just this repo, `Contents: Read and write` only, at [github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new)
 4. Set `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` / `AUTH_SECRET` / `GITHUB_CONTENT_TOKEN` in both `.env.local` (dev OAuth app) and the Vercel dashboard (prod OAuth app)
 5. Optional, for `/admin/analytics`: a Vercel personal access token + this project's Project ID (Team ID too, if it's under a Team) — see `.env.example`
+6. Optional, for the homepage's contribution graph: `GITHUB_STATS_TOKEN`, a **classic** PAT with only the `read:user` scope (a fine-grained PAT doesn't work for this specific GraphQL field) — see `.env.example`
 
-Until those are set, `/admin` (and, separately, `/admin/analytics`) fails closed with a clear "not configured" error rather than silently misbehaving.
+Until those are set, `/admin` (and, separately, `/admin/analytics`) fails closed with a clear "not configured" error. The contribution graph is the one exception — it's public-facing, so it fails *silently* (just doesn't render) instead.
 
 ## License
 

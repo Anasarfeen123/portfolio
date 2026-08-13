@@ -46,11 +46,13 @@ type GitHubFileResponse = GitHubContentEntry & {
   encoding: string;
 };
 
-/** Lists the .md files in content/blog/ directly from GitHub — not the local
- * build — so the admin dashboard reflects a publish immediately instead of
- * waiting on the redeploy it triggers. Returns [] if the directory doesn't exist yet. */
-export async function listBlogFiles(): Promise<{ slug: string; path: string; sha: string }[]> {
-  const res = await fetch(`${API_BASE}/repos/${OWNER}/${REPO}/contents/${BLOG_DIR}?ref=${BRANCH}`, {
+/** Lists the .md files in `dir` directly from GitHub — not the local build —
+ * so the admin dashboard reflects a publish immediately instead of waiting
+ * on the redeploy it triggers. Returns [] if the directory doesn't exist yet.
+ * Shared by the blog and TIL admin dashboards (see listBlogFiles below and
+ * til-validation.ts). */
+export async function listMarkdownFiles(dir: string): Promise<{ slug: string; path: string; sha: string }[]> {
+  const res = await fetch(`${API_BASE}/repos/${OWNER}/${REPO}/contents/${dir}?ref=${BRANCH}`, {
     headers: authHeaders(),
     cache: "no-store",
   });
@@ -61,6 +63,10 @@ export async function listBlogFiles(): Promise<{ slug: string; path: string; sha
   return entries
     .filter((e) => e.type === "file" && e.name.endsWith(".md"))
     .map((e) => ({ slug: e.name.replace(/\.md$/, ""), path: e.path, sha: e.sha }));
+}
+
+export async function listBlogFiles(): Promise<{ slug: string; path: string; sha: string }[]> {
+  return listMarkdownFiles(BLOG_DIR);
 }
 
 /** Fetches one file's raw content + sha (sha is required to update/delete it). */

@@ -38,6 +38,7 @@ const availableCommands = [
   "projects",
   "catalog",
   "blog",
+  "til",
   "skills",
   "experience",
   "snake",
@@ -784,6 +785,7 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
   projects    - List all ${projects.length} project repositories
   catalog     - Open the full /projects catalog page
   blog        - Open the /blog field-notes page
+  til         - Open the /til page (short, no-title notes)
   skills      - Machine learning, systems & web tech ecosystem
   experience  - Leadership positions & experience nodes
   contact     - Email, GitHub & LinkedIn handles
@@ -1051,6 +1053,11 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
       case "blog":
         onNavigate("/blog");
         responses.push({ id: Math.random().toString(), type: "system", text: "Navigating to /blog..." });
+        break;
+
+      case "til":
+        onNavigate("/til");
+        responses.push({ id: Math.random().toString(), type: "system", text: "Navigating to /til..." });
         break;
 
       case "matrix":
