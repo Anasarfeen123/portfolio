@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Code2, Lightbulb, Moon, ScrollText, Sun } from "lucide-react";
+import { Code2, Home, Lightbulb, Moon, ScrollText, Sun } from "lucide-react";
 import { profile } from "@/data/portfolio";
 import { GithubIcon } from "@/components/GithubIcon";
+import { HudMobileMenu } from "@/components/HudMobileMenu";
 import { useTheme } from "@/hooks/useTheme";
 
 interface SiteHeaderProps {
@@ -26,13 +27,13 @@ export function SiteHeader({ active }: SiteHeaderProps) {
         <Link href="/" className="hud-link hud-hide-mobile">
           Home
         </Link>
-        <Link href="/projects" className={`hud-link ${active === "projects" ? "hud-link-active" : ""}`}>
+        <Link href="/projects" className={`hud-link hud-hide-mobile ${active === "projects" ? "hud-link-active" : ""}`}>
           <Code2 size={13} /> Projects
         </Link>
-        <Link href="/blog" className={`hud-link ${active === "blog" ? "hud-link-active" : ""}`}>
+        <Link href="/blog" className={`hud-link hud-hide-mobile ${active === "blog" ? "hud-link-active" : ""}`}>
           <ScrollText size={13} /> Blog
         </Link>
-        <Link href="/til" className={`hud-link ${active === "til" ? "hud-link-active" : ""}`}>
+        <Link href="/til" className={`hud-link hud-hide-mobile ${active === "til" ? "hud-link-active" : ""}`}>
           <Lightbulb size={13} /> TIL
         </Link>
         <button onClick={toggleTheme} className="hud-link hud-button" title="Toggle Light / Dark Theme">
@@ -41,6 +42,15 @@ export function SiteHeader({ active }: SiteHeaderProps) {
         <a className="hud-link hud-hide-mobile" href={profile.github} target="_blank" rel="noreferrer">
           <GithubIcon size={13} /> GitHub
         </a>
+        <HudMobileMenu
+          items={[
+            { key: "home", label: "Home", href: "/", icon: <Home size={15} /> },
+            { key: "projects", label: "Projects", href: "/projects", icon: <Code2 size={15} />, active: active === "projects" },
+            { key: "blog", label: "Blog", href: "/blog", icon: <ScrollText size={15} />, active: active === "blog" },
+            { key: "til", label: "TIL", href: "/til", icon: <Lightbulb size={15} />, active: active === "til" },
+            { key: "github", label: "GitHub", href: profile.github, external: true, icon: <GithubIcon size={15} /> },
+          ]}
+        />
       </nav>
     </header>
   );

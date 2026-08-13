@@ -231,6 +231,65 @@ a {
   cursor: pointer;
 }
 
+/* Hamburger trigger — desktop keeps the full pill row (hud-hide-mobile
+   handles hiding the overflow items there), so this button only exists
+   below the same 640px breakpoint the rest of the mobile layout uses. */
+.hud-hamburger {
+  display: none;
+}
+
+.hud-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.hud-mobile-panel {
+  position: fixed;
+  z-index: 46;
+  top: 64px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.hud-mobile-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-height: 44px;
+  color: var(--foreground);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hud-mobile-link:hover,
+.hud-mobile-link:active {
+  background: var(--card-hover);
+}
+
+.hud-mobile-link-active {
+  color: var(--accent);
+}
+
 /* One Card at a Time Section Stream with Mandatory Scroll Snap */
 .narrative {
   position: relative;
@@ -1753,6 +1812,10 @@ a {
 
   .hud-actions .hud-hide-mobile {
     display: none;
+  }
+
+  .hud-hamburger {
+    display: inline-flex;
   }
 
   .hud-link {

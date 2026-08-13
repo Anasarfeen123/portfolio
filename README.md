@@ -27,6 +27,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 ## Features
 
 - Scroll-driven 3D scene (`SceneCanvas`) synced to page scroll via native CSS scroll-snap + GSAP ScrollTrigger, with a `prefers-reduced-motion`-aware fallback (scroll-snap disabled, plain fades instead of the 3D tilt/scale reveal). No JS smooth-scroll library — Lenis was removed after its own docs turned out to explicitly warn it doesn't support CSS scroll-snap, which was the root cause of a janky mobile scroll feel
+- `HudMobileMenu` — below 640px, both the homepage HUD and the standalone-page `SiteHeader` collapse their full pill row into a single hamburger button that opens a dropdown panel with every link/action, shared by both headers instead of duplicated
 - `Revolving3DCarousel` for browsing featured projects in 3D on the homepage; `ProjectCard` grid + `ProjectDetailsModal` for the full catalog on `/projects`
 - Shared light/dark theme (`useTheme`, `lib/theme.ts`) that persists across the homepage and standalone pages, with a no-flash inline init script
 - `TerminalModal` — an interactive terminal easter egg with real commands (`catalog`/`blog`/`til` to jump to those pages, `stats`/`github` for a live fetch of real GitHub profile stats, `quote` for a random dev quote) and a couple of playable ASCII arcade games

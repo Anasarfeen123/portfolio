@@ -12,6 +12,7 @@ import { experience, journey, profile, projects, skillClusters, type Project } f
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { GithubIcon } from "@/components/GithubIcon";
 import { GitHubActivityFeed } from "@/components/GitHubActivityFeed";
+import { HudMobileMenu } from "@/components/HudMobileMenu";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
 import { Revolving3DCarousel } from "@/components/Revolving3DCarousel";
@@ -260,7 +261,7 @@ export function ScrollExperience() {
         <nav className="hud-actions" aria-label="Primary links">
           <button
             onClick={toggleSound}
-            className="hud-link hud-button"
+            className="hud-link hud-button hud-hide-mobile"
             title={soundOn ? "Mute Web Audio" : "Enable Web Audio SFX"}
           >
             {soundOn ? <Volume2 size={13} className="text-[var(--accent)]" /> : <VolumeX size={13} />}
@@ -271,7 +272,7 @@ export function ScrollExperience() {
               playClickSound();
               setIsTerminalOpen(true);
             }}
-            className="hud-link hud-button"
+            className="hud-link hud-button hud-hide-mobile"
             title="Open Developer Shell (Cmd + K)"
           >
             <Terminal size={13} className="text-[var(--accent)]" />
@@ -303,13 +304,46 @@ export function ScrollExperience() {
               playClickSound();
               setIsResumeOpen(true);
             }}
-            className="hud-link hud-button"
+            className="hud-link hud-button hud-hide-mobile"
           >
             <FileText size={13} /> Resume
           </button>
           <a className="hud-link hud-hide-mobile" href={profile.github} target="_blank" rel="noreferrer">
             <GithubIcon size={13} /> GitHub
           </a>
+          <HudMobileMenu
+            items={[
+              {
+                key: "sound",
+                label: soundOn ? "Mute Sound" : "Enable Sound",
+                icon: soundOn ? <Volume2 size={15} className="text-[var(--accent)]" /> : <VolumeX size={15} />,
+                onClick: toggleSound,
+              },
+              {
+                key: "cli",
+                label: "Developer Shell",
+                icon: <Terminal size={15} className="text-[var(--accent)]" />,
+                onClick: () => {
+                  playClickSound();
+                  setIsTerminalOpen(true);
+                },
+              },
+              { key: "skills", label: "Skills", href: "#skills", icon: <Network size={15} /> },
+              { key: "projects", label: "Projects", href: "/projects", icon: <Code2 size={15} />, onClick: () => playClickSound() },
+              { key: "blog", label: "Blog", href: "/blog", icon: <ScrollText size={15} />, onClick: () => playClickSound() },
+              { key: "til", label: "TIL", href: "/til", icon: <Lightbulb size={15} />, onClick: () => playClickSound() },
+              {
+                key: "resume",
+                label: "Resume",
+                icon: <FileText size={15} />,
+                onClick: () => {
+                  playClickSound();
+                  setIsResumeOpen(true);
+                },
+              },
+              { key: "github", label: "GitHub", href: profile.github, external: true, icon: <GithubIcon size={15} /> },
+            ]}
+          />
         </nav>
       </header>
 
