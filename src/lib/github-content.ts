@@ -10,13 +10,15 @@
  * write" are independently revocable credentials.
  */
 
-const OWNER = process.env.GITHUB_CONTENT_OWNER ?? "Anasarfeen123";
-const REPO = process.env.GITHUB_CONTENT_REPO ?? "portfolio";
-const BRANCH = process.env.GITHUB_CONTENT_BRANCH ?? "main";
-const API_BASE = "https://api.github.com";
+// Shared with src/lib/github-binary.ts (Git Data API — needed for files too
+// large/binary for the simple Contents API PUT below, see that file's header).
+export const OWNER = process.env.GITHUB_CONTENT_OWNER ?? "Anasarfeen123";
+export const REPO = process.env.GITHUB_CONTENT_REPO ?? "portfolio";
+export const BRANCH = process.env.GITHUB_CONTENT_BRANCH ?? "main";
+export const API_BASE = "https://api.github.com";
 const BLOG_DIR = "content/blog";
 
-function authHeaders(): HeadersInit {
+export function authHeaders(): HeadersInit {
   const token = process.env.GITHUB_CONTENT_TOKEN;
   if (!token) {
     throw new Error("GITHUB_CONTENT_TOKEN is not set — the admin write API is not configured.");
@@ -72,6 +74,22 @@ export async function getFile(path: string): Promise<{ content: string; sha: str
 
   const data = (await res.json()) as GitHubFileResponse;
   return { content: Buffer.from(data.content, "base64").toString("utf-8"), sha: data.sha };
+}
+
+/** Just the sha, for files where we don't need (or can't safely read) the
+ * content — GitHub omits `content` entirely for files over 1MB, so getFile()
+ * above throws on anything binary/large. Use this instead before deleting an
+ * uploaded image/PDF with deleteFile(), which only needs the sha anyway. */
+export async function getFileSha(path: string): Promise<string | null> {
+  const res = await fetch(`${API_BASE}/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GitHub get failed: ${res.status} ${await res.text()}`);
+
+  const data = (await res.json()) as GitHubContentEntry;
+  return data.sha;
 }
 
 /** Creates the file if `sha` is omitted, otherwise updates the existing one — a

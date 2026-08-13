@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { Eye, Loader2, Pencil, Save } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Eye, ImagePlus, Link2, Loader2, Pencil, Save } from "lucide-react";
 import { projects } from "@/data/portfolio";
 import { BlogContent } from "@/components/BlogContent";
 
@@ -40,6 +40,26 @@ function estimateReadingTime(text: string) {
   return `${minutes} min read`;
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
+    reader.onerror = () => reject(new Error("Couldn't read that file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Inserts `insertText` at `cursorPos` in `current`, adding blank-line
+ * padding around it so it never runs into adjacent text/markdown. */
+function insertAtCursor(current: string, insertText: string, cursorPos: number) {
+  const before = current.slice(0, cursorPos);
+  const after = current.slice(cursorPos);
+  const prefix = before.length === 0 ? "" : before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
+  const suffix = after.length === 0 ? "" : after.startsWith("\n\n") ? "" : after.startsWith("\n") ? "\n" : "\n\n";
+  const text = before + prefix + insertText + suffix + after;
+  return { text, newCursor: (before + prefix + insertText).length };
+}
+
 interface PostEditorProps {
   mode: "new" | "edit";
   slug?: string;
@@ -55,6 +75,10 @@ export function PostEditor({ mode, slug: existingSlug, initialPost }: PostEditor
   const [status, setStatus] = useState<{ type: "idle" | "saving" | "error" | "success"; message?: string }>({
     type: "idle",
   });
+  const [uploading, setUploading] = useState(false);
+  const [fetchingPreview, setFetchingPreview] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEdit = mode === "edit";
   const tagsPreview = useMemo(
@@ -65,6 +89,62 @@ export function PostEditor({ mode, slug: existingSlug, initialPost }: PostEditor
   const handleTitleChange = (title: string) => {
     setPost((p) => ({ ...p, title }));
     if (!slugTouched) setSlug(slugify(title));
+  };
+
+  const insertIntoContent = (markdown: string) => {
+    const el = textareaRef.current;
+    const cursorPos = el?.selectionStart ?? post.content.length;
+    const { text, newCursor } = insertAtCursor(post.content, markdown, cursorPos);
+    setPost((p) => ({ ...p, content: text }));
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(newCursor, newCursor);
+    });
+  };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // so picking the same file twice still fires onChange
+    if (!file || !slug) return;
+
+    setUploading(true);
+    try {
+      const dataBase64 = await fileToBase64(file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "blog", ownerId: slug, filename: file.name, dataBase64 }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? "Upload failed");
+      insertIntoContent(`![](${body.url})`);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAddLinkPreview = async () => {
+    const url = window.prompt("URL to preview:");
+    if (!url) return;
+
+    setFetchingPreview(true);
+    try {
+      const res = await fetch("/api/admin/link-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? "Couldn't fetch a preview for that URL.");
+      const block = "```linkpreview\n" + JSON.stringify({ url: body.url, title: body.title, description: body.description, image: body.image }) + "\n```";
+      insertIntoContent(block);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Couldn't fetch a preview for that URL.");
+    } finally {
+      setFetchingPreview(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -195,24 +275,45 @@ export function PostEditor({ mode, slug: existingSlug, initialPost }: PostEditor
         </div>
 
         <div className="admin-field" style={{ marginTop: 20 }}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <label htmlFor="content">Content (Markdown)</label>
-            <button
-              type="button"
-              onClick={() => setPreview((v) => !v)}
-              className="admin-header-link"
-              style={{ marginBottom: 5 }}
-            >
-              {preview ? (
-                <>
-                  <Pencil size={12} /> Write
-                </>
-              ) : (
-                <>
-                  <Eye size={12} /> Preview
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/gif,image/webp"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!slug || uploading}
+                title={slug ? "Upload an image" : "Enter a title/slug first"}
+                className="admin-header-link"
+              >
+                {uploading ? <Loader2 size={12} className="animate-spin" /> : <ImagePlus size={12} />} Image
+              </button>
+              <button
+                type="button"
+                onClick={handleAddLinkPreview}
+                disabled={fetchingPreview}
+                className="admin-header-link"
+              >
+                {fetchingPreview ? <Loader2 size={12} className="animate-spin" /> : <Link2 size={12} />} Link preview
+              </button>
+              <button type="button" onClick={() => setPreview((v) => !v)} className="admin-header-link">
+                {preview ? (
+                  <>
+                    <Pencil size={12} /> Write
+                  </>
+                ) : (
+                  <>
+                    <Eye size={12} /> Preview
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {preview ? (
@@ -221,6 +322,7 @@ export function PostEditor({ mode, slug: existingSlug, initialPost }: PostEditor
             </div>
           ) : (
             <textarea
+              ref={textareaRef}
               id="content"
               required
               className="admin-textarea"
@@ -230,8 +332,9 @@ export function PostEditor({ mode, slug: existingSlug, initialPost }: PostEditor
             />
           )}
           <span className="admin-field-hint">
-            Standard Markdown + GFM (tables, strikethrough). Two blockquote conventions: a bold first line renders as a
-            callout box; a last line starting with &ldquo;— &rdquo; renders as a citation.
+            Standard Markdown + GFM (tables, strikethrough). A bold blockquote first line renders as a callout; a last
+            line starting with &ldquo;— &rdquo; renders as a citation. &ldquo;Image&rdquo; needs a slug set first (images
+            are stored per-post). Max image size 3MB.
           </span>
         </div>
 
