@@ -2539,7 +2539,7 @@ a {
 .project-sphere-canvas {
   position: relative;
   width: 100%;
-  height: 400px;
+  height: 460px;
 }
 
 .project-sphere-canvas canvas {
@@ -2703,11 +2703,65 @@ a {
 
 @media (max-width: 640px) {
   .project-sphere-canvas {
-    height: 340px;
+    height: 380px;
   }
 
   .project-sphere-card {
     width: 170px;
     padding: 10px 12px;
+  }
+}
+
+/* Live preview iframe (ProjectDetailsModal, when project.demo is set) — an
+   explicit opt-in toggle, not mounted by default (see the JSX comment for
+   why). Styled like a plain browser frame, not another glass card. */
+.project-live-preview-toggle {
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 5px 11px;
+  background: #0d1527;
+  color: var(--accent);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.project-live-preview-toggle:hover {
+  border-color: var(--accent);
+}
+
+.project-live-preview-frame {
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  background: #02040a;
+  height: 380px;
+}
+
+.project-live-preview-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.project-live-preview-note {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+}
+
+.project-live-preview-note a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .project-live-preview-frame {
+    height: 280px;
   }
 }

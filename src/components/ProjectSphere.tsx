@@ -12,7 +12,17 @@ import { useCanRenderWebGL } from "@/hooks/useCanRenderWebGL";
 import { useGitHubRepo } from "@/hooks/useGitHubRepo";
 
 const ACCENT = "#e08214";
-const SPHERE_RADIUS = 2.4;
+const SIGNAL = "#5a9c5e";
+
+// Three concentric shells, not one — the featured projects sit on the
+// middle one; the other two are blank, decorative, non-interactive nodes
+// that exist purely to make the composition read as a rich, populated 3D
+// space rather than "N cards floating in a ring." Different radius, size,
+// color, and rotation speed per shell gives real parallax depth as they
+// turn, not just visual noise.
+const CORE_RADIUS = 1.35;
+const PROJECT_RADIUS = 2.7;
+const OUTER_RADIUS = 3.9;
 
 interface ProjectSphereProps {
   projects: Project[];
@@ -21,10 +31,11 @@ interface ProjectSphereProps {
 
 /** Evenly distributes `count` points on a unit sphere (golden-angle spiral —
  * the standard technique for even coverage at any count, no clustering at
- * the poles the way a naive lat/long grid gets). Works well specifically
- * *because* this only ever holds the featured subset (5-8 projects, not all
- * 25) — with that few points, most or all stay visible/legible as the
- * sphere turns, which wouldn't hold at a much larger count. */
+ * the poles the way a naive lat/long grid gets). Works well for the project
+ * shell specifically *because* it only ever holds the featured subset (5-8
+ * projects, not all 25) — with that few points, most/all stay legible as
+ * the sphere turns. The decorative shells don't have this constraint since
+ * their nodes are small and non-interactive either way. */
 function fibonacciSpherePoints(count: number, radius: number): THREE.Vector3[] {
   const points: THREE.Vector3[] = [];
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
@@ -53,6 +64,76 @@ function smoothstep(edge0: number, edge1: number, x: number) {
   return t * t * (3 - 2 * t);
 }
 
+// Soft radial dot — drawn fresh per mount rather than cached at module
+// scope, same reasoning as ArchitectureDiagram.tsx's tech-icon textures:
+// R3F disposes textures on unmount, so a shared cache would eventually hand
+// back a disposed one. Cheap enough (one small canvas draw) not to matter.
+function createDotTexture(): THREE.CanvasTexture {
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, "rgba(255,255,255,1)");
+  grad.addColorStop(0.5, "rgba(255,255,255,0.5)");
+  grad.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+/** Blank, non-interactive shell of glowing points — a THREE.Points cloud
+ * (one draw call for the whole shell) rather than individual DOM/Html
+ * elements per node, since these are purely decorative and there can be
+ * 15-20+ of them; Html per node would mean that many extra DOM elements
+ * doing nothing but sitting there, which Points does for effectively free. */
+function DecorativeShell({
+  count,
+  radius,
+  color,
+  size,
+  speed,
+  opacity,
+}: {
+  count: number;
+  radius: number;
+  color: string;
+  size: number;
+  speed: number;
+  opacity: number;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+  const texture = useMemo(() => createDotTexture(), []);
+  const positions = useMemo(() => {
+    const pts = fibonacciSpherePoints(count, radius);
+    const arr = new Float32Array(count * 3);
+    pts.forEach((p, i) => {
+      arr[i * 3] = p.x;
+      arr[i * 3 + 1] = p.y;
+      arr[i * 3 + 2] = p.z;
+    });
+    return arr;
+  }, [count, radius]);
+
+  useFrame((_, delta) => {
+    if (groupRef.current) groupRef.current.rotation.y += delta * speed;
+  });
+
+  return (
+    <group ref={groupRef}>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial map={texture} color={color} size={size} transparent opacity={opacity} depthWrite={false} sizeAttenuation />
+      </points>
+    </group>
+  );
+}
+
 function SphereCard({
   project,
   point,
@@ -79,7 +160,7 @@ function SphereCard({
     // Points only ever rotate around Y, so a plain 2D rotation of (x, z) is
     // enough — no quaternion math needed for a single-axis spin.
     const worldZ = -point.x * Math.sin(rot) + point.z * Math.cos(rot);
-    const facing = worldZ / SPHERE_RADIUS; // -1 (back of sphere) .. 1 (front, facing camera)
+    const facing = worldZ / PROJECT_RADIUS; // -1 (back of sphere) .. 1 (front, facing camera)
     facingRef.current = facing;
 
     if (!wrapperRef.current) return;
@@ -165,7 +246,7 @@ function SphereScene({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const groupRotationRef = useRef(0);
-  const wireframeGeo = useMemo(() => new THREE.IcosahedronGeometry(SPHERE_RADIUS * 0.72, 2), []);
+  const wireframeGeo = useMemo(() => new THREE.IcosahedronGeometry(CORE_RADIUS * 1.15, 2), []);
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -180,16 +261,22 @@ function SphereScene({
     <>
       <ambientLight intensity={0.7} />
       <pointLight position={[4, 4, 6]} intensity={1.2} color={ACCENT} />
-      <pointLight position={[-4, -2, 4]} intensity={0.4} color="#5a9c5e" />
+      <pointLight position={[-4, -2, 4]} intensity={0.4} color={SIGNAL} />
 
-      {/* Faint wireframe globe the cards orbit — ties visually to the
-          orbit-ring language already used in the homepage's solar system,
-          and gives the arrangement a "surface" to read even while cards
-          fade in/out at the edges. */}
+      {/* Structural wireframe cage around the core — ties visually to the
+          orbit-ring language already used in the homepage's solar system. */}
       <mesh geometry={wireframeGeo}>
-        <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.08} />
+        <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.1} />
       </mesh>
 
+      {/* Dense, warm, fast-spinning core — the innermost layer of texture. */}
+      <DecorativeShell count={16} radius={CORE_RADIUS} color={ACCENT} size={0.05} speed={0.16} opacity={0.55} />
+
+      {/* Sparse, cool, slow-spinning outer shell, turning the opposite
+          direction from the core for parallax contrast. */}
+      <DecorativeShell count={22} radius={OUTER_RADIUS} color={SIGNAL} size={0.045} speed={-0.06} opacity={0.35} />
+
+      {/* The real featured-project cards, on their own middle shell. */}
       <group ref={groupRef}>
         {projects.map((project, i) => (
           <SphereCard
@@ -212,7 +299,7 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const points = useMemo(() => fibonacciSpherePoints(projects.length, SPHERE_RADIUS), [projects.length]);
+  const points = useMemo(() => fibonacciSpherePoints(projects.length, PROJECT_RADIUS), [projects.length]);
 
   // Same scroll-linked index as the CSS carousel this replaces — scrolling
   // through the section turns the sphere. No free drag-to-rotate on top of
@@ -250,7 +337,7 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   return (
     <div ref={containerRef} className="relative w-full flex flex-col items-center select-none">
       <div className="project-sphere-canvas">
-        <Canvas camera={{ position: [0, 0.6, 6.4], fov: 42 }} dpr={1} gl={{ antialias: true, alpha: true }}>
+        <Canvas camera={{ position: [0, 0.8, 8.5], fov: 40 }} dpr={1} gl={{ antialias: true, alpha: true }}>
           <SphereScene
             projects={projects}
             points={points}

@@ -25,12 +25,14 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
   const ghStats = useGitHubRepo(project?.repoName);
   const canRenderWebGL = useCanRenderWebGL();
   const [showText, setShowText] = useState(false);
+  const [showLivePreview, setShowLivePreview] = useState(false);
 
   // A fresh project should always open on the 3D view (if available) — a
   // "view as text" choice from a previously-viewed project shouldn't carry
-  // over to the next one.
+  // over to the next one. Same for the live-preview toggle.
   useEffect(() => {
     setShowText(false);
+    setShowLivePreview(false);
   }, [project?.id]);
 
   useEffect(() => {
@@ -88,9 +90,33 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
             </button>
           </div>
 
-          {/* Image / Visual Header */}
-          {project.image ? (
-            <div className="mt-4 overflow-hidden rounded-xl border border-[#1e293b] bg-[#02040a]">
+          {/* Image / Visual Header — a live iframe of the actual site when
+              it has a demo URL, screenshot otherwise. Not mounted by
+              default: embedding can be blocked by a site's own
+              X-Frame-Options/CSP (nothing JS can detect ahead of time), so
+              this stays an explicit "peek at it live" action rather than a
+              default that might just show a blank frame. */}
+          {project.demo && (
+            <div className="mt-4 flex justify-end">
+              <button type="button" className="project-live-preview-toggle" onClick={() => setShowLivePreview((v) => !v)}>
+                {showLivePreview ? "Show screenshot" : "Show live preview"}
+              </button>
+            </div>
+          )}
+          {showLivePreview && project.demo ? (
+            <div className="mt-2">
+              <div className="project-live-preview-frame">
+                <iframe src={project.demo} title={`${project.title} — live preview`} loading="lazy" />
+              </div>
+              <p className="project-live-preview-note">
+                Some sites block being embedded — if this looks empty,{" "}
+                <a href={project.demo} target="_blank" rel="noreferrer">
+                  open it directly <ExternalLink size={10} />
+                </a>
+              </p>
+            </div>
+          ) : project.image ? (
+            <div className={`overflow-hidden rounded-xl border border-[#1e293b] bg-[#02040a] ${project.demo ? "mt-2" : "mt-4"}`}>
               <img src={project.image} alt={project.title} className="w-full max-h-[320px] object-cover" />
             </div>
           ) : null}
