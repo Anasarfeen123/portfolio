@@ -17,10 +17,18 @@ import { GitHubActivityFeed } from "@/components/GitHubActivityFeed";
 import { HudMobileMenu } from "@/components/HudMobileMenu";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
-import { Revolving3DCarousel } from "@/components/Revolving3DCarousel";
 import { TerminalModal } from "@/components/TerminalModal";
 import { useTheme } from "@/hooks/useTheme";
 import { playChimeSound, playClickSound, setSoundEnabled } from "@/lib/audio";
+
+// Real WebGL — same reasoning as SceneCanvas: Three.js touches browser
+// globals at module-load time, not just render time, so it needs to stay
+// out of the server bundle entirely rather than relying on an internal
+// capability check alone.
+const ProjectSphere = dynamic(() => import("@/components/ProjectSphere").then((m) => m.ProjectSphere), {
+  ssr: false,
+  loading: () => <div className="project-sphere-canvas project-sphere-loading" aria-hidden="true" />,
+});
 
 function LinkedinIcon({ size = 16 }: { size?: number }) {
   return (
@@ -605,9 +613,9 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
             <h2 className="chapter-title">A few things I&apos;ve built.</h2>
             <p className="chapter-copy">A handful of the projects I&apos;m most likely to talk your ear off about.</p>
 
-            {/* 3D Revolving Cylindrical Carousel */}
+            {/* Featured projects distributed on a real 3D sphere */}
             <div className="mt-4">
-              <Revolving3DCarousel
+              <ProjectSphere
                 projects={featuredProjects}
                 onOpenDetails={(p) => {
                   playClickSound();

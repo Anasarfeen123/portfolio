@@ -29,7 +29,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 
 - Scroll-driven 3D scene (`SceneCanvas`) synced to page scroll via native CSS scroll-snap + GSAP ScrollTrigger, with a `prefers-reduced-motion`-aware fallback (scroll-snap disabled, plain fades instead of the 3D tilt/scale reveal). No JS smooth-scroll library — Lenis was removed after its own docs turned out to explicitly warn it doesn't support CSS scroll-snap, which was the root cause of a janky mobile scroll feel
 - `HudMobileMenu` — below 640px, both the homepage HUD and the standalone-page `SiteHeader` collapse their full pill row into a single hamburger button that opens a dropdown panel with every link/action, shared by both headers instead of duplicated
-- `Revolving3DCarousel` for browsing featured projects in 3D on the homepage; `ProjectCard` grid + `ProjectDetailsModal` for the full catalog on `/projects`
+- `ProjectSphere` — featured projects distributed evenly on a real WebGL sphere (golden-angle spiral placement), billboarded so each card stays flat/readable as it turns, faded by facing direction so the back of the sphere clears out of the way naturally. Scroll-linked rotation, same interaction model as the CSS carousel it replaced (no free drag — a second pointer-capturing surface competing with page scroll wasn't worth it given this session's own Lenis-vs-scroll-snap history). Falls back to the original `Revolving3DCarousel` (kept, not deleted) when WebGL is unavailable or motion is reduced. `ProjectCard` grid + `ProjectDetailsModal` for the full catalog on `/projects`
 - `ArchitectureDiagram` — a real WebGL 3D scene inside `ProjectDetailsModal`'s "How It's Built" section: layer panels connected by lines, tech-stack nodes (real brand icons via a small hand-picked `simple-icons` extract, or a text-label fallback for algorithm/technique names with no real logo) orbiting each layer, explode-in entrance, drag-to-orbit. Works for every project immediately from the existing `architecture`/`technologies` fields; an optional `architectureLayers` field (editable in `/admin`) unlocks labeled layers with per-layer tech instead of the auto-derived generic version. Falls back to the original plain-text list — with a "View as text" toggle always available — when WebGL isn't available or the visitor prefers reduced motion, same fail-safe pattern as the homepage's 3D scene
 - Shared light/dark theme (`useTheme`, `lib/theme.ts`) that persists across the homepage and standalone pages, with a no-flash inline init script
 - `TerminalModal` — an interactive terminal easter egg with real commands (`catalog`/`blog`/`til` to jump to those pages, `stats`/`github` for a live fetch of real GitHub profile stats, `quote` for a random dev quote) and a couple of playable ASCII arcade games
@@ -88,7 +88,8 @@ portfolio/
 │   ├── components/
 │   │   ├── SceneCanvas.tsx           # R3F canvas root (homepage background)
 │   │   ├── ScrollExperience.tsx      # Homepage scroll choreography (native scroll-snap + GSAP ScrollTrigger)
-│   │   ├── Revolving3DCarousel.tsx   # 3D featured-project carousel (homepage)
+│   │   ├── ProjectSphere.tsx         # Featured projects on a real WebGL sphere (homepage); falls back to...
+│   │   ├── Revolving3DCarousel.tsx   # ...this, the original CSS 3D carousel — kept as the no-WebGL/reduced-motion fallback
 │   │   ├── SiteHeader.tsx            # Shared nav for /projects and /blog
 │   │   ├── ProjectCard.tsx / ProjectsView.tsx / ProjectDetailsModal.tsx
 │   │   ├── ArchitectureDiagram.tsx   # 3D exploded architecture view, dynamically imported into ProjectDetailsModal

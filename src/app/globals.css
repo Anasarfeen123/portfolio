@@ -2526,3 +2526,188 @@ a {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* ============================================================
+   Project sphere (ProjectSphere.tsx) — replaces the old flat CSS
+   carousel with a real WebGL scene: featured projects distributed
+   evenly on a sphere (golden-angle spiral), billboarded so each card
+   stays flat/readable as the sphere turns, faded by facing direction
+   so the back of the sphere clears out of the way naturally. Falls
+   back to Revolving3DCarousel.tsx (kept, not deleted) when WebGL is
+   unavailable or the visitor prefers reduced motion.
+   ============================================================ */
+.project-sphere-canvas {
+  position: relative;
+  width: 100%;
+  height: 400px;
+}
+
+.project-sphere-canvas canvas {
+  display: block;
+}
+
+.project-sphere-loading {
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%);
+}
+
+.project-sphere-card {
+  position: relative;
+  width: 210px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  background: rgba(13, 21, 39, 0.95);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  font-family: var(--font-mono), monospace;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.project-sphere-card:hover {
+  border-color: var(--accent);
+}
+
+.project-sphere-card-active {
+  border-color: var(--accent);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.project-sphere-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.project-sphere-card-category {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.project-sphere-card-stars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #fbbf24;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.project-sphere-card h3 {
+  margin: 6px 0 0;
+  color: #f1f5f9;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.project-sphere-card p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 10.5px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.project-sphere-card-tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.project-sphere-card-tech span {
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: #cbd5e1;
+  font-size: 9px;
+}
+
+.project-sphere-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #1e293b;
+}
+
+.project-sphere-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.project-sphere-card-cta-muted {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.project-sphere-card-bottom-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-sphere-card-forks {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.project-sphere-card-gh {
+  display: flex;
+  color: #94a3b8;
+  transition: color 150ms ease;
+}
+
+.project-sphere-card-gh:hover {
+  color: var(--accent);
+}
+
+.project-sphere-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--line-strong);
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.project-sphere-dot:hover {
+  background: var(--heading);
+}
+
+.project-sphere-dot-active {
+  background: var(--accent);
+  transform: scale(1.3);
+}
+
+@media (max-width: 640px) {
+  .project-sphere-canvas {
+    height: 340px;
+  }
+
+  .project-sphere-card {
+    width: 170px;
+    padding: 10px 12px;
+  }
+}
