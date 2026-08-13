@@ -1280,6 +1280,364 @@ a {
   max-width: 46ch;
 }
 
+/* ============================================================
+   /admin — no 3D stage here, so a plain sticky header instead
+   of the fixed .hud pattern used elsewhere.
+   ============================================================ */
+.admin-auth-page {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.admin-auth-card {
+  width: min(400px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 32px;
+  background: var(--card-bg);
+  text-align: center;
+}
+
+.admin-auth-title {
+  margin: 4px 0 0;
+  color: var(--heading);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.admin-auth-copy {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.admin-auth-error {
+  margin: 16px 0 0;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  font-size: 12.5px;
+}
+
+.admin-auth-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 20px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 11px 20px;
+  background: var(--accent);
+  color: #04120d;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 150ms ease;
+}
+
+.admin-auth-button:hover {
+  filter: brightness(1.08);
+}
+
+.admin-shell {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+}
+
+.admin-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px max(3vw, 16px);
+  border-bottom: 1px solid var(--line);
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+}
+
+.admin-header-mark {
+  color: var(--heading);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-header-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: var(--foreground);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.admin-header-link:hover {
+  border-color: var(--line-strong);
+  color: var(--heading);
+}
+
+.admin-page-inner {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px max(3vw, 16px) 80px;
+}
+
+.admin-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.admin-page-title {
+  margin: 4px 0 0;
+  color: var(--heading);
+  font-size: clamp(24px, 3.4vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.admin-primary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 9px 16px;
+  background: var(--accent);
+  color: #04120d;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-primary-button:hover {
+  filter: brightness(1.08);
+}
+
+.admin-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-empty {
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  padding: 40px 20px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.admin-post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-post-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--card-bg);
+}
+
+.admin-post-row-title {
+  color: var(--heading);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.admin-post-row-meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+}
+
+.admin-post-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.admin-icon-link,
+.admin-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.admin-icon-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.admin-icon-button-danger:hover {
+  border-color: #ef4444;
+  color: #f87171;
+}
+
+.admin-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Post editor */
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.admin-field label {
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-field input,
+.admin-field select,
+.admin-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--background);
+  padding: 10px 12px;
+  color: var(--heading);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.admin-field input:focus,
+.admin-field select:focus,
+.admin-field textarea:focus {
+  border-color: var(--accent);
+}
+
+.admin-field input::placeholder,
+.admin-field textarea::placeholder {
+  color: var(--muted);
+}
+
+.admin-field-hint {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.admin-editor-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+@media (min-width: 720px) {
+  .admin-editor-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+.admin-textarea {
+  min-height: 420px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.admin-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-status {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+}
+
+.admin-status-error {
+  color: #f87171;
+}
+
+.admin-status-success {
+  color: var(--accent);
+}
+
+.admin-preview {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 24px;
+  min-height: 420px;
+  background: var(--card-bg);
+}
+
 /* Mobile Friendly Responsive Optimization (< 640px) */
 @media (max-width: 640px) {
   .hud {
