@@ -1205,7 +1205,6 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
           onClick={(e) => e.stopPropagation()}
-          data-lenis-prevent="true"
         >
           {/* Header Bar with Mac Dots */}
           <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--card-hover)] px-4 py-3 text-xs font-mono">
@@ -1236,7 +1235,6 @@ export function TerminalModal({ isOpen, onClose, onToggleTheme, onOpenResume, on
             className="flex-1 min-h-[300px] max-h-[440px] overflow-y-auto p-4 font-mono text-xs leading-relaxed space-y-2.5 bg-[var(--background)]/40"
             onWheel={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
-            data-lenis-prevent="true"
           >
             {activeGame === "snake" ? (
               <TerminalSnakeGame onQuit={() => setActiveGame(null)} />

@@ -53,7 +53,6 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           onClick={(e) => e.stopPropagation()}
-          data-lenis-prevent="true"
         >
           {/* Top Bar Controls & Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[var(--line)] bg-[var(--card-hover)] px-4 py-3 gap-3">
@@ -128,7 +127,7 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
 
           {/* Modal Content Body */}
           {activeTab === "pdf" ? (
-            <div className="flex-1 w-full h-full bg-[var(--background)]/30" data-lenis-prevent="true">
+            <div className="flex-1 w-full h-full bg-[var(--background)]/30">
               <iframe
                 src={`${profile.resume}#toolbar=0`}
                 title={`${profile.name} Resume PDF`}
@@ -138,7 +137,6 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
           ) : (
             <div
               className="flex-1 w-full h-full overflow-y-auto p-5 sm:p-8 space-y-6 font-sans bg-[var(--background)]/30"
-              data-lenis-prevent="true"
             >
               {/* Header Overview */}
               <div className="border-b border-[var(--line)] pb-5">

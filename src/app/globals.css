@@ -42,6 +42,18 @@ html {
   overflow-x: hidden;
 }
 
+/* Touch devices: "mandatory" forces a snap-back after every scroll gesture,
+   even a short, hesitant swipe — on a trackpad/wheel that's barely
+   noticeable, but on a touchscreen it reads as the page fighting your
+   finger. "proximity" only snaps once a scroll comes to rest near a
+   section's edge, so a fast flick can sail through several cards the way a
+   normal mobile page would, while a slow drag still settles into place. */
+@media (pointer: coarse) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+}
+
 [data-theme="dark"] html {
   color-scheme: dark;
 }
@@ -232,24 +244,25 @@ a {
   pointer-events: auto;
 }
 
-/* Strictly 1 Section at a Time (Scroll Snap mandatory) */
+/* One section snaps into view at a time, but a section is only ever
+   min-height: 100vh — never a fixed height. Fixed height + a card too tall
+   for the viewport used to force independent scrolling *inside* the card
+   (overflow-y: auto below), which fought the page's own scroll on touch
+   devices. Letting the section grow means long content just extends the
+   page — you scroll past it normally, same as any other page, and the
+   next section's snap point still lines up at its top when you get there. */
 .chapter-section {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  height: 100vh;
   /* dvh accounts for mobile browsers' collapsing address bar — 100vh alone
      is sized to the largest possible viewport, so on a phone with the bar
      visible (the default, especially mid-scroll) it overshoots the real
      visible area and cuts content off at the bottom of every snapped
      section. dvh tracks the actual visible viewport as the bar shows/hides.
-     vh stays first as a fallback for browsers without dvh support.
-     min-height must switch too — otherwise the (larger) 100vh min-height
-     would still win over the smaller 100dvh height per the CSS spec, and
-     silently undo this fix. */
+     vh stays first as a fallback for browsers without dvh support. */
   min-height: 100dvh;
-  height: 100dvh;
-  scroll-snap-align: center;
+  scroll-snap-align: start;
   scroll-snap-stop: always;
   display: flex;
   align-items: center;
@@ -274,7 +287,11 @@ a {
   justify-content: flex-end;
 }
 
-/* Section cards — a solid card with a subtle frosted edge, not a glass sheet */
+/* Section cards — a solid card with a subtle frosted edge, not a glass sheet.
+   No max-height/overflow here on purpose — a card never scrolls on its own;
+   if its content is taller than the viewport, the page scrolls (see
+   .chapter-section above). Two independent scroll containers stacked on top
+   of each other is what made mobile scrolling feel broken. */
 .chapter-card {
   position: relative;
   width: min(840px, 95vw);
@@ -285,9 +302,6 @@ a {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
-  max-height: calc(100vh - 110px);
-  max-height: calc(100dvh - 110px);
-  overflow-y: auto;
 }
 
 [data-theme="light"] .chapter-card {
@@ -1754,15 +1768,12 @@ a {
   .chapter-section {
     padding: 55px 0 35px;
     min-height: 100dvh;
-    height: 100dvh;
   }
 
   .chapter-card {
     width: 100% !important;
     padding: 16px;
     border-radius: 20px;
-    max-height: calc(100vh - 90px);
-    max-height: calc(100dvh - 90px);
   }
 
   .hero-stats {

@@ -51,7 +51,6 @@ export function ProjectDetailsModal({ project, onClose }: ProjectDetailsModalPro
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 15 }}
           onClick={(e) => e.stopPropagation()}
-          data-lenis-prevent="true"
         >
           {/* Header */}
           <div className="flex items-start justify-between gap-4 border-b border-[#1e293b] pb-4">

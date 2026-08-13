@@ -8,7 +8,6 @@ import { ArrowDown, ArrowRight, Check, Code2, FileText, Lightbulb, Mail, Moon, N
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Lenis from "lenis";
 import { experience, journey, profile, projects, skillClusters, type Project } from "@/data/portfolio";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { GithubIcon } from "@/components/GithubIcon";
@@ -178,24 +177,14 @@ export function ScrollExperience() {
 
     gsap.registerPlugin(ScrollTrigger);
 
-    // Skip Lenis's smoothed/lerped scroll entirely for reduced-motion — native
-    // instant scroll instead. The progress rail still works via ScrollTrigger.
-    const lenis = prefersReducedMotion
-      ? null
-      : new Lenis({
-          duration: 0.8,
-          lerp: 0.1,
-          smoothWheel: true,
-        });
-
-    lenis?.on("scroll", ScrollTrigger.update);
-
-    const updateLenis = (time: number) => {
-      lenis?.raf(time * 1000);
-    };
-
-    gsap.ticker.add(updateLenis);
-
+    // Plain native scroll drives everything here — no Lenis. Lenis's own docs
+    // say it doesn't support CSS scroll-snap without a separate plugin
+    // (lenis/snap), and this page relies on native scroll-snap-type for the
+    // one-card-at-a-time feel. Running Lenis's lerped scroll simulation on
+    // top of that was two systems fighting over the same scroll position —
+    // especially rough on touch, where it stepped on native momentum
+    // scrolling. ScrollTrigger doesn't need Lenis either; it tracks native
+    // window scroll on its own, which is all the progress rail needs.
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: rootRef.current,
@@ -210,8 +199,6 @@ export function ScrollExperience() {
 
     return () => {
       ctx.revert();
-      gsap.ticker.remove(updateLenis);
-      lenis?.destroy();
     };
   }, [prefersReducedMotion]);
 

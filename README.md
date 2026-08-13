@@ -14,7 +14,7 @@
 
 ## Overview
 
-anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (Three.js) for the 3D scene, **GSAP** + **Lenis** for smooth-scroll-linked animation, and **Framer Motion** for UI transitions — plus standalone pages (`/projects`, `/blog`, `/til`) for the parts that don't fit a single scroll journey. There's also a hidden **interactive terminal** overlay (`Cmd+K`) you can open to explore the site command-line-style, including a couple of playable ASCII arcade games — and pressing `?` anywhere shows a shortcuts overlay.
+anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (Three.js) for the 3D scene, native CSS scroll-snap + **GSAP ScrollTrigger** for scroll-linked animation, and **Framer Motion** for UI transitions — plus standalone pages (`/projects`, `/blog`, `/til`) for the parts that don't fit a single scroll journey. There's also a hidden **interactive terminal** overlay (`Cmd+K`) you can open to explore the site command-line-style, including a couple of playable ASCII arcade games — and pressing `?` anywhere shows a shortcuts overlay.
 
 ## Pages
 
@@ -26,7 +26,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 
 ## Features
 
-- Scroll-driven 3D scene (`SceneCanvas`) synced to page scroll via Lenis + GSAP, with a `prefers-reduced-motion`-aware fallback (no Lenis smoothing, plain fades instead of the 3D tilt/scale reveal)
+- Scroll-driven 3D scene (`SceneCanvas`) synced to page scroll via native CSS scroll-snap + GSAP ScrollTrigger, with a `prefers-reduced-motion`-aware fallback (scroll-snap disabled, plain fades instead of the 3D tilt/scale reveal). No JS smooth-scroll library — Lenis was removed after its own docs turned out to explicitly warn it doesn't support CSS scroll-snap, which was the root cause of a janky mobile scroll feel
 - `Revolving3DCarousel` for browsing featured projects in 3D on the homepage; `ProjectCard` grid + `ProjectDetailsModal` for the full catalog on `/projects`
 - Shared light/dark theme (`useTheme`, `lib/theme.ts`) that persists across the homepage and standalone pages, with a no-flash inline init script
 - `TerminalModal` — an interactive terminal easter egg with real commands (`catalog`/`blog`/`til` to jump to those pages, `stats`/`github` for a live fetch of real GitHub profile stats, `quote` for a random dev quote) and a couple of playable ASCII arcade games
@@ -45,7 +45,7 @@ anasarfeen.dev: a scroll-choreographed homepage built on **React Three Fiber** (
 |---|---|
 | Framework | Next.js 16 (App Router), React 19, TypeScript |
 | 3D | Three.js via `@react-three/fiber` + `@react-three/drei` |
-| Animation | GSAP, Lenis (smooth scroll), Framer Motion |
+| Animation | GSAP (ScrollTrigger), native CSS scroll-snap, Framer Motion |
 | Styling | Tailwind CSS v4 + a small hand-written design-token system in `globals.css` |
 | Content | Markdown + frontmatter (`gray-matter`, `react-markdown`, `remark-gfm`) under `content/blog/` |
 | Email | Resend (`/api/contact`) |
@@ -72,7 +72,7 @@ portfolio/
 │   │   └── layout.tsx, globals.css
 │   ├── components/
 │   │   ├── SceneCanvas.tsx           # R3F canvas root (homepage background)
-│   │   ├── ScrollExperience.tsx      # Homepage scroll choreography (Lenis + GSAP)
+│   │   ├── ScrollExperience.tsx      # Homepage scroll choreography (native scroll-snap + GSAP ScrollTrigger)
 │   │   ├── Revolving3DCarousel.tsx   # 3D featured-project carousel (homepage)
 │   │   ├── SiteHeader.tsx            # Shared nav for /projects and /blog
 │   │   ├── ProjectCard.tsx / ProjectsView.tsx / ProjectDetailsModal.tsx
