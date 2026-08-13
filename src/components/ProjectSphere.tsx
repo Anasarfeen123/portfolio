@@ -164,9 +164,14 @@ function SphereCard({
     facingRef.current = facing;
 
     if (!wrapperRef.current) return;
-    const opacity = smoothstep(-0.05, 0.55, facing);
+    // Wide enough that most of the front hemisphere reads as fully visible
+    // — with only a handful of cards on the shell, a narrow "must be almost
+    // dead-center" window meant only ever one card was legible at a time,
+    // which just looks like a single floating card, not multiple rectangles
+    // on a sphere. Only the back half (facing < 0) actually fades away.
+    const opacity = smoothstep(-0.35, 0.15, facing);
     wrapperRef.current.style.opacity = opacity.toFixed(3);
-    wrapperRef.current.style.pointerEvents = facing > 0.15 ? "auto" : "none";
+    wrapperRef.current.style.pointerEvents = facing > -0.1 ? "auto" : "none";
     wrapperRef.current.style.zIndex = String(Math.round(facing * 100));
   });
 
@@ -246,7 +251,11 @@ function SphereScene({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const groupRotationRef = useRef(0);
-  const wireframeGeo = useMemo(() => new THREE.IcosahedronGeometry(CORE_RADIUS * 1.15, 2), []);
+  // Sized to match the project shell itself, not the small inner core — the
+  // cards need to visibly sit *on* this wireframe's surface for the whole
+  // thing to read as "a sphere with rectangles on it" rather than a small
+  // wireframe ball floating separately from cards orbiting way outside it.
+  const wireframeGeo = useMemo(() => new THREE.IcosahedronGeometry(PROJECT_RADIUS, 2), []);
 
   useFrame(() => {
     if (!groupRef.current) return;
@@ -263,10 +272,13 @@ function SphereScene({
       <pointLight position={[4, 4, 6]} intensity={1.2} color={ACCENT} />
       <pointLight position={[-4, -2, 4]} intensity={0.4} color={SIGNAL} />
 
-      {/* Structural wireframe cage around the core — ties visually to the
-          orbit-ring language already used in the homepage's solar system. */}
+      {/* Structural wireframe cage — sized to match the project shell
+          exactly, so the cards visibly sit on its surface (this is "the
+          sphere"), not floating separately from a smaller decorative ball.
+          Also ties visually to the orbit-ring language already used in the
+          homepage's solar system. */}
       <mesh geometry={wireframeGeo}>
-        <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.1} />
+        <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.22} />
       </mesh>
 
       {/* Dense, warm, fast-spinning core — the innermost layer of texture. */}
