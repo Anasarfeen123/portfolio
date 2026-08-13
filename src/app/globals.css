@@ -188,6 +188,8 @@ a {
 
 .hud-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 6px;
 }
@@ -236,6 +238,17 @@ a {
   width: 100%;
   min-height: 100vh;
   height: 100vh;
+  /* dvh accounts for mobile browsers' collapsing address bar — 100vh alone
+     is sized to the largest possible viewport, so on a phone with the bar
+     visible (the default, especially mid-scroll) it overshoots the real
+     visible area and cuts content off at the bottom of every snapped
+     section. dvh tracks the actual visible viewport as the bar shows/hides.
+     vh stays first as a fallback for browsers without dvh support.
+     min-height must switch too — otherwise the (larger) 100vh min-height
+     would still win over the smaller 100dvh height per the CSS spec, and
+     silently undo this fix. */
+  min-height: 100dvh;
+  height: 100dvh;
   scroll-snap-align: center;
   scroll-snap-stop: always;
   display: flex;
@@ -273,6 +286,7 @@ a {
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
   max-height: calc(100vh - 110px);
+  max-height: calc(100dvh - 110px);
   overflow-y: auto;
 }
 
@@ -1424,9 +1438,10 @@ a {
   top: 0;
   z-index: 20;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px 12px;
   padding: 14px max(3vw, 16px);
   border-bottom: 1px solid var(--line);
   background: var(--card-bg);
@@ -1443,6 +1458,8 @@ a {
 
 .admin-header-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 6px;
 }
@@ -1725,9 +1742,9 @@ a {
   }
 
   .hud-link {
-    padding: 4px 8px;
+    padding: 6px 10px;
     font-size: 10px;
-    min-height: 32px;
+    min-height: 36px;
   }
 
   .narrative {
@@ -1736,8 +1753,8 @@ a {
 
   .chapter-section {
     padding: 55px 0 35px;
-    min-height: 100vh;
-    height: 100vh;
+    min-height: 100dvh;
+    height: 100dvh;
   }
 
   .chapter-card {
@@ -1745,6 +1762,7 @@ a {
     padding: 16px;
     border-radius: 20px;
     max-height: calc(100vh - 90px);
+    max-height: calc(100dvh - 90px);
   }
 
   .hero-stats {
