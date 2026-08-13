@@ -270,11 +270,11 @@ function SphereScene({
       </mesh>
 
       {/* Dense, warm, fast-spinning core — the innermost layer of texture. */}
-      <DecorativeShell count={16} radius={CORE_RADIUS} color={ACCENT} size={0.05} speed={0.16} opacity={0.55} />
+      <DecorativeShell count={12} radius={CORE_RADIUS} color={ACCENT} size={0.05} speed={0.16} opacity={0.55} />
 
       {/* Sparse, cool, slow-spinning outer shell, turning the opposite
           direction from the core for parallax contrast. */}
-      <DecorativeShell count={22} radius={OUTER_RADIUS} color={SIGNAL} size={0.045} speed={-0.06} opacity={0.35} />
+      <DecorativeShell count={16} radius={OUTER_RADIUS} color={SIGNAL} size={0.045} speed={-0.06} opacity={0.35} />
 
       {/* The real featured-project cards, on their own middle shell. */}
       <group ref={groupRef}>
@@ -299,7 +299,24 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [inView, setInView] = useState(false);
   const points = useMemo(() => fibonacciSpherePoints(projects.length, PROJECT_RADIUS), [projects.length]);
+
+  // The homepage already runs one continuously-animating WebGL canvas as a
+  // fixed background (SceneCanvas); this is a second, independent one. Two
+  // simultaneous R3F render loops is real, sustained GPU load — running
+  // this one at full tilt even while scrolled far away from it is what was
+  // actually causing "THREE.WebGLRenderer: Context Lost" (confirmed live —
+  // when the context drops mid-rotation, the cards freeze wherever they
+  // were, which reads exactly as "random cards" rather than a sphere).
+  // Pausing the frameloop when the section isn't in view fixes the root
+  // cause, not just this one symptom.
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: 0.05 });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Same scroll-linked index as the CSS carousel this replaces — scrolling
   // through the section turns the sphere. No free drag-to-rotate on top of
@@ -337,7 +354,12 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   return (
     <div ref={containerRef} className="relative w-full flex flex-col items-center select-none">
       <div className="project-sphere-canvas">
-        <Canvas camera={{ position: [0, 0.8, 8.5], fov: 40 }} dpr={1} gl={{ antialias: true, alpha: true }}>
+        <Canvas
+          camera={{ position: [0, 0.8, 8.5], fov: 40 }}
+          dpr={1}
+          gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
+          frameloop={inView ? "always" : "never"}
+        >
           <SphereScene
             projects={projects}
             points={points}
