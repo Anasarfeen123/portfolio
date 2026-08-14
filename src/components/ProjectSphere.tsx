@@ -345,35 +345,32 @@ function SphereScene({
   );
 }
 
-// Points near the pole of a Fibonacci sphere sit on a small-radius ring —
-// they can be adjacent in angle even at very different index positions, so
-// naively taking the top-N by z can hand two real project cards neighbouring
-// (or even visually overlapping) slots. This greedily accepts a candidate
-// only if it's at least the current threshold away (great-circle angle) from
-// every real slot already claimed, guaranteeing breathing room between every
-// featured project. Tried at progressively looser thresholds — a handful of
-// featured projects gets wide, clearly separated placement; if there are
-// ever enough featured projects that the wide threshold can't fit them all,
-// this relaxes step by step rather than leaving one strandeded unplaced.
-const SEPARATION_THRESHOLDS_DEG = [55, 45, 35, 26, 18, 0];
-
-function pickRealSlots(candidates: THREE.Vector3[], count: number): { real: THREE.Vector3[]; rest: THREE.Vector3[] } {
-  for (const deg of SEPARATION_THRESHOLDS_DEG) {
-    const minSeparation = THREE.MathUtils.degToRad(deg);
-    const real: THREE.Vector3[] = [];
-    const rest: THREE.Vector3[] = [];
-    for (const point of candidates) {
-      if (real.length < count && real.every((r) => point.angleTo(r) >= minSeparation)) {
-        real.push(point);
-      } else {
-        rest.push(point);
-      }
-    }
-    if (real.length === count) return { real, rest };
+// Real project cards get a purpose-built layout instead of being picked out
+// of the same coarse 42-slot lattice the blanks use — trying to greedily
+// filter well-separated points out of a fixed, low-resolution lattice kept
+// bottoming out at whatever sparse points happened to survive, which still
+// overlapped on screen once you account for how big a card actually
+// projects to up close. This instead distributes `count` points evenly, by
+// area, across a camera-facing cap (so every featured project is not just
+// unoccluded but legibly close to dead-center), using the same golden-angle
+// spiral idea as fibonacciSpherePoints but bounded to the cap instead of the
+// whole sphere — the fewer the projects, the more room each one gets.
+function capPoints(count: number, capAngleDeg: number, radius: number): THREE.Vector3[] {
+  const capAngle = THREE.MathUtils.degToRad(capAngleDeg);
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const points: THREE.Vector3[] = [];
+  for (let i = 0; i < count; i++) {
+    const t = (i + 0.5) / count;
+    // Even coverage *by area* within the cap — points thin out in theta
+    // near the center the same way fibonacciSpherePoints avoids clustering
+    // at a sphere's poles.
+    const theta = Math.acos(1 - t * (1 - Math.cos(capAngle)));
+    const phi = goldenAngle * i;
+    points.push(
+      new THREE.Vector3(Math.sin(theta) * Math.cos(phi), Math.sin(theta) * Math.sin(phi), Math.cos(theta)).multiplyScalar(radius)
+    );
   }
-  // Unreachable in practice (the 0° threshold above always succeeds), but
-  // keeps this total rather than throwing if TOTAL_SLOTS < projects.length.
-  return { real: candidates.slice(0, count), rest: candidates.slice(count) };
+  return points;
 }
 
 export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
@@ -385,19 +382,22 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   // from drag/auto-rotate — which slots are "real" vs. "blank" is fixed for
   // the component's lifetime, only their on-screen position moves.
   const { realPoints, blankPoints } = useMemo(() => {
-    const all = fibonacciSpherePoints(TOTAL_SLOTS, PROJECT_RADIUS).sort((a, b) => b.z - a.z);
-    // Only pick real-project slots from a narrow camera-facing cone (within
-    // ~55° of dead-center), not the full front hemisphere — a slot near the
-    // z > 0 equator is technically "facing forward" but is so close to
-    // edge-on from the camera that its card reads as a barely-visible
-    // sliver, not a real project someone can actually read on load. The
-    // separation cascade inside pickRealSlots still spaces candidates apart
-    // within that narrower cone.
-    const FRONT_CAP_Z = PROJECT_RADIUS * Math.cos(THREE.MathUtils.degToRad(55));
-    const front = all.filter((p) => p.z > FRONT_CAP_Z);
-    const back = all.filter((p) => p.z <= FRONT_CAP_Z);
-    const { real, rest } = pickRealSlots(front, projects.length);
-    return { realPoints: real, blankPoints: [...rest, ...back] };
+    // Wider cap for more featured projects (each one needs its own share of
+    // room), narrower — so every card stays close to dead-center and
+    // legible — when there are only a few, as there are today.
+    const capAngleDeg = THREE.MathUtils.clamp(28 + projects.length * 5, 30, 70);
+    const real = capPoints(projects.length, capAngleDeg, PROJECT_RADIUS);
+
+    // Blank filler comes from the usual whole-sphere lattice, minus any
+    // slot that landed too close to a real card's now-fixed position —
+    // without this a blank could sit directly behind/beside a featured
+    // card instead of visibly filling the *rest* of the sphere.
+    const MIN_BLANK_CLEARANCE = THREE.MathUtils.degToRad(16);
+    const blankPoints = fibonacciSpherePoints(TOTAL_SLOTS, PROJECT_RADIUS).filter((p) =>
+      real.every((r) => p.angleTo(r) >= MIN_BLANK_CLEARANCE)
+    );
+
+    return { realPoints: real, blankPoints };
   }, [projects.length]);
 
   if (canRenderWebGL === null) {
