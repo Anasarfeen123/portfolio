@@ -2705,7 +2705,8 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 90px;
+  width: 42px;
+  height: 42px;
   cursor: default;
   border-style: dashed;
   background: rgba(13, 21, 39, 0.4);
@@ -2714,7 +2715,7 @@ a {
 .project-sphere-card-blank span {
   color: var(--line-strong);
   font-family: var(--font-mono), monospace;
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 300;
 }
 
@@ -2742,7 +2743,8 @@ a {
   }
 
   .project-sphere-card-blank {
-    height: 70px;
+    width: 34px;
+    height: 34px;
   }
 }
 

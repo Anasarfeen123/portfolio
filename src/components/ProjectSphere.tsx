@@ -14,21 +14,21 @@ import { useGitHubRepo } from "@/hooks/useGitHubRepo";
 const ACCENT = "#e08214";
 const SIGNAL = "#5a9c5e";
 
-// Three concentric shells, not one — the featured projects sit on their own
-// forward-facing arc; the other two are full-sphere, blank, decorative,
-// non-interactive nodes that make the composition read as a rich, populated
-// 3D space rather than "N cards floating in a row."
+// Two concentric decorative shells (small glowing points, no cards) sit
+// inside and outside the project shell itself, which is now the *whole*
+// sphere's surface tiled with cards — real featured projects claim the
+// slots facing the camera on load, everything else renders as blank filler
+// all the way around, revealed as you drag.
 const CORE_RADIUS = 1.35;
 const PROJECT_RADIUS = 2.7;
 const OUTER_RADIUS = 3.9;
 
-// The project dome is a fixed rows x cols grid of slots — filled with real
-// featured projects first (the most central, best-facing positions), the
-// rest rendered as blank placeholder cards. Featuring another project later
-// just lights up the next-most-central empty slot instead of the sphere
-// staying sparse until there happen to be this many featured.
-const DOME_ROWS = 3;
-const DOME_COLS = 6;
+// Total card slots tiling the sphere's surface — filled with real featured
+// projects first (the currently best-facing positions), the rest rendered
+// as blank placeholder cards. Featuring another project later just lights
+// up the next-best slot instead of the sphere needing to reach this count
+// before it stops looking sparse.
+const TOTAL_SLOTS = 42;
 
 /** Rotates the +Z axis to point along `point`'s direction from the origin
  * — used so a card at a given dome position faces straight outward, the
@@ -44,46 +44,12 @@ interface ProjectSphereProps {
   onOpenDetails: (project: Project) => void;
 }
 
-/** A rows x cols grid of points across a *forward-facing dome* (real
- * latitude/longitude spherical coordinates, not a full enclosing sphere —
- * every point stays within a forward-facing patch, so nothing ever needs to
- * hide on "the back" the way a full 360-degree distribution would). A grid
- * gives real, even spacing between neighbors in both directions, unlike a
- * single zigzag row — and with more slots than there are featured projects,
- * most of the grid is empty, ready to fill in as more get featured.
- *
- * Returned sorted by distance from the grid's own center, nearest first —
- * callers hand the first N (nearest, most-forward-facing, least-angled)
- * slots to real content and the rest to blank filler, so real projects
- * always land in the most legible positions regardless of how many there
- * currently are. */
-function domeGridPoints(rows: number, cols: number, radius: number): THREE.Vector3[] {
-  const lonSpread = THREE.MathUtils.degToRad(150);
-  const latSpread = THREE.MathUtils.degToRad(84);
-  const entries: { point: THREE.Vector3; centerDist: number }[] = [];
-
-  for (let r = 0; r < rows; r++) {
-    const vt = rows === 1 ? 0.5 : r / (rows - 1);
-    const lat = (vt - 0.5) * latSpread;
-    for (let c = 0; c < cols; c++) {
-      const ht = cols === 1 ? 0.5 : c / (cols - 1);
-      const lon = (ht - 0.5) * lonSpread;
-      const x = Math.sin(lon) * Math.cos(lat) * radius;
-      const y = Math.sin(lat) * radius;
-      const z = Math.cos(lon) * Math.cos(lat) * radius;
-      const centerDist = Math.hypot(vt - 0.5, ht - 0.5);
-      entries.push({ point: new THREE.Vector3(x, y, z), centerDist });
-    }
-  }
-
-  entries.sort((a, b) => a.centerDist - b.centerDist);
-  return entries.map((e) => e.point);
-}
-
-/** Evenly distributes `count` points on a full unit sphere (golden-angle
- * spiral — the standard technique for even coverage at any count, no
- * clustering at the poles the way a naive lat/long grid gets). Used for the
- * decorative shells only, which have no legibility requirement either way. */
+/** Evenly distributes `count` points across the *whole* sphere surface
+ * (golden-angle spiral — the standard technique for even coverage at any
+ * count, no clustering at the poles the way a naive lat/long grid gets).
+ * Used both for the decorative shells and, now, the card slots themselves —
+ * the entire sphere is meant to read as tiled with cards, not just a
+ * forward-facing patch, since dragging can bring any part of it into view. */
 function fibonacciSpherePoints(count: number, radius: number): THREE.Vector3[] {
   const points: THREE.Vector3[] = [];
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
@@ -364,7 +330,16 @@ function SphereScene({ projects, points, onOpenDetails }: { projects: Project[];
 
 export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
-  const points = useMemo(() => domeGridPoints(DOME_ROWS, DOME_COLS, PROJECT_RADIUS), []);
+  // Real projects claim whichever slots face the camera on load (highest z
+  // — least angled, most legible without having to drag first); everything
+  // else, including the rest of the back and sides, renders as blank
+  // filler. Sorted once, not re-sorted as the sphere later rotates from
+  // drag/auto-rotate — which slots are "real" vs. "blank" is fixed for the
+  // component's lifetime, only their on-screen position moves.
+  const points = useMemo(
+    () => fibonacciSpherePoints(TOTAL_SLOTS, PROJECT_RADIUS).sort((a, b) => b.z - a.z),
+    []
+  );
 
   if (canRenderWebGL === null) {
     return <div className="project-sphere-canvas project-sphere-loading" aria-hidden="true" />;
