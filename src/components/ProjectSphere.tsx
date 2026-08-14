@@ -22,11 +22,13 @@ const CORE_RADIUS = 1.35;
 const PROJECT_RADIUS = 2.7;
 const OUTER_RADIUS = 3.9;
 
-// The project dome always reserves at least this many slots — filled with
-// real featured projects first, the rest rendered as blank placeholder
-// cards. Featuring another project later just lights up the next empty
-// slot instead of the sphere staying sparse until there happen to be 8.
-const MIN_SLOTS = 8;
+// The project dome is a fixed rows x cols grid of slots — filled with real
+// featured projects first (the most central, best-facing positions), the
+// rest rendered as blank placeholder cards. Featuring another project later
+// just lights up the next-most-central empty slot instead of the sphere
+// staying sparse until there happen to be this many featured.
+const DOME_ROWS = 3;
+const DOME_COLS = 6;
 
 /** Rotates the +Z axis to point along `point`'s direction from the origin
  * — used so a card at a given dome position faces straight outward, the
@@ -42,25 +44,40 @@ interface ProjectSphereProps {
   onOpenDetails: (project: Project) => void;
 }
 
-/** Evenly distributes `count` points across a *forward-facing dome*, not a
- * full enclosing sphere — every point stays within roughly +/-70 degrees of
- * dead-center, so nothing ever needs to hide on "the back" the way a full
- * 360-degree distribution would require. This is deliberate: with only a
- * handful of featured projects, the goal is every card visible and legible
- * at once, not a carousel that reveals one at a time. A slight vertical
- * stagger (alternating up/down) keeps it from reading as one flat row. */
-function domePoints(count: number, radius: number): THREE.Vector3[] {
-  const points: THREE.Vector3[] = [];
-  const spread = THREE.MathUtils.degToRad(count > 1 ? 130 : 0);
-  for (let i = 0; i < count; i++) {
-    const t = count === 1 ? 0.5 : i / (count - 1);
-    const angle = (t - 0.5) * spread;
-    const vertical = (i % 2 === 0 ? 1 : -1) * radius * 0.16;
-    const x = Math.sin(angle) * radius;
-    const z = Math.cos(angle) * radius;
-    points.push(new THREE.Vector3(x, vertical, z));
+/** A rows x cols grid of points across a *forward-facing dome* (real
+ * latitude/longitude spherical coordinates, not a full enclosing sphere —
+ * every point stays within a forward-facing patch, so nothing ever needs to
+ * hide on "the back" the way a full 360-degree distribution would). A grid
+ * gives real, even spacing between neighbors in both directions, unlike a
+ * single zigzag row — and with more slots than there are featured projects,
+ * most of the grid is empty, ready to fill in as more get featured.
+ *
+ * Returned sorted by distance from the grid's own center, nearest first —
+ * callers hand the first N (nearest, most-forward-facing, least-angled)
+ * slots to real content and the rest to blank filler, so real projects
+ * always land in the most legible positions regardless of how many there
+ * currently are. */
+function domeGridPoints(rows: number, cols: number, radius: number): THREE.Vector3[] {
+  const lonSpread = THREE.MathUtils.degToRad(150);
+  const latSpread = THREE.MathUtils.degToRad(84);
+  const entries: { point: THREE.Vector3; centerDist: number }[] = [];
+
+  for (let r = 0; r < rows; r++) {
+    const vt = rows === 1 ? 0.5 : r / (rows - 1);
+    const lat = (vt - 0.5) * latSpread;
+    for (let c = 0; c < cols; c++) {
+      const ht = cols === 1 ? 0.5 : c / (cols - 1);
+      const lon = (ht - 0.5) * lonSpread;
+      const x = Math.sin(lon) * Math.cos(lat) * radius;
+      const y = Math.sin(lat) * radius;
+      const z = Math.cos(lon) * Math.cos(lat) * radius;
+      const centerDist = Math.hypot(vt - 0.5, ht - 0.5);
+      entries.push({ point: new THREE.Vector3(x, y, z), centerDist });
+    }
   }
-  return points;
+
+  entries.sort((a, b) => a.centerDist - b.centerDist);
+  return entries.map((e) => e.point);
 }
 
 /** Evenly distributes `count` points on a full unit sphere (golden-angle
@@ -249,7 +266,7 @@ function SphereCard({ project, point, index, onOpenDetails }: { project: Project
 /** An empty slot on the dome — reserved space for a project that isn't
  * featured yet. Featuring another one just fills the next of these in,
  * rather than the sphere staying visibly sparse until there happen to be
- * MIN_SLOTS real projects. */
+ * DOME_ROWS x DOME_COLS real projects. */
 function BlankSlotCard({ point, index }: { point: THREE.Vector3; index: number }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const mountTimeRef = useRef<number | null>(null);
@@ -347,7 +364,7 @@ function SphereScene({ projects, points, onOpenDetails }: { projects: Project[];
 
 export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
-  const points = useMemo(() => domePoints(Math.max(MIN_SLOTS, projects.length), PROJECT_RADIUS), [projects.length]);
+  const points = useMemo(() => domeGridPoints(DOME_ROWS, DOME_COLS, PROJECT_RADIUS), []);
 
   if (canRenderWebGL === null) {
     return <div className="project-sphere-canvas project-sphere-loading" aria-hidden="true" />;
