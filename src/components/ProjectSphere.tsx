@@ -350,25 +350,33 @@ function SphereScene({
 // filter well-separated points out of a fixed, low-resolution lattice kept
 // bottoming out at whatever sparse points happened to survive, which still
 // overlapped on screen once you account for how big a card actually
-// projects to up close. This instead distributes `count` points evenly, by
-// area, across a camera-facing cap (so every featured project is not just
-// unoccluded but legibly close to dead-center), using the same golden-angle
-// spiral idea as fibonacciSpherePoints but bounded to the cap instead of the
-// whole sphere — the fewer the projects, the more room each one gets.
+// projects to up close.
+//
+// For a small handful of cards (today: 4, comfortably up to 8) this places
+// them all on a single ring around dead-center, evenly spaced by angle —
+// for a *fixed* count, one ring maximizes the minimum pairwise separation
+// between any two cards, which is exactly the thing that was overlapping.
+// A golden-angle spiral across multiple theta bands (used for the whole
+// sphere, where the count is much larger) doesn't give that guarantee:
+// two points can land in different bands but similar phi and end up close
+// together anyway. Past ring capacity this spills onto additional, wider
+// rings within the same cap rather than crowding the first one.
 function capPoints(count: number, capAngleDeg: number, radius: number): THREE.Vector3[] {
-  const capAngle = THREE.MathUtils.degToRad(capAngleDeg);
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  if (count <= 0) return [];
+  if (count === 1) return [new THREE.Vector3(0, 0, radius)];
+
+  const RING_CAPACITY = 8;
+  const ringCount = Math.ceil(count / RING_CAPACITY);
   const points: THREE.Vector3[] = [];
-  for (let i = 0; i < count; i++) {
-    const t = (i + 0.5) / count;
-    // Even coverage *by area* within the cap — points thin out in theta
-    // near the center the same way fibonacciSpherePoints avoids clustering
-    // at a sphere's poles.
-    const theta = Math.acos(1 - t * (1 - Math.cos(capAngle)));
-    const phi = goldenAngle * i;
-    points.push(
-      new THREE.Vector3(Math.sin(theta) * Math.cos(phi), Math.sin(theta) * Math.sin(phi), Math.cos(theta)).multiplyScalar(radius)
-    );
+  let remaining = count;
+  for (let ring = 0; ring < ringCount; ring++) {
+    const onThisRing = Math.min(remaining, Math.ceil(count / ringCount));
+    const theta = THREE.MathUtils.degToRad((capAngleDeg * (ring + 1)) / ringCount);
+    for (let i = 0; i < onThisRing; i++) {
+      const phi = (i / onThisRing) * Math.PI * 2 + ring * (Math.PI / RING_CAPACITY);
+      points.push(new THREE.Vector3(Math.sin(theta) * Math.cos(phi), Math.sin(theta) * Math.sin(phi), Math.cos(theta)).multiplyScalar(radius));
+    }
+    remaining -= onThisRing;
   }
   return points;
 }
