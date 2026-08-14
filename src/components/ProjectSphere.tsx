@@ -20,8 +20,11 @@ const SIGNAL = "#5a9c5e";
 // slots facing the camera on load, everything else renders as blank filler
 // all the way around, revealed as you drag.
 const CORE_RADIUS = 1.35;
-const PROJECT_RADIUS = 2.7;
-const OUTER_RADIUS = 3.9;
+// Bumped up from 2.7 so the same TOTAL_SLOTS count spreads across more
+// surface area — more breathing room between neighbouring cards — without
+// having to thin out how many slots tile the sphere.
+const PROJECT_RADIUS = 3.3;
+const OUTER_RADIUS = 4.6;
 
 // Total card slots tiling the sphere's surface — filled with real featured
 // projects first (the currently best-facing positions), the rest rendered
@@ -146,9 +149,11 @@ function SphereCard({ project, point, index, onOpenDetails }: { project: Project
   // Static depth cue (nearer cards read slightly bolder than the ones set
   // further back in the dome) — never drops below a floor, since the whole
   // point is that every card stays clearly legible, not that some fade out.
+  // Kept to a narrow band so cards read as a uniform, consistent size across
+  // the sphere rather than visibly ballooning toward the camera.
   const depthFactor = THREE.MathUtils.clamp(point.z / PROJECT_RADIUS, 0, 1);
-  const baseOpacity = 0.8 + depthFactor * 0.2;
-  const baseScale = 0.88 + depthFactor * 0.12;
+  const baseOpacity = 0.85 + depthFactor * 0.15;
+  const baseScale = 0.94 + depthFactor * 0.06;
 
   useFrame(({ clock }) => {
     if (!wrapperRef.current) return;
@@ -172,7 +177,7 @@ function SphereCard({ project, point, index, onOpenDetails }: { project: Project
     // billboarded) on the Html below, the card now rotates rigidly with
     // the sphere instead of always flattening back to face the camera.
     <group position={point} quaternion={quaternion}>
-      <Html center transform distanceFactor={6} occlude={false} pointerEvents="none">
+      <Html center transform distanceFactor={7} occlude={false} pointerEvents="none">
         <div
           ref={wrapperRef}
           className="project-sphere-card"
@@ -242,15 +247,17 @@ function BlankSlotCard({ point, index }: { point: THREE.Vector3; index: number }
     if (!wrapperRef.current) return;
     if (mountTimeRef.current === null) mountTimeRef.current = clock.elapsedTime;
     const elapsed = clock.elapsedTime - mountTimeRef.current;
-    const delay = index * 0.12;
-    const progress = smoothstep(delay, delay + 0.55, elapsed);
-    wrapperRef.current.style.opacity = (progress * 0.4).toFixed(3);
-    wrapperRef.current.style.transform = `scale(${(0.5 + progress * 0.4).toFixed(3)})`;
+    // Shorter per-card stagger than the real cards use (there are 30+ of
+    // these, not a handful — index * 0.12 would take ~5s to finish revealing).
+    const delay = index * 0.04;
+    const progress = smoothstep(delay, delay + 0.4, elapsed);
+    wrapperRef.current.style.opacity = (progress * 0.7).toFixed(3);
+    wrapperRef.current.style.transform = `scale(${(0.5 + progress * 0.5).toFixed(3)})`;
   });
 
   return (
     <group position={point} quaternion={quaternion}>
-      <Html center transform distanceFactor={6} occlude={false} pointerEvents="none">
+      <Html center transform distanceFactor={7} occlude={false} pointerEvents="none">
         <div ref={wrapperRef} className="project-sphere-card project-sphere-card-blank" style={{ opacity: 0, transform: "scale(0.5)" }} aria-hidden="true">
           <span>+</span>
         </div>
@@ -356,7 +363,7 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
     <div className="relative w-full flex flex-col items-center select-none">
       <div className="project-sphere-canvas">
         <Canvas
-          camera={{ position: [0, 0.8, 8.2], fov: 42 }}
+          camera={{ position: [0, 1, 10.2], fov: 42 }}
           dpr={1}
           gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
         >
