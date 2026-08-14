@@ -2563,7 +2563,12 @@ a {
   position: relative;
   width: 96px;
   overflow: hidden;
-  border-radius: 9px;
+  /* Elliptical corners (taller radius than the flat card edges) plus the
+     ::after shading below are what sell "wrapped around a ball" rather
+     than "flat rectangle floating near one" — a true per-pixel curved
+     mesh isn't worth the interactivity/text-wrapping risk for a card this
+     small, so this is a deliberate, cheap illusion of curvature instead. */
+  border-radius: 30% / 9px;
   border: 1px solid #1e293b;
   background: rgba(13, 21, 39, 0.95);
   backdrop-filter: blur(3px);
@@ -2580,6 +2585,25 @@ a {
      opaque object would. */
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+/* Left/right edge shading + a soft center sheen — mimics how light falls
+   off a curved (barrel-shaped) surface as it wraps away from the viewer,
+   without touching the card's real content or click targets underneath. */
+.project-sphere-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0) 20%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(0, 0, 0, 0) 80%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
 }
 
 .project-sphere-card:hover {
@@ -2707,7 +2731,9 @@ a {
   color: var(--accent);
 }
 
-/* Empty dome slot — reserved space for a project that isn't featured yet. */
+/* Empty dome slot — reserved space for a project that isn't featured yet.
+   Plain rounded square, not a "wrapped" card — the ::after shading and
+   elliptical corners are reserved for real project cards. */
 .project-sphere-card-blank {
   display: flex;
   align-items: center;
@@ -2715,10 +2741,15 @@ a {
   width: 36px;
   height: 36px;
   cursor: default;
+  border-radius: 8px;
   border-width: 1.5px;
   border-style: dashed;
   border-color: color-mix(in srgb, var(--accent) 30%, #1e293b);
   background: rgba(13, 21, 39, 0.65);
+}
+
+.project-sphere-card-blank::after {
+  display: none;
 }
 
 .project-sphere-card-blank span {

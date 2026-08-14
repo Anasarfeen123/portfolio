@@ -266,7 +266,17 @@ function BlankSlotCard({ point, index }: { point: THREE.Vector3; index: number }
   );
 }
 
-function SphereScene({ projects, points, onOpenDetails }: { projects: Project[]; points: THREE.Vector3[]; onOpenDetails: (project: Project) => void }) {
+function SphereScene({
+  projects,
+  realPoints,
+  blankPoints,
+  onOpenDetails,
+}: {
+  projects: Project[];
+  realPoints: THREE.Vector3[];
+  blankPoints: THREE.Vector3[];
+  onOpenDetails: (project: Project) => void;
+}) {
   // Sized to match the project dome exactly, so the cards visibly sit on its
   // surface (this is "the sphere") rather than floating separately from a
   // smaller decorative ball.
@@ -304,9 +314,9 @@ function SphereScene({ projects, points, onOpenDetails }: { projects: Project[];
           <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.22} />
         </mesh>
         {projects.map((project, i) => (
-          <SphereCard key={project.id} project={project} point={points[i]} index={i} onOpenDetails={onOpenDetails} />
+          <SphereCard key={project.id} project={project} point={realPoints[i]} index={i} onOpenDetails={onOpenDetails} />
         ))}
-        {points.slice(projects.length).map((point, i) => (
+        {blankPoints.map((point, i) => (
           <BlankSlotCard key={`blank-${i}`} point={point} index={projects.length + i} />
         ))}
       </group>
@@ -335,18 +345,45 @@ function SphereScene({ projects, points, onOpenDetails }: { projects: Project[];
   );
 }
 
+// Points near the pole of a Fibonacci sphere sit on a small-radius ring —
+// they can be adjacent in angle even at very different index positions, so
+// naively taking the top-N by z can hand two real project cards neighbouring
+// slots that visually overlap. This greedily accepts a candidate only if
+// it's at least MIN_SEPARATION away (great-circle angle) from every real
+// slot already claimed, guaranteeing breathing room between every featured
+// project — falling back to filling in by best z-order if there ever are
+// more featured projects than the sphere can comfortably space apart.
+const MIN_REAL_SLOT_SEPARATION = THREE.MathUtils.degToRad(26);
+
+function pickRealSlots(candidates: THREE.Vector3[], count: number): { real: THREE.Vector3[]; rest: THREE.Vector3[] } {
+  const real: THREE.Vector3[] = [];
+  const rest: THREE.Vector3[] = [];
+  for (const point of candidates) {
+    if (real.length < count && real.every((r) => point.angleTo(r) >= MIN_REAL_SLOT_SEPARATION)) {
+      real.push(point);
+    } else {
+      rest.push(point);
+    }
+  }
+  while (real.length < count && rest.length > 0) {
+    real.push(rest.shift()!);
+  }
+  return { real, rest };
+}
+
 export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
-  // Real projects claim whichever slots face the camera on load (highest z
-  // — least angled, most legible without having to drag first); everything
-  // else, including the rest of the back and sides, renders as blank
-  // filler. Sorted once, not re-sorted as the sphere later rotates from
-  // drag/auto-rotate — which slots are "real" vs. "blank" is fixed for the
-  // component's lifetime, only their on-screen position moves.
-  const points = useMemo(
-    () => fibonacciSpherePoints(TOTAL_SLOTS, PROJECT_RADIUS).sort((a, b) => b.z - a.z),
-    []
-  );
+  // Real projects claim whichever well-spaced slots face the camera on load
+  // (highest z — least angled, most legible without having to drag first);
+  // everything else, including the rest of the back and sides, renders as
+  // blank filler. Computed once, not re-derived as the sphere later rotates
+  // from drag/auto-rotate — which slots are "real" vs. "blank" is fixed for
+  // the component's lifetime, only their on-screen position moves.
+  const { realPoints, blankPoints } = useMemo(() => {
+    const candidates = fibonacciSpherePoints(TOTAL_SLOTS, PROJECT_RADIUS).sort((a, b) => b.z - a.z);
+    const { real, rest } = pickRealSlots(candidates, projects.length);
+    return { realPoints: real, blankPoints: rest };
+  }, [projects.length]);
 
   if (canRenderWebGL === null) {
     return <div className="project-sphere-canvas project-sphere-loading" aria-hidden="true" />;
@@ -367,7 +404,7 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
           dpr={1}
           gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
         >
-          <SphereScene projects={projects} points={points} onOpenDetails={onOpenDetails} />
+          <SphereScene projects={projects} realPoints={realPoints} blankPoints={blankPoints} onOpenDetails={onOpenDetails} />
         </Canvas>
       </div>
     </div>
