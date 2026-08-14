@@ -1,9 +1,9 @@
 "use client";
 
-import { Html } from "@react-three/drei";
+import { Html, OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ExternalLink, GitFork, Star } from "lucide-react";
-import { useEffect, useMemo, useRef, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { Project } from "@/data/portfolio";
 import { GithubIcon } from "@/components/GithubIcon";
@@ -276,34 +276,22 @@ function BlankSlotCard({ point, index }: { point: THREE.Vector3; index: number }
   );
 }
 
-function SphereScene({
-  projects,
-  points,
-  scrollTiltRef,
-  onOpenDetails,
-}: {
-  projects: Project[];
-  points: THREE.Vector3[];
-  scrollTiltRef: RefObject<number>;
-  onOpenDetails: (project: Project) => void;
-}) {
-  const groupRef = useRef<THREE.Group>(null);
+function SphereScene({ projects, points, onOpenDetails }: { projects: Project[]; points: THREE.Vector3[]; onOpenDetails: (project: Project) => void }) {
   // Sized to match the project dome exactly, so the cards visibly sit on its
   // surface (this is "the sphere") rather than floating separately from a
   // smaller decorative ball.
   const wireframeGeo = useMemo(() => new THREE.IcosahedronGeometry(PROJECT_RADIUS, 2), []);
 
-  useFrame(({ clock }) => {
-    if (!groupRef.current) return;
-    // A gentle continuous sway rather than a full 360-degree spin: cards
-    // are stuck rigidly to the sphere's surface now (see outwardQuaternion),
-    // not billboarded — a full spin would rotate them to genuinely face
-    // sideways/away from the camera, unreadable, not just re-angled. A
-    // bounded sine sway keeps motion constantly visible without that
-    // trade-off. Scroll adds its own tilt on top, layered independently.
-    groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.35) * 0.4;
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, scrollTiltRef.current, 0.06);
-  });
+  // Rotation now has exactly one source: OrbitControls, auto-rotating the
+  // camera when idle and handing full control to a drag the moment one
+  // starts (see the OrbitControls props below) — not a second, independent
+  // animation on the object itself running at the same time. Two systems
+  // both trying to own "how the sphere is oriented right now" is exactly
+  // the class of bug this session already hit once with Lenis vs. native
+  // scroll-snap; not repeating it here over something as simple as a spin.
+  const [autoRotate, setAutoRotate] = useState(true);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); }, []);
 
   return (
     <>
@@ -318,11 +306,10 @@ function SphereScene({
           direction from the core for parallax contrast. */}
       <DecorativeShell count={16} radius={OUTER_RADIUS} color={SIGNAL} size={0.045} speed={-0.06} opacity={0.35} />
 
-      {/* The wireframe cage and the cards rotate together, in the *same*
-          group — they're meant to read as one object (the cards sitting on
-          the sphere's surface), not a static card layer masking a sphere
-          that moves independently underneath it. */}
-      <group ref={groupRef}>
+      {/* The wireframe cage and the cards — one group, so they read as one
+          draggable object (cards on the sphere's surface), not a static
+          card layer sitting in front of a sphere that moves on its own. */}
+      <group>
         <mesh geometry={wireframeGeo}>
           <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.22} />
         </mesh>
@@ -333,57 +320,34 @@ function SphereScene({
           <BlankSlotCard key={`blank-${i}`} point={point} index={projects.length + i} />
         ))}
       </group>
+
+      <OrbitControls
+        makeDefault
+        enablePan={false}
+        // Zoom on this element would mean scroll-wheel-over-the-sphere
+        // fights the page's own scroll instead of turning the sphere —
+        // disabled on purpose, drag-to-rotate only.
+        enableZoom={false}
+        enableDamping
+        dampingFactor={0.08}
+        rotateSpeed={0.6}
+        autoRotate={autoRotate}
+        autoRotateSpeed={0.9}
+        onStart={() => {
+          setAutoRotate(false);
+          if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+        }}
+        onEnd={() => {
+          idleTimerRef.current = setTimeout(() => setAutoRotate(true), 2500);
+        }}
+      />
     </>
   );
 }
 
 export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollTiltRef = useRef(0);
   const points = useMemo(() => domePoints(Math.max(MIN_SLOTS, projects.length), PROJECT_RADIUS), [projects.length]);
-
-  // Scroll no longer snaps to a specific "active" card — every card is
-  // visible and directly clickable now, so there's no discrete state to
-  // snap between. Instead, how far the section has scrolled through the
-  // viewport drives a gentle tilt on the whole dome (see SphereScene),
-  // read via a plain ref rather than React state so scrolling never
-  // triggers a re-render here at all.
-  //
-  // rAF-throttled regardless: the homepage's own wheel-driven "magnetic"
-  // section paging (ScrollExperience) animates scroll with ~60
-  // window.scrollTo() calls/second during a jump, each firing a native
-  // scroll event, and reacting to every single one of those (uncapped) was
-  // the actual trigger for "THREE.WebGLRenderer: Context Lost" crashes
-  // reproduced live earlier — enough simultaneous main-thread work to blow
-  // through the GPU process's watchdog.
-  useEffect(() => {
-    let ticking = false;
-
-    const updateTilt = () => {
-      if (!containerRef.current) {
-        ticking = false;
-        return;
-      }
-      const rect = containerRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const totalDist = windowHeight + rect.height;
-      const currentDist = windowHeight - rect.top;
-      const scrollRatio = Math.max(0, Math.min(1, currentDist / totalDist));
-      scrollTiltRef.current = (scrollRatio - 0.5) * 0.35;
-      ticking = false;
-    };
-
-    const handleScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(updateTilt);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    updateTilt();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   if (canRenderWebGL === null) {
     return <div className="project-sphere-canvas project-sphere-loading" aria-hidden="true" />;
@@ -397,14 +361,14 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative w-full flex flex-col items-center select-none">
+    <div className="relative w-full flex flex-col items-center select-none">
       <div className="project-sphere-canvas">
         <Canvas
           camera={{ position: [0, 0.8, 8.2], fov: 42 }}
           dpr={1}
           gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
         >
-          <SphereScene projects={projects} points={points} scrollTiltRef={scrollTiltRef} onOpenDetails={onOpenDetails} />
+          <SphereScene projects={projects} points={points} onOpenDetails={onOpenDetails} />
         </Canvas>
       </div>
     </div>

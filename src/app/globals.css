@@ -2540,6 +2540,14 @@ a {
   position: relative;
   width: 100%;
   height: 460px;
+  /* OrbitControls owns drag on this element now — without this, a touch
+     drag also tries to scroll the page underneath it at the same time. */
+  touch-action: none;
+  cursor: grab;
+}
+
+.project-sphere-canvas:active {
+  cursor: grabbing;
 }
 
 .project-sphere-canvas canvas {
