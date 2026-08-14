@@ -385,9 +385,17 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   // from drag/auto-rotate — which slots are "real" vs. "blank" is fixed for
   // the component's lifetime, only their on-screen position moves.
   const { realPoints, blankPoints } = useMemo(() => {
-    const candidates = fibonacciSpherePoints(TOTAL_SLOTS, PROJECT_RADIUS).sort((a, b) => b.z - a.z);
-    const { real, rest } = pickRealSlots(candidates, projects.length);
-    return { realPoints: real, blankPoints: rest };
+    const all = fibonacciSpherePoints(TOTAL_SLOTS, PROJECT_RADIUS).sort((a, b) => b.z - a.z);
+    // Only pick real-project slots from the camera-facing hemisphere (z > 0)
+    // — spacing candidates out across the *entire* sphere could hand a real
+    // card a well-separated slot that's actually round the back, invisible
+    // until the sphere is dragged. Restricting the pool first guarantees
+    // every featured project is visible on load; the separation cascade
+    // inside pickRealSlots still spaces them apart within that half.
+    const front = all.filter((p) => p.z > 0);
+    const back = all.filter((p) => p.z <= 0);
+    const { real, rest } = pickRealSlots(front, projects.length);
+    return { realPoints: real, blankPoints: [...rest, ...back] };
   }, [projects.length]);
 
   if (canRenderWebGL === null) {
