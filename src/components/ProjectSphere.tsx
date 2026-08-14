@@ -22,6 +22,21 @@ const CORE_RADIUS = 1.35;
 const PROJECT_RADIUS = 2.7;
 const OUTER_RADIUS = 3.9;
 
+// The project dome always reserves at least this many slots — filled with
+// real featured projects first, the rest rendered as blank placeholder
+// cards. Featuring another project later just lights up the next empty
+// slot instead of the sphere staying sparse until there happen to be 8.
+const MIN_SLOTS = 8;
+
+/** Rotates the +Z axis to point along `point`'s direction from the origin
+ * — used so a card at a given dome position faces straight outward, the
+ * way a sticker applied to a ball's surface would, rather than always
+ * facing the camera regardless of where it sits. */
+function outwardQuaternion(point: THREE.Vector3): THREE.Quaternion {
+  const normal = point.clone().normalize();
+  return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+}
+
 interface ProjectSphereProps {
   projects: Project[];
   onOpenDetails: (project: Project) => void;
@@ -143,6 +158,7 @@ function SphereCard({ project, point, index, onOpenDetails }: { project: Project
   const ghStats = useGitHubRepo(project.repoName);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const mountTimeRef = useRef<number | null>(null);
+  const quaternion = useMemo(() => outwardQuaternion(point), [point]);
 
   // Static depth cue (nearer cards read slightly bolder than the ones set
   // further back in the dome) — never drops below a floor, since the whole
@@ -166,8 +182,14 @@ function SphereCard({ project, point, index, onOpenDetails }: { project: Project
   });
 
   return (
-    <group position={point}>
-      <Html center transform={false} distanceFactor={7.5} occlude={false} pointerEvents="none">
+    // quaternion faces the card outward from the sphere's center, like a
+    // sticker applied to its surface — position() alone would have every
+    // card facing the same default (0,0,1) direction regardless of where
+    // it sits on the dome. Combined with `transform` (true 3D, not
+    // billboarded) on the Html below, the card now rotates rigidly with
+    // the sphere instead of always flattening back to face the camera.
+    <group position={point} quaternion={quaternion}>
+      <Html center transform distanceFactor={6} occlude={false} pointerEvents="none">
         <div
           ref={wrapperRef}
           className="project-sphere-card"
@@ -224,6 +246,36 @@ function SphereCard({ project, point, index, onOpenDetails }: { project: Project
   );
 }
 
+/** An empty slot on the dome — reserved space for a project that isn't
+ * featured yet. Featuring another one just fills the next of these in,
+ * rather than the sphere staying visibly sparse until there happen to be
+ * MIN_SLOTS real projects. */
+function BlankSlotCard({ point, index }: { point: THREE.Vector3; index: number }) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const mountTimeRef = useRef<number | null>(null);
+  const quaternion = useMemo(() => outwardQuaternion(point), [point]);
+
+  useFrame(({ clock }) => {
+    if (!wrapperRef.current) return;
+    if (mountTimeRef.current === null) mountTimeRef.current = clock.elapsedTime;
+    const elapsed = clock.elapsedTime - mountTimeRef.current;
+    const delay = index * 0.12;
+    const progress = smoothstep(delay, delay + 0.55, elapsed);
+    wrapperRef.current.style.opacity = (progress * 0.4).toFixed(3);
+    wrapperRef.current.style.transform = `scale(${(0.5 + progress * 0.4).toFixed(3)})`;
+  });
+
+  return (
+    <group position={point} quaternion={quaternion}>
+      <Html center transform distanceFactor={6} occlude={false} pointerEvents="none">
+        <div ref={wrapperRef} className="project-sphere-card project-sphere-card-blank" style={{ opacity: 0, transform: "scale(0.5)" }} aria-hidden="true">
+          <span>+</span>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
 function SphereScene({
   projects,
   points,
@@ -243,15 +295,12 @@ function SphereScene({
 
   useFrame(({ clock }) => {
     if (!groupRef.current) return;
-    // A gentle continuous sway rather than a full 360-degree spin: the
-    // cards are billboarded to always face the camera regardless of where
-    // their orbit position ends up, so a full spin would eventually cycle
-    // them around to "behind" the sphere from the camera's point of view —
-    // still technically visible (billboards don't hide), but no longer
-    // arranged as the forward-facing dome, and it'd fight the "every card
-    // legible at all times" point of this layout. A bounded sine sway keeps
-    // motion constantly visible without that trade-off. Scroll adds its own
-    // tilt on top, layered independently.
+    // A gentle continuous sway rather than a full 360-degree spin: cards
+    // are stuck rigidly to the sphere's surface now (see outwardQuaternion),
+    // not billboarded — a full spin would rotate them to genuinely face
+    // sideways/away from the camera, unreadable, not just re-angled. A
+    // bounded sine sway keeps motion constantly visible without that
+    // trade-off. Scroll adds its own tilt on top, layered independently.
     groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.35) * 0.4;
     groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, scrollTiltRef.current, 0.06);
   });
@@ -280,6 +329,9 @@ function SphereScene({
         {projects.map((project, i) => (
           <SphereCard key={project.id} project={project} point={points[i]} index={i} onOpenDetails={onOpenDetails} />
         ))}
+        {points.slice(projects.length).map((point, i) => (
+          <BlankSlotCard key={`blank-${i}`} point={point} index={projects.length + i} />
+        ))}
       </group>
     </>
   );
@@ -289,7 +341,7 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollTiltRef = useRef(0);
-  const points = useMemo(() => domePoints(projects.length, PROJECT_RADIUS), [projects.length]);
+  const points = useMemo(() => domePoints(Math.max(MIN_SLOTS, projects.length), PROJECT_RADIUS), [projects.length]);
 
   // Scroll no longer snaps to a specific "active" card — every card is
   // visible and directly clickable now, so there's no discrete state to

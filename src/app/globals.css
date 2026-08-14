@@ -2553,14 +2553,14 @@ a {
 
 .project-sphere-card {
   position: relative;
-  width: 220px;
+  width: 148px;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 11px;
   border: 1px solid #1e293b;
   background: rgba(13, 21, 39, 0.95);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
   font-family: var(--font-mono), monospace;
   text-align: left;
   cursor: pointer;
@@ -2569,13 +2569,13 @@ a {
 
 .project-sphere-card:hover {
   border-color: var(--accent);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45), 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
-  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+  transform: translateY(-2px);
 }
 
 .project-sphere-card-image {
   width: 100%;
-  height: 90px;
+  height: 54px;
   overflow: hidden;
   background: #02040a;
   border-bottom: 1px solid #1e293b;
@@ -2588,46 +2588,46 @@ a {
 }
 
 .project-sphere-card-body {
-  padding: 12px 14px;
+  padding: 8px 10px;
 }
 
 .project-sphere-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .project-sphere-card-category {
   color: var(--accent);
-  font-size: 9px;
+  font-size: 7.5px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
 .project-sphere-card-stars {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   color: #fbbf24;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
 }
 
 .project-sphere-card h3 {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: #f1f5f9;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .project-sphere-card p {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: #94a3b8;
-  font-size: 10.5px;
-  line-height: 1.4;
+  font-size: 9px;
+  line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -2637,49 +2637,49 @@ a {
 .project-sphere-card-tech {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 8px;
+  gap: 3px;
+  margin-top: 6px;
 }
 
 .project-sphere-card-tech span {
   border: 1px solid #1e293b;
-  border-radius: 4px;
-  padding: 1px 6px;
+  border-radius: 3px;
+  padding: 1px 5px;
   color: #cbd5e1;
-  font-size: 9px;
+  font-size: 7.5px;
 }
 
 .project-sphere-card-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 8px;
+  gap: 6px;
+  margin-top: 7px;
+  padding-top: 6px;
   border-top: 1px solid #1e293b;
 }
 
 .project-sphere-card-cta {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   color: var(--accent);
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 700;
 }
 
 .project-sphere-card-bottom-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .project-sphere-card-forks {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   color: #64748b;
-  font-size: 10px;
+  font-size: 8.5px;
 }
 
 .project-sphere-card-gh {
@@ -2692,21 +2692,49 @@ a {
   color: var(--accent);
 }
 
+/* Empty dome slot — reserved space for a project that isn't featured yet. */
+.project-sphere-card-blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 90px;
+  cursor: default;
+  border-style: dashed;
+  background: rgba(13, 21, 39, 0.4);
+}
+
+.project-sphere-card-blank span {
+  color: var(--line-strong);
+  font-family: var(--font-mono), monospace;
+  font-size: 20px;
+  font-weight: 300;
+}
+
+.project-sphere-card-blank:hover {
+  border-color: #1e293b;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  transform: none;
+}
+
 @media (max-width: 640px) {
   .project-sphere-canvas {
     height: 380px;
   }
 
   .project-sphere-card {
-    width: 175px;
+    width: 120px;
   }
 
   .project-sphere-card-image {
-    height: 70px;
+    height: 44px;
   }
 
   .project-sphere-card-body {
-    padding: 10px 12px;
+    padding: 7px 8px;
+  }
+
+  .project-sphere-card-blank {
+    height: 70px;
   }
 }
 
