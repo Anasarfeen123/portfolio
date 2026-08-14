@@ -241,13 +241,18 @@ function SphereScene({
   // smaller decorative ball.
   const wireframeGeo = useMemo(() => new THREE.IcosahedronGeometry(PROJECT_RADIUS, 2), []);
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }) => {
     if (!groupRef.current) return;
-    // A slow continuous idle spin (always some motion, even without
-    // scrolling) plus a scroll-linked tilt offset layered on top — turning
-    // the page becomes part of the animation instead of a hard snap between
-    // discrete "active" states.
-    groupRef.current.rotation.y += delta * 0.05;
+    // A gentle continuous sway rather than a full 360-degree spin: the
+    // cards are billboarded to always face the camera regardless of where
+    // their orbit position ends up, so a full spin would eventually cycle
+    // them around to "behind" the sphere from the camera's point of view —
+    // still technically visible (billboards don't hide), but no longer
+    // arranged as the forward-facing dome, and it'd fight the "every card
+    // legible at all times" point of this layout. A bounded sine sway keeps
+    // motion constantly visible without that trade-off. Scroll adds its own
+    // tilt on top, layered independently.
+    groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.35) * 0.4;
     groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, scrollTiltRef.current, 0.06);
   });
 
@@ -257,14 +262,6 @@ function SphereScene({
       <pointLight position={[4, 4, 6]} intensity={1.2} color={ACCENT} />
       <pointLight position={[-4, -2, 4]} intensity={0.4} color={SIGNAL} />
 
-      {/* Structural wireframe cage — sized to match the project dome
-          exactly, so the cards visibly sit on its surface. Also ties
-          visually to the orbit-ring language already used in the
-          homepage's solar system. */}
-      <mesh geometry={wireframeGeo}>
-        <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.22} />
-      </mesh>
-
       {/* Dense, warm, fast-spinning core — the innermost layer of texture. */}
       <DecorativeShell count={12} radius={CORE_RADIUS} color={ACCENT} size={0.05} speed={0.16} opacity={0.55} />
 
@@ -272,9 +269,14 @@ function SphereScene({
           direction from the core for parallax contrast. */}
       <DecorativeShell count={16} radius={OUTER_RADIUS} color={SIGNAL} size={0.045} speed={-0.06} opacity={0.35} />
 
-      {/* The real featured-project cards, all visible at once on their own
-          forward-facing dome. */}
+      {/* The wireframe cage and the cards rotate together, in the *same*
+          group — they're meant to read as one object (the cards sitting on
+          the sphere's surface), not a static card layer masking a sphere
+          that moves independently underneath it. */}
       <group ref={groupRef}>
+        <mesh geometry={wireframeGeo}>
+          <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.22} />
+        </mesh>
         {projects.map((project, i) => (
           <SphereCard key={project.id} project={project} point={points[i]} index={i} onOpenDetails={onOpenDetails} />
         ))}
