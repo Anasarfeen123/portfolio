@@ -348,27 +348,32 @@ function SphereScene({
 // Points near the pole of a Fibonacci sphere sit on a small-radius ring —
 // they can be adjacent in angle even at very different index positions, so
 // naively taking the top-N by z can hand two real project cards neighbouring
-// slots that visually overlap. This greedily accepts a candidate only if
-// it's at least MIN_SEPARATION away (great-circle angle) from every real
-// slot already claimed, guaranteeing breathing room between every featured
-// project — falling back to filling in by best z-order if there ever are
-// more featured projects than the sphere can comfortably space apart.
-const MIN_REAL_SLOT_SEPARATION = THREE.MathUtils.degToRad(26);
+// (or even visually overlapping) slots. This greedily accepts a candidate
+// only if it's at least the current threshold away (great-circle angle) from
+// every real slot already claimed, guaranteeing breathing room between every
+// featured project. Tried at progressively looser thresholds — a handful of
+// featured projects gets wide, clearly separated placement; if there are
+// ever enough featured projects that the wide threshold can't fit them all,
+// this relaxes step by step rather than leaving one strandeded unplaced.
+const SEPARATION_THRESHOLDS_DEG = [55, 45, 35, 26, 18, 0];
 
 function pickRealSlots(candidates: THREE.Vector3[], count: number): { real: THREE.Vector3[]; rest: THREE.Vector3[] } {
-  const real: THREE.Vector3[] = [];
-  const rest: THREE.Vector3[] = [];
-  for (const point of candidates) {
-    if (real.length < count && real.every((r) => point.angleTo(r) >= MIN_REAL_SLOT_SEPARATION)) {
-      real.push(point);
-    } else {
-      rest.push(point);
+  for (const deg of SEPARATION_THRESHOLDS_DEG) {
+    const minSeparation = THREE.MathUtils.degToRad(deg);
+    const real: THREE.Vector3[] = [];
+    const rest: THREE.Vector3[] = [];
+    for (const point of candidates) {
+      if (real.length < count && real.every((r) => point.angleTo(r) >= minSeparation)) {
+        real.push(point);
+      } else {
+        rest.push(point);
+      }
     }
+    if (real.length === count) return { real, rest };
   }
-  while (real.length < count && rest.length > 0) {
-    real.push(rest.shift()!);
-  }
-  return { real, rest };
+  // Unreachable in practice (the 0° threshold above always succeeds), but
+  // keeps this total rather than throwing if TOTAL_SLOTS < projects.length.
+  return { real: candidates.slice(0, count), rest: candidates.slice(count) };
 }
 
 export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
