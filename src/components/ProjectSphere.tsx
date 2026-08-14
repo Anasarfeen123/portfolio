@@ -3,7 +3,7 @@
 import { Html } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ExternalLink, GitFork, Star } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import type { Project } from "@/data/portfolio";
 import { GithubIcon } from "@/components/GithubIcon";
@@ -14,12 +14,10 @@ import { useGitHubRepo } from "@/hooks/useGitHubRepo";
 const ACCENT = "#e08214";
 const SIGNAL = "#5a9c5e";
 
-// Three concentric shells, not one — the featured projects sit on the
-// middle one; the other two are blank, decorative, non-interactive nodes
-// that exist purely to make the composition read as a rich, populated 3D
-// space rather than "N cards floating in a ring." Different radius, size,
-// color, and rotation speed per shell gives real parallax depth as they
-// turn, not just visual noise.
+// Three concentric shells, not one — the featured projects sit on their own
+// forward-facing arc; the other two are full-sphere, blank, decorative,
+// non-interactive nodes that make the composition read as a rich, populated
+// 3D space rather than "N cards floating in a row."
 const CORE_RADIUS = 1.35;
 const PROJECT_RADIUS = 2.7;
 const OUTER_RADIUS = 3.9;
@@ -29,13 +27,31 @@ interface ProjectSphereProps {
   onOpenDetails: (project: Project) => void;
 }
 
-/** Evenly distributes `count` points on a unit sphere (golden-angle spiral —
- * the standard technique for even coverage at any count, no clustering at
- * the poles the way a naive lat/long grid gets). Works well for the project
- * shell specifically *because* it only ever holds the featured subset (5-8
- * projects, not all 25) — with that few points, most/all stay legible as
- * the sphere turns. The decorative shells don't have this constraint since
- * their nodes are small and non-interactive either way. */
+/** Evenly distributes `count` points across a *forward-facing dome*, not a
+ * full enclosing sphere — every point stays within roughly +/-70 degrees of
+ * dead-center, so nothing ever needs to hide on "the back" the way a full
+ * 360-degree distribution would require. This is deliberate: with only a
+ * handful of featured projects, the goal is every card visible and legible
+ * at once, not a carousel that reveals one at a time. A slight vertical
+ * stagger (alternating up/down) keeps it from reading as one flat row. */
+function domePoints(count: number, radius: number): THREE.Vector3[] {
+  const points: THREE.Vector3[] = [];
+  const spread = THREE.MathUtils.degToRad(count > 1 ? 130 : 0);
+  for (let i = 0; i < count; i++) {
+    const t = count === 1 ? 0.5 : i / (count - 1);
+    const angle = (t - 0.5) * spread;
+    const vertical = (i % 2 === 0 ? 1 : -1) * radius * 0.16;
+    const x = Math.sin(angle) * radius;
+    const z = Math.cos(angle) * radius;
+    points.push(new THREE.Vector3(x, vertical, z));
+  }
+  return points;
+}
+
+/** Evenly distributes `count` points on a full unit sphere (golden-angle
+ * spiral — the standard technique for even coverage at any count, no
+ * clustering at the poles the way a naive lat/long grid gets). Used for the
+ * decorative shells only, which have no legibility requirement either way. */
 function fibonacciSpherePoints(count: number, radius: number): THREE.Vector3[] {
   const points: THREE.Vector3[] = [];
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
@@ -46,17 +62,6 @@ function fibonacciSpherePoints(count: number, radius: number): THREE.Vector3[] {
     points.push(new THREE.Vector3(Math.cos(theta) * radiusAtY, y, Math.sin(theta) * radiusAtY).multiplyScalar(radius));
   }
   return points;
-}
-
-function angleTo(point: THREE.Vector3) {
-  return Math.atan2(point.x, point.z);
-}
-
-function shortestAngleDelta(from: number, to: number) {
-  let delta = (to - from) % (Math.PI * 2);
-  if (delta > Math.PI) delta -= Math.PI * 2;
-  if (delta < -Math.PI) delta += Math.PI * 2;
-  return delta;
 }
 
 function smoothstep(edge0: number, edge1: number, x: number) {
@@ -134,101 +139,84 @@ function DecorativeShell({
   );
 }
 
-function SphereCard({
-  project,
-  point,
-  index,
-  activeIndex,
-  setActiveIndex,
-  groupRotationRef,
-  onOpenDetails,
-}: {
-  project: Project;
-  point: THREE.Vector3;
-  index: number;
-  activeIndex: number;
-  setActiveIndex: (i: number) => void;
-  groupRotationRef: RefObject<number>;
-  onOpenDetails: (project: Project) => void;
-}) {
+function SphereCard({ project, point, index, onOpenDetails }: { project: Project; point: THREE.Vector3; index: number; onOpenDetails: (project: Project) => void }) {
   const ghStats = useGitHubRepo(project.repoName);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const facingRef = useRef(0);
+  const mountTimeRef = useRef<number | null>(null);
 
-  useFrame(() => {
-    const rot = groupRotationRef.current;
-    // Points only ever rotate around Y, so a plain 2D rotation of (x, z) is
-    // enough — no quaternion math needed for a single-axis spin.
-    const worldZ = -point.x * Math.sin(rot) + point.z * Math.cos(rot);
-    const facing = worldZ / PROJECT_RADIUS; // -1 (back of sphere) .. 1 (front, facing camera)
-    facingRef.current = facing;
+  // Static depth cue (nearer cards read slightly bolder than the ones set
+  // further back in the dome) — never drops below a floor, since the whole
+  // point is that every card stays clearly legible, not that some fade out.
+  const depthFactor = THREE.MathUtils.clamp(point.z / PROJECT_RADIUS, 0, 1);
+  const baseOpacity = 0.8 + depthFactor * 0.2;
+  const baseScale = 0.88 + depthFactor * 0.12;
 
+  useFrame(({ clock }) => {
     if (!wrapperRef.current) return;
-    // Wide enough that most of the front hemisphere reads as fully visible
-    // — with only a handful of cards on the shell, a narrow "must be almost
-    // dead-center" window meant only ever one card was legible at a time,
-    // which just looks like a single floating card, not multiple rectangles
-    // on a sphere. Only the back half (facing < 0) actually fades away.
-    const opacity = smoothstep(-0.35, 0.15, facing);
-    wrapperRef.current.style.opacity = opacity.toFixed(3);
-    wrapperRef.current.style.pointerEvents = facing > -0.1 ? "auto" : "none";
-    wrapperRef.current.style.zIndex = String(Math.round(facing * 100));
-  });
+    if (mountTimeRef.current === null) mountTimeRef.current = clock.elapsedTime;
+    // Staggered entrance — each card grows in slightly after the last,
+    // instead of the whole dome popping in at once.
+    const elapsed = clock.elapsedTime - mountTimeRef.current;
+    const delay = index * 0.12;
+    const progress = smoothstep(delay, delay + 0.55, elapsed);
 
-  const isActive = index === activeIndex;
+    wrapperRef.current.style.opacity = (progress * baseOpacity).toFixed(3);
+    wrapperRef.current.style.transform = `scale(${(0.55 + progress * (baseScale - 0.55)).toFixed(3)})`;
+    wrapperRef.current.style.pointerEvents = progress > 0.6 ? "auto" : "none";
+  });
 
   return (
     <group position={point}>
-      <Html center transform={false} distanceFactor={8} occlude={false} pointerEvents="none">
+      <Html center transform={false} distanceFactor={7.5} occlude={false} pointerEvents="none">
         <div
           ref={wrapperRef}
-          className={`project-sphere-card${isActive ? " project-sphere-card-active" : ""}`}
-          style={{ pointerEvents: "none", opacity: 0 }}
-          onClick={() => {
-            if (isActive) onOpenDetails(project);
-            else setActiveIndex(index);
-          }}
+          className="project-sphere-card"
+          style={{ pointerEvents: "none", opacity: 0, transform: "scale(0.55)" }}
+          onClick={() => onOpenDetails(project)}
         >
-          <div className="project-sphere-card-top">
-            <span className="project-sphere-card-category">{project.category}</span>
-            {!ghStats.loading && ghStats.stars > 0 && (
-              <span className="project-sphere-card-stars">
-                <Star size={10} /> {ghStats.stars}
-              </span>
-            )}
-          </div>
-          <h3>{project.title}</h3>
-          <p>{project.signal}</p>
-          <div className="project-sphere-card-tech">
-            {project.technologies.slice(0, 3).map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-          </div>
-          <div className="project-sphere-card-bottom">
-            {isActive ? (
+          {project.image && (
+            <div className="project-sphere-card-image">
+              <img src={project.image} alt="" />
+            </div>
+          )}
+          <div className="project-sphere-card-body">
+            <div className="project-sphere-card-top">
+              <span className="project-sphere-card-category">{project.category}</span>
+              {!ghStats.loading && ghStats.stars > 0 && (
+                <span className="project-sphere-card-stars">
+                  <Star size={10} /> {ghStats.stars}
+                </span>
+              )}
+            </div>
+            <h3>{project.title}</h3>
+            <p>{project.signal}</p>
+            <div className="project-sphere-card-tech">
+              {project.technologies.slice(0, 3).map((t) => (
+                <span key={t}>{t}</span>
+              ))}
+            </div>
+            <div className="project-sphere-card-bottom">
               <span className="project-sphere-card-cta">
                 Full details <ExternalLink size={11} />
               </span>
-            ) : (
-              <span className="project-sphere-card-cta project-sphere-card-cta-muted">Bring to front</span>
-            )}
-            <span className="project-sphere-card-bottom-right">
-              {ghStats.forks > 0 && (
-                <span className="project-sphere-card-forks">
-                  <GitFork size={10} /> {ghStats.forks}
-                </span>
-              )}
-              <a
-                href={project.github}
-                target="_blank"
-                rel="noreferrer"
-                className="project-sphere-card-gh"
-                onClick={(e) => e.stopPropagation()}
-                aria-label={`${project.title} on GitHub`}
-              >
-                <GithubIcon size={12} />
-              </a>
-            </span>
+              <span className="project-sphere-card-bottom-right">
+                {ghStats.forks > 0 && (
+                  <span className="project-sphere-card-forks">
+                    <GitFork size={10} /> {ghStats.forks}
+                  </span>
+                )}
+                <a
+                  href={project.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="project-sphere-card-gh"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`${project.title} on GitHub`}
+                >
+                  <GithubIcon size={12} />
+                </a>
+              </span>
+            </div>
           </div>
         </div>
       </Html>
@@ -239,31 +227,28 @@ function SphereCard({
 function SphereScene({
   projects,
   points,
-  activeIndex,
-  setActiveIndex,
+  scrollTiltRef,
   onOpenDetails,
 }: {
   projects: Project[];
   points: THREE.Vector3[];
-  activeIndex: number;
-  setActiveIndex: (i: number) => void;
+  scrollTiltRef: RefObject<number>;
   onOpenDetails: (project: Project) => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  const groupRotationRef = useRef(0);
-  // Sized to match the project shell itself, not the small inner core — the
-  // cards need to visibly sit *on* this wireframe's surface for the whole
-  // thing to read as "a sphere with rectangles on it" rather than a small
-  // wireframe ball floating separately from cards orbiting way outside it.
+  // Sized to match the project dome exactly, so the cards visibly sit on its
+  // surface (this is "the sphere") rather than floating separately from a
+  // smaller decorative ball.
   const wireframeGeo = useMemo(() => new THREE.IcosahedronGeometry(PROJECT_RADIUS, 2), []);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!groupRef.current) return;
-    const target = -angleTo(points[activeIndex] ?? points[0]);
-    const current = groupRef.current.rotation.y;
-    const next = current + shortestAngleDelta(current, target) * 0.08;
-    groupRef.current.rotation.y = next;
-    groupRotationRef.current = next;
+    // A slow continuous idle spin (always some motion, even without
+    // scrolling) plus a scroll-linked tilt offset layered on top — turning
+    // the page becomes part of the animation instead of a hard snap between
+    // discrete "active" states.
+    groupRef.current.rotation.y += delta * 0.05;
+    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, scrollTiltRef.current, 0.06);
   });
 
   return (
@@ -272,10 +257,9 @@ function SphereScene({
       <pointLight position={[4, 4, 6]} intensity={1.2} color={ACCENT} />
       <pointLight position={[-4, -2, 4]} intensity={0.4} color={SIGNAL} />
 
-      {/* Structural wireframe cage — sized to match the project shell
-          exactly, so the cards visibly sit on its surface (this is "the
-          sphere"), not floating separately from a smaller decorative ball.
-          Also ties visually to the orbit-ring language already used in the
+      {/* Structural wireframe cage — sized to match the project dome
+          exactly, so the cards visibly sit on its surface. Also ties
+          visually to the orbit-ring language already used in the
           homepage's solar system. */}
       <mesh geometry={wireframeGeo}>
         <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.22} />
@@ -288,19 +272,11 @@ function SphereScene({
           direction from the core for parallax contrast. */}
       <DecorativeShell count={16} radius={OUTER_RADIUS} color={SIGNAL} size={0.045} speed={-0.06} opacity={0.35} />
 
-      {/* The real featured-project cards, on their own middle shell. */}
+      {/* The real featured-project cards, all visible at once on their own
+          forward-facing dome. */}
       <group ref={groupRef}>
         {projects.map((project, i) => (
-          <SphereCard
-            key={project.id}
-            project={project}
-            point={points[i]}
-            index={i}
-            activeIndex={activeIndex}
-            setActiveIndex={setActiveIndex}
-            groupRotationRef={groupRotationRef}
-            onOpenDetails={onOpenDetails}
-          />
+          <SphereCard key={project.id} project={project} point={points[i]} index={i} onOpenDetails={onOpenDetails} />
         ))}
       </group>
     </>
@@ -310,30 +286,27 @@ function SphereScene({
 export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
   const canRenderWebGL = useCanRenderWebGL();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const points = useMemo(() => fibonacciSpherePoints(projects.length, PROJECT_RADIUS), [projects.length]);
+  const scrollTiltRef = useRef(0);
+  const points = useMemo(() => domePoints(projects.length, PROJECT_RADIUS), [projects.length]);
 
-  // Same scroll-linked index as the CSS carousel this replaces — scrolling
-  // through the section turns the sphere. No free drag-to-rotate on top of
-  // that: this page already had one hard-won scroll-conflict bug this
-  // session (Lenis vs. native scroll-snap), and a second pointer-capturing
-  // surface competing with page scroll isn't worth the risk for a feature
-  // that doesn't need it — buttons + scroll cover the interaction fine.
+  // Scroll no longer snaps to a specific "active" card — every card is
+  // visible and directly clickable now, so there's no discrete state to
+  // snap between. Instead, how far the section has scrolled through the
+  // viewport drives a gentle tilt on the whole dome (see SphereScene),
+  // read via a plain ref rather than React state so scrolling never
+  // triggers a re-render here at all.
   //
-  // rAF-throttled rather than recomputing on every raw scroll event: the
-  // homepage's own wheel-driven "magnetic" section paging (ScrollExperience)
-  // animates scroll with ~60 window.scrollTo() calls/second during a jump,
-  // each one firing a native scroll event — without throttling, this
-  // listener (and the setActiveIndex re-renders it triggers) ran that often
-  // too, and that scroll-event storm turned out to be the actual trigger
-  // for the "THREE.WebGLRenderer: Context Lost" crashes reproduced live:
-  // enough simultaneous main-thread work to blow through the GPU process's
-  // watchdog. Once frozen mid-rotation, cards sit wherever they were —
-  // which reads exactly as "random cards," not a sphere.
+  // rAF-throttled regardless: the homepage's own wheel-driven "magnetic"
+  // section paging (ScrollExperience) animates scroll with ~60
+  // window.scrollTo() calls/second during a jump, each firing a native
+  // scroll event, and reacting to every single one of those (uncapped) was
+  // the actual trigger for "THREE.WebGLRenderer: Context Lost" crashes
+  // reproduced live earlier — enough simultaneous main-thread work to blow
+  // through the GPU process's watchdog.
   useEffect(() => {
     let ticking = false;
 
-    const updateIndex = () => {
+    const updateTilt = () => {
       if (!containerRef.current) {
         ticking = false;
         return;
@@ -343,21 +316,20 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
       const totalDist = windowHeight + rect.height;
       const currentDist = windowHeight - rect.top;
       const scrollRatio = Math.max(0, Math.min(1, currentDist / totalDist));
-      const targetIndex = Math.min(projects.length - 1, Math.floor(scrollRatio * projects.length));
-      setActiveIndex((prev) => (prev === targetIndex ? prev : targetIndex));
+      scrollTiltRef.current = (scrollRatio - 0.5) * 0.35;
       ticking = false;
     };
 
     const handleScroll = () => {
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(updateIndex);
+      requestAnimationFrame(updateTilt);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    updateIndex();
+    updateTilt();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [projects.length]);
+  }, []);
 
   if (canRenderWebGL === null) {
     return <div className="project-sphere-canvas project-sphere-loading" aria-hidden="true" />;
@@ -374,29 +346,12 @@ export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
     <div ref={containerRef} className="relative w-full flex flex-col items-center select-none">
       <div className="project-sphere-canvas">
         <Canvas
-          camera={{ position: [0, 0.8, 8.5], fov: 40 }}
+          camera={{ position: [0, 0.8, 8.2], fov: 42 }}
           dpr={1}
           gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
         >
-          <SphereScene
-            projects={projects}
-            points={points}
-            activeIndex={activeIndex}
-            setActiveIndex={setActiveIndex}
-            onOpenDetails={onOpenDetails}
-          />
+          <SphereScene projects={projects} points={points} scrollTiltRef={scrollTiltRef} onOpenDetails={onOpenDetails} />
         </Canvas>
-      </div>
-
-      <div className="mt-4 flex items-center gap-2">
-        {projects.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActiveIndex(i)}
-            className={`project-sphere-dot${i === activeIndex ? " project-sphere-dot-active" : ""}`}
-            aria-label={`Bring project ${i + 1} to front`}
-          />
-        ))}
       </div>
     </div>
   );
