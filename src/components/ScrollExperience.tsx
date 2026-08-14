@@ -84,9 +84,6 @@ const SceneCanvas = dynamic(() => import("@/components/SceneCanvas").then((mod) 
   loading: () => <div className="scene-canvas" />,
 });
 
-// Featured Projects for the homepage 3D carousel — see `featured: true` in data/portfolio.ts
-const featuredProjects = projects.filter((p) => p.featured);
-
 interface ScrollExperienceProps {
   buildInfo?: BuildInfo | null;
 }
@@ -610,13 +607,13 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
             style={{ transformStyle: "preserve-3d" }}
             className="chapter-card"
           >
-            <h2 className="chapter-title">A few things I&apos;ve built.</h2>
-            <p className="chapter-copy">A handful of the projects I&apos;m most likely to talk your ear off about.</p>
+            <h2 className="chapter-title">Things I&apos;ve built.</h2>
+            <p className="chapter-copy">Every project in the archive, wrapped into a draggable card shell.</p>
 
-            {/* Featured projects distributed on a real 3D sphere */}
+            {/* All projects distributed on a real 3D sphere */}
             <div className="mt-4">
               <ProjectSphere
-                projects={featuredProjects}
+                projects={projects}
                 onOpenDetails={(p) => {
                   playClickSound();
                   setSelectedProject(p);

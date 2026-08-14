@@ -2528,30 +2528,60 @@ a {
 }
 
 /* ============================================================
-   Project sphere (ProjectSphere.tsx) — replaces the old flat CSS
-   carousel with a real WebGL scene: featured projects distributed
-   evenly on a sphere (golden-angle spiral), billboarded so each card
-   stays flat/readable as the sphere turns, faded by facing direction
-   so the back of the sphere clears out of the way naturally. Falls
-   back to Revolving3DCarousel.tsx (kept, not deleted) when WebGL is
-   unavailable or the visitor prefers reduced motion.
+   Project sphere (ProjectSphere.tsx) — every project is a real curved
+   card, golden-angle-spaced across a genuine 3D sphere (rotateY/rotateX/
+   translateZ per card, no wireframe mesh needed to read as one). Drag or
+   let it auto-rotate; cards facing away fade and stop intercepting clicks
+   instead of silently overlapping the ones in front. Falls back to a flat
+   wrapping grid — ProjectSphereFlat, `.project-sphere-canvas-flat` below —
+   on narrow screens and `prefers-reduced-motion`.
    ============================================================ */
 .project-sphere-canvas {
   position: relative;
   width: 100%;
-  height: 460px;
-  /* OrbitControls owns drag on this element now — without this, a touch
-     drag also tries to scroll the page underneath it at the same time. */
-  touch-action: none;
+  min-height: 720px;
+  padding: 24px;
+  isolation: isolate;
+  overflow: hidden;
+  /* The drag-to-rotate listener lives on this element, not on
+     `.project-sphere-world` (see the comment on ProjectSphereScene's
+     onPointerDown) — so cursor/touch-action belong here too: a drag
+     starting on empty canvas background or a blank filler card needs the
+     same grab cursor and the same "don't let the browser try to pan/zoom
+     this" as one starting on a real card. */
   cursor: grab;
+  touch-action: none;
+  /* Dragging to rotate is a mousedown-and-move gesture — the same input
+     the browser's own text-selection uses — so without this, a drag
+     starting anywhere near the hint text or a card title paints a
+     selection highlight across the sphere instead of just rotating it. */
+  user-select: none;
+  -webkit-user-select: none;
+  /* A tighter perspective (this used to be 1500px) makes true 3D
+     foreshortening do real work: cards near dead-center project noticeably
+     bigger than ones toward the rim of the visible cluster, purely from
+     distance-from-camera, no JS scaling involved. Pushed way out instead —
+     rotation/orientation/curvature all come from rotateX/rotateY and don't
+     depend on this value, only apparent *size* does, so a distant
+     perspective origin keeps every card reading as the same size wherever
+     it currently sits on the sphere. */
+  perspective: 4800px;
 }
 
 .project-sphere-canvas:active {
   cursor: grabbing;
 }
 
-.project-sphere-canvas canvas {
-  display: block;
+.project-sphere-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(12, 18, 33, 0.92), rgba(2, 6, 14, 0.98) 68%),
+    linear-gradient(180deg, rgba(2, 6, 14, 0.86), rgba(2, 6, 14, 0.98));
+  pointer-events: none;
 }
 
 .project-sphere-loading {
@@ -2559,62 +2589,171 @@ a {
   background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%);
 }
 
-.project-sphere-card {
+.project-sphere-world {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 1;
+  transform-style: preserve-3d;
+  /* Rewritten every animation frame — hints the browser to keep this on
+     its own stable GPU layer instead of repeatedly re-promoting one. */
+  will-change: transform;
+}
+
+.project-sphere-hint {
   position: relative;
-  width: 96px;
+  z-index: 1;
+  display: block;
+  margin-top: 8px;
+  text-align: center;
+  color: #64748b;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+/* Great-circle wireframe — see GLOBE_RING_TRANSFORMS. Sized to exactly
+   match SPHERE_RADIUS so the cage and the cards read as one object. Kept
+   faint and behind every card (negative z-index survives here since cards
+   get a positive one set per-frame in JS) — it's there to sell "sphere",
+   not to compete with the cards for attention. */
+.project-sphere-globe-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 540px;
+  height: 540px;
+  margin: -270px 0 0 -270px;
+  z-index: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
+  pointer-events: none;
+}
+
+.project-sphere-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 112px;
+  height: 92px;
+  margin: -46px 0 0 -56px;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  /* Elliptical corners (taller radius than the flat card edges) plus the
-     ::after shading below are what sell "wrapped around a ball" rather
-     than "flat rectangle floating near one" — a true per-pixel curved
-     mesh isn't worth the interactivity/text-wrapping risk for a card this
-     small, so this is a deliberate, cheap illusion of curvature instead. */
-  border-radius: 30% / 9px;
-  border: 1px solid #1e293b;
-  background: rgba(13, 21, 39, 0.95);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  /* Curved on all four sides (was `44% / 14px` — barrel-curved left/right,
+     almost square-cornered top/bottom) so a card reads as a patch cut from
+     a sphere's surface instead of a rounded rectangle with curved sides. */
+  border-radius: 46% / 26%;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, #1e293b);
+  background:
+    radial-gradient(circle at 50% -16%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 48%),
+    linear-gradient(180deg, rgba(15, 25, 45, 0.98), rgba(7, 12, 24, 0.96));
+  box-shadow:
+    inset 9px 0 16px rgba(255, 255, 255, 0.03),
+    inset -12px 0 18px rgba(0, 0, 0, 0.5),
+    0 10px 22px rgba(0, 0, 0, 0.45);
   font-family: var(--font-mono), monospace;
   text-align: left;
   cursor: pointer;
-  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
-  /* Cards are stuck to the sphere's actual 3D surface (real CSS transform,
-     not billboarded), so a card can rotate to face away from the camera
-     as the sphere turns — without this, CSS shows its *mirrored* backside
-     (readable text flipped backwards) instead of hiding it like a real
-     opaque object would. */
   backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  /* `transform` is set once in JS and never rewritten afterward (see
+     SphereCard's comment) specifically so this stays crisp — a
+     backdrop-filter used to sit here too, but blurring a layer that's
+     already inside a 3D `preserve-3d` context is what was making each
+     card's own text look soft, not just whatever's behind it. The card's
+     background is ~97% opaque anyway, so the backdrop blur was buying
+     almost nothing. */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-/* Left/right edge shading + a soft center sheen — mimics how light falls
-   off a curved (barrel-shaped) surface as it wraps away from the viewer,
-   without touching the card's real content or click targets underneath. */
+.project-sphere-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 8px auto;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  pointer-events: none;
+}
+
+/* All-around vignette (was a left/right-only linear falloff, which read as
+   a barrel/cylinder rather than a sphere) — bright near top-center, dark
+   toward every edge, the way a curved reflective surface actually shades. */
 .project-sphere-card::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0) 20%,
-    rgba(255, 255, 255, 0.05) 50%,
-    rgba(0, 0, 0, 0) 80%,
-    rgba(0, 0, 0, 0.55) 100%
+  background: radial-gradient(
+    120% 100% at 50% 28%,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(0, 0, 0, 0.06) 42%,
+    rgba(0, 0, 0, 0.32) 78%,
+    rgba(0, 0, 0, 0.58) 100%
   );
 }
 
 .project-sphere-card:hover {
   border-color: var(--accent);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* Blank filler slots (BlankSphereCard) — identical footprint to a real
+   project card (same width/height/margin/curve as .project-sphere-card
+   above, not a smaller stand-in shape), just empty, accent-less, and
+   non-interactive. Same tessellation unit repeated everywhere on the
+   sphere is what reads as "a grid," not two differently-sized things. */
+.project-sphere-card-blank {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 112px;
+  height: 92px;
+  margin: -46px 0 0 -56px;
+  border-radius: 46% / 26%;
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, #1e293b);
+  background: linear-gradient(180deg, rgba(15, 25, 45, 0.9), rgba(7, 12, 24, 0.86));
+  backface-visibility: hidden;
+  pointer-events: none;
+}
+
+/* Flat fallback (narrow screens / prefers-reduced-motion) — same card,
+   opted back into normal document flow instead of the sphere's absolute +
+   translateZ positioning. */
+.project-sphere-canvas-flat {
+  perspective: none;
+  overflow: visible;
+}
+
+.project-sphere-flat-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 10px;
+}
+
+.project-sphere-card-flat {
+  position: static;
+  width: 100%;
+  height: 140px;
+  margin: 0;
+}
+
+.project-sphere-card-flat:hover {
   transform: translateY(-2px);
 }
 
 .project-sphere-card-image {
   width: 100%;
-  height: 34px;
+  height: 24px;
+  flex: 0 0 24px;
   overflow: hidden;
   background: #02040a;
   border-bottom: 1px solid #1e293b;
@@ -2626,165 +2765,91 @@ a {
   object-fit: cover;
 }
 
+/* Deliberately minimal — category, title, "there's more" hint. Everything
+   else a project has (description, tech stack, stars/forks, GitHub link)
+   only shows up in ProjectDetailsModal, one click away. See the comment on
+   ProjectCardFace for why: this is also most of what fixed the "text looks
+   blurry" complaint — three lines of small text plus a row of tag pills
+   crammed onto a small, often mid-rotation curved face read as clutter and
+   mush a lot faster than one short title does. Sizes here (and h3's
+   line-clamp, dropped from 3 to 2) are scaled down from the previous
+   150x122 card in step with SPHERE_RADIUS above — proportional, not just
+   "smaller," so the same text-to-card ratio that was already legible
+   stays legible at the smaller footprint. */
 .project-sphere-card-body {
-  padding: 6px 6px;
-}
-
-.project-sphere-card-top {
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 10px;
 }
 
 .project-sphere-card-category {
   color: var(--accent);
-  font-size: 6.5px;
+  font-size: 6.4px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.project-sphere-card-stars {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  color: #fbbf24;
-  font-size: 8px;
-  font-weight: 600;
-}
-
 .project-sphere-card h3 {
-  margin: 2px 0 0;
+  margin: 0;
   color: #f1f5f9;
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 700;
   line-height: 1.25;
-}
-
-.project-sphere-card p {
-  margin: 2px 0 0;
-  color: #94a3b8;
-  font-size: 8px;
-  line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.project-sphere-card-tech {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  margin-top: 4px;
-}
-
-.project-sphere-card-tech span {
-  border: 1px solid #1e293b;
-  border-radius: 3px;
-  padding: 1px 3px;
-  color: #cbd5e1;
-  font-size: 6.5px;
-}
-
-.project-sphere-card-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 5px;
-  margin-top: 5px;
-  padding-top: 4px;
-  border-top: 1px solid #1e293b;
-}
-
-.project-sphere-card-cta {
+.project-sphere-card-hint {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  color: var(--accent);
-  font-size: 7.5px;
-  font-weight: 700;
-}
-
-.project-sphere-card-bottom-right {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.project-sphere-card-forks {
-  display: flex;
-  align-items: center;
-  gap: 2px;
+  gap: 1px;
+  margin-top: 1px;
   color: #64748b;
-  font-size: 7.5px;
+  font-size: 6.4px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.project-sphere-card-gh {
-  display: flex;
-  color: #94a3b8;
-  transition: color 150ms ease;
-}
-
-.project-sphere-card-gh:hover {
+.project-sphere-card:hover .project-sphere-card-hint {
   color: var(--accent);
-}
-
-/* Empty dome slot — reserved space for a project that isn't featured yet.
-   Plain rounded square, not a "wrapped" card — the ::after shading and
-   elliptical corners are reserved for real project cards. */
-.project-sphere-card-blank {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  cursor: default;
-  border-radius: 8px;
-  border-width: 1.5px;
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--accent) 30%, #1e293b);
-  background: rgba(13, 21, 39, 0.65);
-}
-
-.project-sphere-card-blank::after {
-  display: none;
-}
-
-.project-sphere-card-blank span {
-  color: color-mix(in srgb, var(--accent) 45%, var(--line-strong));
-  font-family: var(--font-mono), monospace;
-  font-size: 13px;
-  font-weight: 300;
-}
-
-.project-sphere-card-blank:hover {
-  border-color: #1e293b;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-  transform: none;
 }
 
 @media (max-width: 640px) {
-  .project-sphere-canvas {
-    height: 380px;
+  .project-sphere-canvas-flat {
+    min-height: 0;
+    padding: 18px;
   }
 
-  .project-sphere-card {
-    width: 80px;
+  .project-sphere-flat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .project-sphere-card-flat {
+    height: 102px;
+    border-radius: 38% / 22%;
   }
 
   .project-sphere-card-image {
-    height: 28px;
+    height: 19px;
+    flex-basis: 19px;
   }
 
   .project-sphere-card-body {
-    padding: 5px 6px;
+    padding: 6px 8px;
+    gap: 3px;
   }
 
-  .project-sphere-card-blank {
-    width: 22px;
-    height: 22px;
+  .project-sphere-card h3 {
+    font-size: 10.5px;
+    -webkit-line-clamp: 2;
   }
 }
 

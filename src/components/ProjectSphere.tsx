@@ -1,435 +1,475 @@
 "use client";
 
-import { Html, OrbitControls } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { ExternalLink, GitFork, Star } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import * as THREE from "three";
 import type { Project } from "@/data/portfolio";
-import { GithubIcon } from "@/components/GithubIcon";
-import { Revolving3DCarousel } from "@/components/Revolving3DCarousel";
-import { useCanRenderWebGL } from "@/hooks/useCanRenderWebGL";
-import { useGitHubRepo } from "@/hooks/useGitHubRepo";
-
-const ACCENT = "#e08214";
-const SIGNAL = "#5a9c5e";
-
-// Two concentric decorative shells (small glowing points, no cards) sit
-// inside and outside the project shell itself, which is now the *whole*
-// sphere's surface tiled with cards — real featured projects claim the
-// slots facing the camera on load, everything else renders as blank filler
-// all the way around, revealed as you drag.
-const CORE_RADIUS = 1.35;
-// Bumped up from 2.7 so the same TOTAL_SLOTS count spreads across more
-// surface area — more breathing room between neighbouring cards — without
-// having to thin out how many slots tile the sphere.
-const PROJECT_RADIUS = 3.3;
-const OUTER_RADIUS = 4.6;
-
-// Total card slots tiling the sphere's surface — filled with real featured
-// projects first (the currently best-facing positions), the rest rendered
-// as blank placeholder cards. Featuring another project later just lights
-// up the next-best slot instead of the sphere needing to reach this count
-// before it stops looking sparse.
-const TOTAL_SLOTS = 42;
-
-/** Rotates the +Z axis to point along `point`'s direction from the origin
- * — used so a card at a given dome position faces straight outward, the
- * way a sticker applied to a ball's surface would, rather than always
- * facing the camera regardless of where it sits. */
-function outwardQuaternion(point: THREE.Vector3): THREE.Quaternion {
-  const normal = point.clone().normalize();
-  return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-}
 
 interface ProjectSphereProps {
   projects: Project[];
   onOpenDetails: (project: Project) => void;
 }
 
-/** Evenly distributes `count` points across the *whole* sphere surface
- * (golden-angle spiral — the standard technique for even coverage at any
- * count, no clustering at the poles the way a naive lat/long grid gets).
- * Used both for the decorative shells and, now, the card slots themselves —
- * the entire sphere is meant to read as tiled with cards, not just a
- * forward-facing patch, since dragging can bring any part of it into view. */
-function fibonacciSpherePoints(count: number, radius: number): THREE.Vector3[] {
-  const points: THREE.Vector3[] = [];
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < count; i++) {
-    const y = count === 1 ? 0 : 1 - (i / (count - 1)) * 2;
+// translateZ distance (px) from the sphere's center to every card — the
+// main knob for "no overlap": bigger radius means more chord distance
+// between neighbouring cards for the same card size (see
+// sphereGridPoints). Card footprint itself is set in CSS
+// (.project-sphere-card and .project-sphere-card-blank: both 112x92px,
+// same shape) — the two are tuned together, so changing one without the
+// other reopens the overlap problem this exists to solve. This radius was
+// scaled down from 350 in the same ~0.75 ratio as the card shrink, which
+// keeps the chord-to-diagonal safety margin the same proportion it was at
+// the bigger size instead of just shrinking the cards and leaving the
+// sphere's existing radius to make them float with way more empty gap
+// between neighbours than before.
+const SPHERE_RADIUS = 270;
+const AUTO_ROTATE_DEG_PER_SEC = 7;
+const RESUME_AUTO_ROTATE_MS = 2200;
+
+// Blank, non-interactive filler cards, same full size and shape as a real
+// one — occupying the slots real project cards don't. Purely texture:
+// without them the sphere is only as dense as the project count, which
+// reads as sparse once most of it fades to the "facing away" floor. This
+// is a target, not the final count — sphereGridPoints snaps to whichever
+// ring count's total is the closest achievable match, so the actual blank
+// count that comes out the other end of the split below can land a bit
+// off from `projects.length * BLANK_CARD_RATIO`.
+const BLANK_CARD_RATIO = 0.6;
+
+function smoothstep(edge0: number, edge1: number, x: number) {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+// Static great-circle rings — equator + two meridians 60° apart — purely
+// decorative children of `.project-sphere-world`. They need no per-frame
+// JS at all: sitting in the same preserve-3d group as the cards, they
+// inherit the world's rotateX/rotateY every frame for free. What they buy
+// is legibility of the *shape*: a scatter of cards that happens to be
+// sphere-distributed doesn't read as "a sphere" on sight the way the same
+// scatter does once a faint wire cage is visibly wrapped around it.
+const GLOBE_RING_TRANSFORMS = ["rotateX(90deg)", "rotateY(60deg)", "rotateY(120deg)"];
+
+interface SpherePoint {
+  /** Unit-sphere position — kept alongside theta/phi so the drag/auto-rotate
+   * loop can recompute each card's exact on-screen facing every frame
+   * (see ProjectSphereScene) without re-deriving it from the CSS angles. */
+  x: number;
+  y: number;
+  z: number;
+  /** theta/phi reproduce this exact (x, y, z) through the CSS transform
+   * `rotateY(theta) rotateX(phi) translateZ(R)`. Derivation: that transform
+   * chain, applied to a point at local (0,0,R), composes to
+   * (R·cos(phi)·sin(theta), −R·sin(phi), R·cos(phi)·cos(theta)). Matching
+   * that against (x, y, z) gives phi = asin(y) and theta = atan2(x, z) —
+   * and cos(phi) falls out to exactly `radiusAtY` below, so no extra trig
+   * is needed to solve for theta. */
+  theta: number;
+  phi: number;
+}
+
+/** Distributes points across the *whole* sphere surface as a proper
+ * latitude/longitude grid — evenly spaced rings from pole to pole, each
+ * ring holding however many points keep its point-to-point spacing close
+ * to the spacing *between* rings (so grid cells read as roughly square,
+ * not stretched). This replaced a golden-angle spiral, which spaces points
+ * evenly too but traces a loose organic scatter rather than a grid a
+ * viewer can actually read as rows wrapped around a ball — "uniform" here
+ * meant "looks like an ordered grid," not just "evenly spread."
+ *
+ * `rows` is picked by brute-force search for whichever ring count's total
+ * point count lands closest to the requested one — cheap (count ≤ a few
+ * hundred) and exact enough that callers don't need to special-case an
+ * off-by-a-few actual total, though they should still tolerate one (see
+ * ProjectSphereScene). Alternate rings are longitude-offset by half a
+ * slot so cards brick-pattern instead of lining up in a seam pole-to-pole.
+ *
+ * This is still what makes "no overlap" a property of the layout instead
+ * of something bolted on after: ring spacing and in-ring spacing are both
+ * derived from the same target angle, so as long as SPHERE_RADIUS is
+ * generous relative to a card's footprint, no two cards' boxes can occupy
+ * the same screen space. */
+function sphereGridPoints(count: number): SpherePoint[] {
+  if (count <= 0) return [];
+
+  const countAtRows = (rows: number) => {
+    let total = 0;
+    for (let r = 0; r < rows; r++) {
+      const y = 1 - (2 * (r + 0.5)) / rows;
+      const radiusAtY = Math.sqrt(Math.max(0, 1 - y * y));
+      // Longitude spacing at this ring ≈ ring spacing (π / rows) when
+      // cols ≈ 2 · rows · radiusAtY — the standard square-cell UV-sphere
+      // tessellation.
+      total += Math.max(1, Math.round(2 * rows * radiusAtY));
+    }
+    return total;
+  };
+
+  let bestRows = 1;
+  let bestDiff = Infinity;
+  for (let rows = 1; rows <= Math.max(1, count); rows++) {
+    const diff = Math.abs(countAtRows(rows) - count);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestRows = rows;
+    }
+  }
+
+  const points: SpherePoint[] = [];
+  for (let r = 0; r < bestRows; r++) {
+    const y = 1 - (2 * (r + 0.5)) / bestRows;
     const radiusAtY = Math.sqrt(Math.max(0, 1 - y * y));
-    const theta = goldenAngle * i;
-    points.push(new THREE.Vector3(Math.cos(theta) * radiusAtY, y, Math.sin(theta) * radiusAtY).multiplyScalar(radius));
+    const cols = Math.max(1, Math.round(2 * bestRows * radiusAtY));
+    const rowOffset = (r % 2) * (Math.PI / cols);
+    for (let c = 0; c < cols; c++) {
+      const lon = (c / cols) * Math.PI * 2 + rowOffset;
+      const x = Math.cos(lon) * radiusAtY;
+      const z = Math.sin(lon) * radiusAtY;
+      const theta = Math.atan2(x, z);
+      const phi = Math.asin(Math.max(-1, Math.min(1, y)));
+      points.push({ x, y, z, theta, phi });
+    }
   }
   return points;
 }
 
-function smoothstep(edge0: number, edge1: number, x: number) {
-  const t = THREE.MathUtils.clamp((x - edge0) / (edge1 - edge0), 0, 1);
-  return t * t * (3 - 2 * t);
-}
-
-// Soft radial dot — drawn fresh per mount rather than cached at module
-// scope, same reasoning as ArchitectureDiagram.tsx's tech-icon textures:
-// R3F disposes textures on unmount, so a shared cache would eventually hand
-// back a disposed one. Cheap enough (one small canvas draw) not to matter.
-function createDotTexture(): THREE.CanvasTexture {
-  const size = 64;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  grad.addColorStop(0, "rgba(255,255,255,1)");
-  grad.addColorStop(0.5, "rgba(255,255,255,0.5)");
-  grad.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-  return texture;
-}
-
-/** Blank, non-interactive shell of glowing points — a THREE.Points cloud
- * (one draw call for the whole shell) rather than individual DOM/Html
- * elements per node, since these are purely decorative and there can be
- * 15-20+ of them; Html per node would mean that many extra DOM elements
- * doing nothing but sitting there, which Points does for effectively free. */
-function DecorativeShell({
-  count,
-  radius,
-  color,
-  size,
-  speed,
-  opacity,
-}: {
-  count: number;
-  radius: number;
-  color: string;
-  size: number;
-  speed: number;
-  opacity: number;
-}) {
-  const groupRef = useRef<THREE.Group>(null);
-  const texture = useMemo(() => createDotTexture(), []);
-  const positions = useMemo(() => {
-    const pts = fibonacciSpherePoints(count, radius);
-    const arr = new Float32Array(count * 3);
-    pts.forEach((p, i) => {
-      arr[i * 3] = p.x;
-      arr[i * 3 + 1] = p.y;
-      arr[i * 3 + 2] = p.z;
-    });
-    return arr;
-  }, [count, radius]);
-
-  useFrame((_, delta) => {
-    if (groupRef.current) groupRef.current.rotation.y += delta * speed;
-  });
-
-  return (
-    <group ref={groupRef}>
-      <points>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        </bufferGeometry>
-        <pointsMaterial map={texture} color={color} size={size} transparent opacity={opacity} depthWrite={false} sizeAttenuation />
-      </points>
-    </group>
-  );
-}
-
-function SphereCard({ project, point, index, onOpenDetails }: { project: Project; point: THREE.Vector3; index: number; onOpenDetails: (project: Project) => void }) {
-  const ghStats = useGitHubRepo(project.repoName);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const mountTimeRef = useRef<number | null>(null);
-  const quaternion = useMemo(() => outwardQuaternion(point), [point]);
-
-  // Static depth cue (nearer cards read slightly bolder than the ones set
-  // further back in the dome) — never drops below a floor, since the whole
-  // point is that every card stays clearly legible, not that some fade out.
-  // Kept to a narrow band so cards read as a uniform, consistent size across
-  // the sphere rather than visibly ballooning toward the camera.
-  const depthFactor = THREE.MathUtils.clamp(point.z / PROJECT_RADIUS, 0, 1);
-  const baseOpacity = 0.85 + depthFactor * 0.15;
-  const baseScale = 0.94 + depthFactor * 0.06;
-
-  useFrame(({ clock }) => {
-    if (!wrapperRef.current) return;
-    if (mountTimeRef.current === null) mountTimeRef.current = clock.elapsedTime;
-    // Staggered entrance — each card grows in slightly after the last,
-    // instead of the whole dome popping in at once.
-    const elapsed = clock.elapsedTime - mountTimeRef.current;
-    const delay = index * 0.12;
-    const progress = smoothstep(delay, delay + 0.55, elapsed);
-
-    wrapperRef.current.style.opacity = (progress * baseOpacity).toFixed(3);
-    wrapperRef.current.style.transform = `scale(${(0.55 + progress * (baseScale - 0.55)).toFixed(3)})`;
-    wrapperRef.current.style.pointerEvents = progress > 0.6 ? "auto" : "none";
-  });
-
-  return (
-    // quaternion faces the card outward from the sphere's center, like a
-    // sticker applied to its surface — position() alone would have every
-    // card facing the same default (0,0,1) direction regardless of where
-    // it sits on the dome. Combined with `transform` (true 3D, not
-    // billboarded) on the Html below, the card now rotates rigidly with
-    // the sphere instead of always flattening back to face the camera.
-    <group position={point} quaternion={quaternion}>
-      <Html center transform distanceFactor={7} occlude={false} pointerEvents="none">
-        <div
-          ref={wrapperRef}
-          className="project-sphere-card"
-          style={{ pointerEvents: "none", opacity: 0, transform: "scale(0.55)" }}
-          onClick={() => onOpenDetails(project)}
-        >
-          {project.image && (
-            <div className="project-sphere-card-image">
-              <img src={project.image} alt="" />
-            </div>
-          )}
-          <div className="project-sphere-card-body">
-            <div className="project-sphere-card-top">
-              <span className="project-sphere-card-category">{project.category}</span>
-              {!ghStats.loading && ghStats.stars > 0 && (
-                <span className="project-sphere-card-stars">
-                  <Star size={10} /> {ghStats.stars}
-                </span>
-              )}
-            </div>
-            <h3>{project.title}</h3>
-            <p>{project.signal}</p>
-            <div className="project-sphere-card-tech">
-              {project.technologies.slice(0, 3).map((t) => (
-                <span key={t}>{t}</span>
-              ))}
-            </div>
-            <div className="project-sphere-card-bottom">
-              <span className="project-sphere-card-cta">
-                Full details <ExternalLink size={11} />
-              </span>
-              <span className="project-sphere-card-bottom-right">
-                {ghStats.forks > 0 && (
-                  <span className="project-sphere-card-forks">
-                    <GitFork size={10} /> {ghStats.forks}
-                  </span>
-                )}
-                <a
-                  href={project.github}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="project-sphere-card-gh"
-                  onClick={(e) => e.stopPropagation()}
-                  aria-label={`${project.title} on GitHub`}
-                >
-                  <GithubIcon size={12} />
-                </a>
-              </span>
-            </div>
-          </div>
-        </div>
-      </Html>
-    </group>
-  );
-}
-
-/** An empty slot on the dome — reserved space for a project that isn't
- * featured yet. Featuring another one just fills the next of these in,
- * rather than the sphere staying visibly sparse until there happen to be
- * DOME_ROWS x DOME_COLS real projects. */
-function BlankSlotCard({ point, index }: { point: THREE.Vector3; index: number }) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const mountTimeRef = useRef<number | null>(null);
-  const quaternion = useMemo(() => outwardQuaternion(point), [point]);
-
-  useFrame(({ clock }) => {
-    if (!wrapperRef.current) return;
-    if (mountTimeRef.current === null) mountTimeRef.current = clock.elapsedTime;
-    const elapsed = clock.elapsedTime - mountTimeRef.current;
-    // Shorter per-card stagger than the real cards use (there are 30+ of
-    // these, not a handful — index * 0.12 would take ~5s to finish revealing).
-    const delay = index * 0.04;
-    const progress = smoothstep(delay, delay + 0.4, elapsed);
-    wrapperRef.current.style.opacity = (progress * 0.7).toFixed(3);
-    wrapperRef.current.style.transform = `scale(${(0.5 + progress * 0.5).toFixed(3)})`;
-  });
-
-  return (
-    <group position={point} quaternion={quaternion}>
-      <Html center transform distanceFactor={7} occlude={false} pointerEvents="none">
-        <div ref={wrapperRef} className="project-sphere-card project-sphere-card-blank" style={{ opacity: 0, transform: "scale(0.5)" }} aria-hidden="true">
-          <span>+</span>
-        </div>
-      </Html>
-    </group>
-  );
-}
-
-function SphereScene({
-  projects,
-  realPoints,
-  blankPoints,
-  onOpenDetails,
-}: {
-  projects: Project[];
-  realPoints: THREE.Vector3[];
-  blankPoints: THREE.Vector3[];
-  onOpenDetails: (project: Project) => void;
-}) {
-  // Sized to match the project dome exactly, so the cards visibly sit on its
-  // surface (this is "the sphere") rather than floating separately from a
-  // smaller decorative ball.
-  const wireframeGeo = useMemo(() => new THREE.IcosahedronGeometry(PROJECT_RADIUS, 2), []);
-
-  // Rotation now has exactly one source: OrbitControls, auto-rotating the
-  // camera when idle and handing full control to a drag the moment one
-  // starts (see the OrbitControls props below) — not a second, independent
-  // animation on the object itself running at the same time. Two systems
-  // both trying to own "how the sphere is oriented right now" is exactly
-  // the class of bug this session already hit once with Lenis vs. native
-  // scroll-snap; not repeating it here over something as simple as a spin.
-  const [autoRotate, setAutoRotate] = useState(true);
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); }, []);
-
+/** The card's actual content — identical whether it's sitting on the
+ * rotating sphere or, on narrow screens / reduced motion, laid out flat.
+ * Kept as one function so the two render paths can't drift apart.
+ *
+ * Deliberately minimal: category, title, and a "there's more" hint — every
+ * other detail (description, tech stack, stars/forks, the GitHub link)
+ * already lives one click away in ProjectDetailsModal. A face this small,
+ * curved, and often mid-rotation was never a good place to read a
+ * paragraph and three tag pills off of; packing all of that in was also
+ * most of why the text read as cluttered/blurry at this size in the first
+ * place. Fewer, bigger words is what actually stays legible here. */
+function ProjectCardFace({ project }: { project: Project }) {
   return (
     <>
-      <ambientLight intensity={0.7} />
-      <pointLight position={[4, 4, 6]} intensity={1.2} color={ACCENT} />
-      <pointLight position={[-4, -2, 4]} intensity={0.4} color={SIGNAL} />
-
-      {/* Dense, warm, fast-spinning core — the innermost layer of texture. */}
-      <DecorativeShell count={12} radius={CORE_RADIUS} color={ACCENT} size={0.05} speed={0.16} opacity={0.55} />
-
-      {/* Sparse, cool, slow-spinning outer shell, turning the opposite
-          direction from the core for parallax contrast. */}
-      <DecorativeShell count={16} radius={OUTER_RADIUS} color={SIGNAL} size={0.045} speed={-0.06} opacity={0.35} />
-
-      {/* The wireframe cage and the cards — one group, so they read as one
-          draggable object (cards on the sphere's surface), not a static
-          card layer sitting in front of a sphere that moves on its own. */}
-      <group>
-        <mesh geometry={wireframeGeo}>
-          <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.22} />
-        </mesh>
-        {projects.map((project, i) => (
-          <SphereCard key={project.id} project={project} point={realPoints[i]} index={i} onOpenDetails={onOpenDetails} />
-        ))}
-        {blankPoints.map((point, i) => (
-          <BlankSlotCard key={`blank-${i}`} point={point} index={projects.length + i} />
-        ))}
-      </group>
-
-      <OrbitControls
-        makeDefault
-        enablePan={false}
-        // Zoom on this element would mean scroll-wheel-over-the-sphere
-        // fights the page's own scroll instead of turning the sphere —
-        // disabled on purpose, drag-to-rotate only.
-        enableZoom={false}
-        enableDamping
-        dampingFactor={0.08}
-        rotateSpeed={0.6}
-        autoRotate={autoRotate}
-        autoRotateSpeed={0.9}
-        onStart={() => {
-          setAutoRotate(false);
-          if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-        }}
-        onEnd={() => {
-          idleTimerRef.current = setTimeout(() => setAutoRotate(true), 2500);
-        }}
-      />
+      {project.image && (
+        <div className="project-sphere-card-image">
+          <img src={project.image} alt="" />
+        </div>
+      )}
+      <div className="project-sphere-card-body">
+        <span className="project-sphere-card-category">{project.category}</span>
+        <h3>{project.title}</h3>
+        <span className="project-sphere-card-hint">
+          View details <ChevronRight size={9} />
+        </span>
+      </div>
     </>
   );
 }
 
-// Real project cards get a purpose-built layout instead of being picked out
-// of the same coarse 42-slot lattice the blanks use — trying to greedily
-// filter well-separated points out of a fixed, low-resolution lattice kept
-// bottoming out at whatever sparse points happened to survive, which still
-// overlapped on screen once you account for how big a card actually
-// projects to up close.
-//
-// For a small handful of cards (today: 4, comfortably up to 8) this places
-// them all on a single ring around dead-center, evenly spaced by angle —
-// for a *fixed* count, one ring maximizes the minimum pairwise separation
-// between any two cards, which is exactly the thing that was overlapping.
-// A golden-angle spiral across multiple theta bands (used for the whole
-// sphere, where the count is much larger) doesn't give that guarantee:
-// two points can land in different bands but similar phi and end up close
-// together anyway. Past ring capacity this spills onto additional, wider
-// rings within the same cap rather than crowding the first one.
-function capPoints(count: number, capAngleDeg: number, radius: number): THREE.Vector3[] {
-  if (count <= 0) return [];
-  if (count === 1) return [new THREE.Vector3(0, 0, radius)];
-
-  const RING_CAPACITY = 8;
-  const ringCount = Math.ceil(count / RING_CAPACITY);
-  const points: THREE.Vector3[] = [];
-  let remaining = count;
-  for (let ring = 0; ring < ringCount; ring++) {
-    const onThisRing = Math.min(remaining, Math.ceil(count / ringCount));
-    const theta = THREE.MathUtils.degToRad((capAngleDeg * (ring + 1)) / ringCount);
-    for (let i = 0; i < onThisRing; i++) {
-      const phi = (i / onThisRing) * Math.PI * 2 + ring * (Math.PI / RING_CAPACITY);
-      points.push(new THREE.Vector3(Math.sin(theta) * Math.cos(phi), Math.sin(theta) * Math.sin(phi), Math.cos(theta)).multiplyScalar(radius));
-    }
-    remaining -= onThisRing;
-  }
-  return points;
+/** One card, permanently stuck to its point on the sphere's surface —
+ * `rotateY(theta) rotateX(phi) translateZ(R)` both places it and, because
+ * that's a rotate-then-translate chain rather than a plain offset, orients
+ * it tangent to the sphere at that point (its local Z axis points straight
+ * out along the radius), the way a sticker applied to a ball's surface
+ * would sit — which combined with the barrel-curved border-radius in CSS
+ * is what sells "wrapped over a sphere" instead of "flat cards floating in
+ * a ball shape". This transform is set once and never touched again —
+ * earlier this also had a per-frame `scale(...)` layered on top for a
+ * depth cue, but re-writing `transform` on a GPU-composited 3D layer every
+ * single frame is exactly what was making the card's own text look soft:
+ * the browser was re-rasterizing/resampling it continuously instead of
+ * settling on one crisp bitmap. Real perspective (`.project-sphere-canvas`
+ * already has one) gives the same "farther = smaller" cue for free, purely
+ * from the transform math, with nothing to re-touch — only opacity and
+ * pointer-events change per frame now (see ProjectSphereScene). */
+function SphereCard({
+  project,
+  point,
+  cardRef,
+  onOpenDetails,
+}: {
+  project: Project;
+  point: SpherePoint;
+  cardRef: (el: HTMLElement | null) => void;
+  onOpenDetails: (project: Project) => void;
+}) {
+  const transform = `rotateY(${point.theta}rad) rotateX(${point.phi}rad) translateZ(${SPHERE_RADIUS}px)`;
+  return (
+    <article
+      ref={cardRef}
+      className={`project-sphere-card ${project.image ? "project-sphere-card-has-image" : "project-sphere-card-no-image"}`}
+      style={{ transform }}
+      onClick={() => onOpenDetails(project)}
+    >
+      <ProjectCardFace project={project} />
+    </article>
+  );
 }
 
-export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
-  const canRenderWebGL = useCanRenderWebGL();
-  // Real projects claim whichever well-spaced slots face the camera on load
-  // (highest z — least angled, most legible without having to drag first);
-  // everything else, including the rest of the back and sides, renders as
-  // blank filler. Computed once, not re-derived as the sphere later rotates
-  // from drag/auto-rotate — which slots are "real" vs. "blank" is fixed for
-  // the component's lifetime, only their on-screen position moves.
-  const { realPoints, blankPoints } = useMemo(() => {
-    // Wider cap for more featured projects (each one needs its own share of
-    // room), narrower — so every card stays close to dead-center and
-    // legible — when there are only a few, as there are today.
-    const capAngleDeg = THREE.MathUtils.clamp(28 + projects.length * 5, 30, 70);
-    const real = capPoints(projects.length, capAngleDeg, PROJECT_RADIUS);
+/** Decorative, non-interactive filler — same sphere, same static-transform
+ * approach as SphereCard, just smaller/dimmer and with no content to open.
+ * Exists purely to make the sphere read as populated everywhere, not just
+ * at the 25 slots that happen to hold real projects. */
+function BlankSphereCard({ point, cardRef }: { point: SpherePoint; cardRef: (el: HTMLElement | null) => void }) {
+  const transform = `rotateY(${point.theta}rad) rotateX(${point.phi}rad) translateZ(${SPHERE_RADIUS}px)`;
+  return <div ref={cardRef} className="project-sphere-card-blank" style={{ transform }} aria-hidden="true" />;
+}
 
-    // Blank filler comes from the usual whole-sphere lattice, minus any
-    // slot that landed too close to a real card's now-fixed position —
-    // without this a blank could sit directly behind/beside a featured
-    // card instead of visibly filling the *rest* of the sphere.
-    const MIN_BLANK_CLEARANCE = THREE.MathUtils.degToRad(16);
-    const blankPoints = fibonacciSpherePoints(TOTAL_SLOTS, PROJECT_RADIUS).filter((p) =>
-      real.every((r) => p.angleTo(r) >= MIN_BLANK_CLEARANCE)
-    );
-
-    return { realPoints: real, blankPoints };
+/** The interactive sphere: auto-rotates, drag (mouse or touch) takes over
+ * and hands back after a short idle delay — same interaction model the
+ * WebGL version used (OrbitControls' autoRotate + onStart/onEnd), just
+ * driven by hand since there's no r3f scene underneath it any more. */
+function ProjectSphereScene({ projects, onOpenDetails }: ProjectSphereProps) {
+  // One grid sized for real + blank cards combined, then split by index
+  // parity — not two separately-generated grids — so both groups land on
+  // *every* ring instead of the real projects specifically clustering in
+  // whichever rings a separate, smaller grid happened to lay out. Row-major
+  // order means consecutive indices share a ring (same latitude), so
+  // alternating even/odd interleaves real and blank within each ring too,
+  // not just across the whole sphere.
+  const { points, blankPoints } = useMemo(() => {
+    const blankCount = Math.round(projects.length * BLANK_CARD_RATIO);
+    const all = sphereGridPoints(projects.length + blankCount);
+    const points = all.filter((_, i) => i % 2 === 0);
+    const blankPoints = all.filter((_, i) => i % 2 === 1);
+    // sphereGridPoints' actual total is "closest match," not exact, so
+    // `points` can land a couple off from projects.length — every SphereCard
+    // below indexes into `points` by project index, so that length has to
+    // match exactly. Shuffle the surplus/shortfall to or from blankPoints
+    // rather than trimming (which would silently drop a project's card).
+    while (points.length > projects.length) blankPoints.push(points.pop()!);
+    while (points.length < projects.length && blankPoints.length > 0) points.push(blankPoints.pop()!);
+    return { points, blankPoints };
   }, [projects.length]);
+  const worldRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLElement | null)[]>([]);
+  const blankCardRefs = useRef<(HTMLElement | null)[]>([]);
 
-  if (canRenderWebGL === null) {
-    return <div className="project-sphere-canvas project-sphere-loading" aria-hidden="true" />;
-  }
+  // Rotation state lives in refs, not React state — this updates every
+  // animation frame during auto-rotate/drag, and re-rendering 25 cards'
+  // worth of React tree at 60fps for what's ultimately two numbers would be
+  // wasteful. Styles are written straight to the DOM nodes instead.
+  const yawRef = useRef(-24);
+  const pitchRef = useRef(-10);
+  const draggingRef = useRef(false);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const autoRotateRef = useRef(true);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  if (!canRenderWebGL) {
-    // No WebGL, or prefers-reduced-motion (useCanRenderWebGL folds both into
-    // one check) — the proven CSS carousel this component replaces is a
-    // perfectly good fallback rather than a from-scratch third UI.
-    return <Revolving3DCarousel projects={projects} onOpenDetails={onOpenDetails} />;
-  }
+  useEffect(() => {
+    // One rotation matrix (rotateX(pitch) · rotateY(yaw), the same
+    // composition order as the world's own CSS transform below) applied to
+    // every card's rest-position normal gives its *exact* current facing —
+    // not an approximation — so the fade/click-through-disable for
+    // back-of-sphere cards lines up with what's actually on screen.
+    const applyRotation = () => {
+      const world = worldRef.current;
+      if (!world) return;
+      const yawDeg = yawRef.current;
+      const pitchDeg = pitchRef.current;
+      world.style.transform = `rotateX(${pitchDeg}deg) rotateY(${yawDeg}deg)`;
+
+      const yaw = (yawDeg * Math.PI) / 180;
+      const pitch = (pitchDeg * Math.PI) / 180;
+      const cosYaw = Math.cos(yaw);
+      const sinYaw = Math.sin(yaw);
+      const cosPitch = Math.cos(pitch);
+      const sinPitch = Math.sin(pitch);
+
+      // `backface-visibility: hidden` (CSS) already makes anything with
+      // facing < 0 fully invisible on its own — a card's own back-facing
+      // half of the sphere just isn't painted, full stop. So this ramp only
+      // has one job: suppress the narrow *rim* band right around facing ≈ 0,
+      // where a card is still technically front-facing but turned edge-on
+      // enough to project to a thin sliver instead of its real face.
+      // Everything past that rim — most of the visible hemisphere — stays
+      // at full opacity. No `scale(...)` here any more (see SphereCard) —
+      // only opacity/pointer-events/z-index change per frame now.
+      for (let i = 0; i < points.length; i++) {
+        const el = cardRefs.current[i];
+        if (!el) continue;
+        const p = points[i];
+        const z1 = -p.x * sinYaw + p.z * cosYaw;
+        const facing = p.y * sinPitch + z1 * cosPitch; // -1 fully back .. 1 fully front
+        const t = smoothstep(-0.05, 0.25, facing);
+        el.style.opacity = (0.12 + t * 0.88).toFixed(3);
+        // Faded, mostly-back-facing cards stop accepting clicks so they
+        // can't silently intercept a click meant for the card visually in
+        // front of them.
+        el.style.pointerEvents = facing > 0.08 ? "auto" : "none";
+        el.style.zIndex = String(Math.round(t * 1000));
+      }
+
+      // Blank filler cards use the same ramp but capped much dimmer — they're
+      // texture, not content, and should never out-compete a real card for
+      // attention even at dead-center facing. Never clickable.
+      for (let i = 0; i < blankPoints.length; i++) {
+        const el = blankCardRefs.current[i];
+        if (!el) continue;
+        const p = blankPoints[i];
+        const z1 = -p.x * sinYaw + p.z * cosYaw;
+        const facing = p.y * sinPitch + z1 * cosPitch;
+        const t = smoothstep(-0.05, 0.25, facing);
+        el.style.opacity = (0.05 + t * 0.3).toFixed(3);
+        el.style.zIndex = String(Math.round(t * 400));
+      }
+    };
+
+    applyRotation();
+
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (autoRotateRef.current && !draggingRef.current) {
+        yawRef.current += AUTO_ROTATE_DEG_PER_SEC * dt;
+        applyRotation();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!draggingRef.current || !lastPointerRef.current) return;
+      const dx = e.clientX - lastPointerRef.current.x;
+      const dy = e.clientY - lastPointerRef.current.y;
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
+      yawRef.current += dx * 0.35;
+      pitchRef.current = Math.max(-60, Math.min(60, pitchRef.current - dy * 0.35));
+      applyRotation();
+    };
+    const endDrag = () => {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      lastPointerRef.current = null;
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = setTimeout(() => {
+        autoRotateRef.current = true;
+      }, RESUME_AUTO_ROTATE_MS);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+  }, [points, blankPoints]);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    draggingRef.current = true;
+    autoRotateRef.current = false;
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+  };
 
   return (
-    <div className="relative w-full flex flex-col items-center select-none">
-      <div className="project-sphere-canvas">
-        <Canvas
-          camera={{ position: [0, 1, 10.2], fov: 42 }}
-          dpr={1}
-          gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
-        >
-          <SphereScene projects={projects} realPoints={realPoints} blankPoints={blankPoints} onOpenDetails={onOpenDetails} />
-        </Canvas>
+    // The drag handler lives on the canvas, not the world — `.project-sphere-world`
+    // is a 0×0 positioning anchor (see its CSS), so it only has an actual
+    // hit-testable box where a real card sits on top of it. A drag starting
+    // on genuinely empty canvas background, or on a blank filler card
+    // (`pointer-events: none`, so hits fall through to whatever's behind
+    // it), would land on `.project-sphere-canvas` — an ancestor of the
+    // world, not a descendant — and never bubble up to a listener on the
+    // world at all. Real cards keep working the same way regardless, since
+    // bubbling from a card up through both world *and* canvas reaches this
+    // listener either way.
+    <div
+      className="project-sphere-canvas"
+      aria-label={`${projects.length} project cards arranged on a rotating sphere — drag to look around`}
+      onPointerDown={onPointerDown}
+    >
+      <div className="project-sphere-world" ref={worldRef}>
+        {GLOBE_RING_TRANSFORMS.map((transform) => (
+          <div key={transform} className="project-sphere-globe-ring" style={{ transform }} aria-hidden="true" />
+        ))}
+        {blankPoints.map((point, i) => (
+          <BlankSphereCard
+            key={`blank-${i}`}
+            point={point}
+            cardRef={(el) => {
+              blankCardRefs.current[i] = el;
+            }}
+          />
+        ))}
+        {projects.map((project, i) => (
+          <SphereCard
+            key={project.id}
+            project={project}
+            point={points[i]}
+            cardRef={(el) => {
+              cardRefs.current[i] = el;
+            }}
+            onOpenDetails={onOpenDetails}
+          />
+        ))}
+      </div>
+      <span className="project-sphere-hint">Drag to look around — every project is up there</span>
+    </div>
+  );
+}
+
+/** Static fallback for narrow screens and `prefers-reduced-motion`: same
+ * cards, same curved-card look, laid out in a plain wrapping grid instead
+ * of rotating in 3D. All projects, still no overlap — just none of the
+ * drag/auto-rotate motion. */
+function ProjectSphereFlat({ projects, onOpenDetails }: ProjectSphereProps) {
+  return (
+    <div className="project-sphere-canvas project-sphere-canvas-flat" aria-label={`${projects.length} project cards`}>
+      <div className="project-sphere-flat-grid">
+        {projects.map((project) => (
+          <article
+            key={project.id}
+            className={`project-sphere-card project-sphere-card-flat ${project.image ? "project-sphere-card-has-image" : "project-sphere-card-no-image"}`}
+            onClick={() => onOpenDetails(project)}
+          >
+            <ProjectCardFace project={project} />
+          </article>
+        ))}
       </div>
     </div>
   );
+}
+
+export function ProjectSphere({ projects, onOpenDetails }: ProjectSphereProps) {
+  // null while unknown (first paint, before we can check matchMedia) —
+  // resolved one effect later so the choice never causes a hydration
+  // mismatch between server and client.
+  const [wantsSphere, setWantsSphere] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // Two separate signals for "this is a mobile view, skip the heavy 3D
+    // scene": viewport width (catches phones regardless of pointer type —
+    // a phone reporting a fine pointer via some peripheral shouldn't get
+    // 50 continuously-animated 3D cards) and coarse-pointer (catches
+    // tablets that may report a wide-enough viewport but are still
+    // touch-primary, weaker-GPU devices prone to the same lag). Either one
+    // is enough to fall back to the plain grid.
+    const mobileWidthQuery = window.matchMedia("(max-width: 900px)");
+    const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+    const compute = () =>
+      setWantsSphere(!reducedMotionQuery.matches && !mobileWidthQuery.matches && !coarsePointerQuery.matches);
+    compute();
+    reducedMotionQuery.addEventListener("change", compute);
+    mobileWidthQuery.addEventListener("change", compute);
+    coarsePointerQuery.addEventListener("change", compute);
+    return () => {
+      reducedMotionQuery.removeEventListener("change", compute);
+      mobileWidthQuery.removeEventListener("change", compute);
+      coarsePointerQuery.removeEventListener("change", compute);
+    };
+  }, []);
+
+  if (wantsSphere === null) {
+    return <div className="project-sphere-canvas project-sphere-loading" aria-hidden="true" />;
+  }
+
+  if (!wantsSphere) {
+    return <ProjectSphereFlat projects={projects} onOpenDetails={onOpenDetails} />;
+  }
+
+  return <ProjectSphereScene projects={projects} onOpenDetails={onOpenDetails} />;
 }
