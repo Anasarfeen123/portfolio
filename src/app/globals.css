@@ -1880,7 +1880,13 @@ a {
     inset: 8px 8px auto;
   }
 
-  .hud-actions .hud-hide-mobile {
+  /* Unscoped (not `.hud-actions .hud-hide-mobile`) on purpose: the build
+     badge carries this class too but lives in `.hud-mark-group`, a sibling
+     of `.hud-actions` — scoping to `.hud-actions` alone left it visible on
+     mobile, and since `.hud` itself has no background between its pills,
+     that plain unbadged text sat directly over whatever page content
+     scrolled underneath it. */
+  .hud-hide-mobile {
     display: none;
   }
 
@@ -2539,7 +2545,17 @@ a {
 .project-sphere-canvas {
   position: relative;
   width: 100%;
-  min-height: 720px;
+  /* Targets roughly 86% of the viewport's own height, clamped between a
+     floor (never so short the shell has no room to breathe) and a ceiling
+     (never so tall it dwarfs the surrounding page on a big monitor) — the
+     same [700, 86dvh, 820] the JS side mirrors in computeViewportScale
+     (ProjectSphere.tsx) to size the sphere's own radius/cards against. The
+     two have to move together: this is a floor via min-height, not a hard
+     height, specifically so that if that JS math is ever slightly
+     conservative, the box just ends up a little taller than the target
+     instead of clipping a card (this element clips: see `overflow: hidden`
+     below) — degrades to "not perfectly tight" rather than "broken." */
+  min-height: clamp(700px, 86dvh, 820px);
   padding: 24px;
   isolation: isolate;
   overflow: hidden;
@@ -2589,6 +2605,193 @@ a {
   background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%);
 }
 
+/* The planet at the center of the card shell (see the JSX comment on
+   `.project-sphere-planet` in ProjectSphere.tsx for why it's built as a
+   flat disc rather than a true child of `.project-sphere-world` — a plane
+   with no depth would foreshorten into an ellipse, then a sliver, if it
+   picked up the world's own rotateX/rotateY). To still turn *with* the
+   shell instead of sitting there inert, it fakes rotation the way a CSS
+   "spinning globe" trick always does: the terrain scrolls sideways under
+   fixed lighting, rather than the disc itself tilting in 3D. ProjectSphere.tsx
+   drives that scroll's `background-position-x` off the same yaw driving the
+   card shell every frame, so dragging the cards visibly spins the globe
+   underneath them in the same direction, at a related speed — "attached,"
+   not just "auto-playing alongside."
+
+   Five stacked layers now, three of them animated:
+   1. `.project-sphere-planet` itself — the base rock color. Flat and
+      static; all of the "this is a lit ball" work happens in layer 5, not
+      here, so the base doesn't need its own gradient falloff.
+   2. `.project-sphere-planet-surface` — crater/ridge blobs on a transparent
+      base, `background-repeat: repeat-x` at `background-size: 100% 100%`
+      (one tile == the circle's own diameter) so animating
+      `background-position-x` by exactly one tile-width loops seamlessly
+      forever, in either drag direction.
+   3. `.project-sphere-planet-surface::after` — a handful of small glowing
+      "data node" pins riding the exact same rotation as layer 2 (both read
+      the same `--planet-scroll` custom property), but pulsing on their own
+      independent animation — points of instrumentation on the rock, not
+      just more crater texture.
+   4. `.project-sphere-planet-grid` — a static meridian/latitude wireframe,
+      deliberately *not* wired to the rotation the other layers share (see
+      its own JSX/CSS comments) so it reads as a scanner overlay rather than
+      lines painted on the rock itself.
+   5. `.project-sphere-planet-shade` — a static highlight-plus-rim overlay,
+      painted last so it re-applies the same "lit sphere" shading uniformly
+      over the base rock, whatever crater/node has scrolled underneath it,
+      and the grid — without this, craters (and the grid) would carry flat
+      brightness past the rim instead of dimming into it like the rest of
+      the surface does.
+
+   Sized and colored deliberately small and muted, not a showpiece: a first
+   pass at ~0.85× the card radius, fully opaque, in saturated blue-marble
+   "Earth" colors, ended up as a bright toy ball with a handful of cards
+   stuck to it — it out-weighed the cards it was supposed to be sitting
+   behind, and blotted out the wireframe cage (`.project-sphere-globe-ring`)
+   that used to read clearly against a plain dark backdrop. A second pass
+   fixed the weight problem but was still a smooth blue-green blob with no
+   real texture of its own. A third pass pitched it as a rough, cratered
+   rock — pitted violet stone rather than a marble — but violet sitting on
+   this canvas's own near-black *blue*-violet backdrop (`.project-sphere-canvas::before`)
+   was a hue too close to its own background: through the narrow gaps
+   between cards it read as a formless dark smudge, not a lit sphere, no
+   matter how much texture was actually in the gradient. This pass keeps
+   the cratered-rock idea but recolors it into the site's own warm accent
+   (burnt-orange, `--accent`) precisely because that's the one hue on this
+   page guaranteed to contrast against a cool near-black backdrop — and
+   redraws the base layer as one real lit-sphere gradient (bright
+   sunward crescent falling off through rock-brown to near-black at the
+   rim) instead of a flat fill plus a separate faint highlight overlay, so
+   "this is a lit ball, not a hole in the canvas" reads even through a
+   sliver of a gap. */
+.project-sphere-planet {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0.95;
+  /* The lit-sphere shading itself: a warm sunward crescent (light source
+     upper-left, matching the highlight in the shade layer below) falling
+     off through rock-brown to near-black at the rim — this is what makes
+     the disc's silhouette itself read as "sphere," before the crater
+     texture or shade overlay add anything on top. */
+  background: radial-gradient(
+    circle at 32% 28%,
+    color-mix(in srgb, var(--accent) 55%, #ffd9a8) 0%,
+    color-mix(in srgb, var(--accent) 65%, #241207) 38%,
+    #200f06 66%,
+    #0a0503 100%
+  );
+  /* The rim glow is what actually separates the disc from the near-black
+     canvas behind it in the gaps between cards — without it, the rock's
+     own dark edge and the canvas backdrop are close enough in value to
+     fuse into one shapeless dark field. */
+  box-shadow: 0 0 44px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.project-sphere-planet-surface {
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat-x;
+  background-size: 100% 100%;
+  /* Reads off the custom property ProjectSphereScene's applyRotation writes
+     every frame (see the JS comment there) — a custom property rather than
+     a plain inline backgroundPositionX specifically so ::after below can
+     inherit the exact same value and stay locked to this layer's rotation
+     using nothing but CSS. */
+  background-position-x: var(--planet-scroll, 0%);
+  background-image:
+    /* Small, irregular, mixed light/dark patches — more of them and more
+       varied in size than the old three big smooth "continents" — read as
+       pitted rock instead of a smooth painted ball. Pushed to a wider
+       light/dark spread than the previous violet pass (near-black craters,
+       sand/tan highlights) so the texture stays legible at this small a
+       size instead of washing out into a mid-tone blur. */
+    radial-gradient(circle at 14% 58%, #0c0602 0%, transparent 15%),
+    radial-gradient(circle at 33% 20%, #e8b47c 0%, transparent 11%),
+    radial-gradient(circle at 50% 70%, #0c0602 0%, transparent 18%),
+    radial-gradient(circle at 66% 32%, #f4cd9a 0%, transparent 9%),
+    radial-gradient(circle at 80% 58%, #0c0602 0%, transparent 13%),
+    radial-gradient(circle at 24% 82%, #5c3116 0%, transparent 20%),
+    radial-gradient(circle at 90% 84%, #7a441f 0%, transparent 16%),
+    /* Glowing fracture lines, standing in for magma seams — two thin,
+       elongated glints in the site's own accent color rather than a
+       generic white, so the rock feels tied to the rest of the page
+       instead of a stock-texture drop-in. */
+    radial-gradient(circle at 45% 46%, color-mix(in srgb, var(--accent) 85%, white) 0%, transparent 2.4%),
+    radial-gradient(circle at 92% 22%, color-mix(in srgb, var(--accent) 85%, white) 0%, transparent 1.8%);
+}
+
+/* "Data nodes" — small glowing pins standing in for instrumented sites on
+   the rock, like a map of ground stations. A separate pseudo-element
+   rather than more gradients folded into .project-sphere-planet-surface
+   itself specifically so these can pulse (planet-node-pulse below)
+   independently of the crater texture they share a rotation with — craters
+   pulsing along with them would read as the whole rock flickering, not as
+   points of light on a steady surface. */
+.project-sphere-planet-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat-x;
+  background-size: 100% 100%;
+  background-position-x: var(--planet-scroll, 0%);
+  background-image:
+    radial-gradient(circle at 40% 62%, color-mix(in srgb, var(--accent) 92%, white) 0%, transparent 1.6%),
+    radial-gradient(circle at 60% 40%, color-mix(in srgb, var(--accent) 92%, white) 0%, transparent 1.4%),
+    radial-gradient(circle at 20% 30%, color-mix(in srgb, var(--accent) 92%, white) 0%, transparent 1.3%),
+    radial-gradient(circle at 78% 72%, color-mix(in srgb, var(--accent) 92%, white) 0%, transparent 1.5%);
+  animation: planet-node-pulse 3.4s ease-in-out infinite;
+}
+
+@keyframes planet-node-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* The scanner grid — meridian spokes + latitude rings in the site's accent
+   color, standing in for a wireframe/telemetry overlay rather than markings
+   on the rock (see the JSX comment on this element for why it's a sibling
+   of .project-sphere-planet-surface, not a descendant that would inherit
+   its rotation). screen blend keeps the lines additive against the dark
+   crater texture underneath instead of flattening into a grey wash where
+   they cross a dark patch. */
+.project-sphere-planet-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  mix-blend-mode: screen;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      color-mix(in srgb, var(--accent) 60%, transparent) 0deg 0.5deg,
+      transparent 0.5deg 30deg
+    ),
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--accent) 50%, transparent) 0px 1px,
+      transparent 1px 16%
+    );
+}
+
+.project-sphere-planet-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 28% 25%, rgba(255, 226, 184, 0.32), transparent 22%),
+    radial-gradient(circle at 70% 76%, rgba(3, 1, 1, 0.92), transparent 55%),
+    radial-gradient(circle at 34% 30%, transparent 32%, rgba(4, 2, 1, 0.84) 100%);
+}
+
 .project-sphere-world {
   position: absolute;
   top: 50%;
@@ -2615,21 +2818,24 @@ a {
   pointer-events: none;
 }
 
-/* Great-circle wireframe — see GLOBE_RING_TRANSFORMS. Sized to exactly
-   match SPHERE_RADIUS so the cage and the cards read as one object. Kept
-   faint and behind every card (negative z-index survives here since cards
-   get a positive one set per-frame in JS) — it's there to sell "sphere",
-   not to compete with the cards for attention. */
+/* Great-circle wireframe — see GLOBE_RING_TRANSFORMS. width/height/margin
+   are set inline per-render (ProjectSphereScene) to exactly match the
+   current radius so the cage and the cards read as one object even as that
+   radius scales with project count. Kept faint and behind every card
+   (negative z-index survives here since cards get a positive one set
+   per-frame in JS) — it's there to sell "sphere", not to compete with the
+   cards for attention. */
 .project-sphere-globe-ring {
   position: absolute;
   top: 0;
   left: 0;
-  width: 540px;
-  height: 540px;
-  margin: -270px 0 0 -270px;
   z-index: 0;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
+  /* Bumped from 16% — with the planet now sitting inside this cage (see
+     .project-sphere-planet), the ring needs enough contrast to read as the
+     shell's own outline against a lit backdrop, not just against plain
+     dark canvas the way it did before there was anything else in here. */
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   pointer-events: none;
 }
 
@@ -2637,9 +2843,16 @@ a {
   position: absolute;
   top: 0;
   left: 0;
-  width: 112px;
-  height: 92px;
-  margin: -46px 0 0 -56px;
+  /* --card-w/--card-h are set inline per-card (ProjectSphere.tsx) —
+     CARD_WIDTH_REFERENCE/CARD_HEIGHT_REFERENCE (150x122, the footprint
+     this shape/border-radius/box-shadow were tuned against) scaled down
+     together with the sphere's own radius when a shorter screen can't fit
+     the full-size shell without scrolling past the fold (see
+     computeViewportScale). The `px` fallbacks here are only for the flat/
+     mobile grid variant, which never sets these — see .project-sphere-card-flat. */
+  width: var(--card-w, 124px);
+  height: var(--card-h, 101px);
+  margin: calc(var(--card-h, 101px) / -2) 0 0 calc(var(--card-w, 124px) / -2);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2704,31 +2917,30 @@ a {
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
-/* Blank filler slots (BlankSphereCard) — identical footprint to a real
-   project card (same width/height/margin/curve as .project-sphere-card
-   above, not a smaller stand-in shape), just empty, accent-less, and
-   non-interactive. Same tessellation unit repeated everywhere on the
-   sphere is what reads as "a grid," not two differently-sized things. */
-.project-sphere-card-blank {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 112px;
-  height: 92px;
-  margin: -46px 0 0 -56px;
-  border-radius: 46% / 26%;
-  border: 1px solid color-mix(in srgb, var(--accent) 12%, #1e293b);
-  background: linear-gradient(180deg, rgba(15, 25, 45, 0.9), rgba(7, 12, 24, 0.86));
-  backface-visibility: hidden;
-  pointer-events: none;
+/* Cards are keyboard-focusable now (tabIndex + role="button" in
+   ProjectSphere.tsx) — a curved, often-mid-rotation card with no visible
+   focus ring is a real trap for keyboard-only navigation otherwise: no way
+   to tell which of 25 overlapping-in-DOM-order cards currently has focus.
+   :focus-visible (not :focus) so a mouse click doesn't also paint this —
+   the hover state above already covers pointer users. */
+.project-sphere-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-color: var(--accent);
 }
 
 /* Flat fallback (narrow screens / prefers-reduced-motion) — same card,
    opted back into normal document flow instead of the sphere's absolute +
-   translateZ positioning. */
+   translateZ positioning. min-height: 0 here (not just inside the <640px
+   media query below) because this can also render at full desktop width —
+   prefers-reduced-motion doesn't care how wide the screen is — and the
+   base .project-sphere-canvas's viewport-driven min-height is sized for
+   the *rotating* shell's geometry, which has nothing to do with how tall a
+   plain wrapping grid of cards naturally is. */
 .project-sphere-canvas-flat {
   perspective: none;
   overflow: visible;
+  min-height: 0;
 }
 
 .project-sphere-flat-grid {
@@ -2752,8 +2964,11 @@ a {
 
 .project-sphere-card-image {
   width: 100%;
-  height: 24px;
-  flex: 0 0 24px;
+  /* 32px at the 150px reference width (32/150 ≈ 0.2133) — see the note on
+     .project-sphere-card-body below for why these are all calc()s off
+     --card-w rather than fixed px now. */
+  height: calc(var(--card-w, 124px) * 0.2133);
+  flex: 0 0 calc(var(--card-w, 124px) * 0.2133);
   overflow: hidden;
   background: #02040a;
   border-bottom: 1px solid #1e293b;
@@ -2771,24 +2986,33 @@ a {
    ProjectCardFace for why: this is also most of what fixed the "text looks
    blurry" complaint — three lines of small text plus a row of tag pills
    crammed onto a small, often mid-rotation curved face read as clutter and
-   mush a lot faster than one short title does. Sizes here (and h3's
-   line-clamp, dropped from 3 to 2) are scaled down from the previous
-   150x122 card in step with SPHERE_RADIUS above — proportional, not just
-   "smaller," so the same text-to-card ratio that was already legible
-   stays legible at the smaller footprint. */
+   mush a lot faster than one short title does.
+
+   Every size below is a calc() off --card-w (a fixed ratio of whatever
+   --card-w currently is, e.g. 0.0733 for padding) instead of a fixed px
+   value, so text/padding/image-strip all scale down together with the card
+   itself on a shorter screen (see computeViewportScale in
+   ProjectSphere.tsx) — the same text-to-card ratio that's legible at full
+   size (CARD_WIDTH_REFERENCE/CARD_HEIGHT_REFERENCE there) stays legible at
+   whatever size the card actually renders at. The ratios themselves are
+   tuned to keep title/category readable at the *smallest* size
+   computeViewportScale's floor allows, not just at full size — a font-size
+   ratio that only looked right unscaled was most of why an earlier pass
+   here read as too small on an ordinary laptop screen once the viewport
+   shrink and a smaller reference card size compounded. */
 .project-sphere-card-body {
   flex: 1;
   display: flex;
   min-height: 0;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
-  padding: 8px 10px;
+  gap: calc(var(--card-w, 124px) * 0.0333);
+  padding: calc(var(--card-w, 124px) * 0.0733) calc(var(--card-w, 124px) * 0.0933);
 }
 
 .project-sphere-card-category {
   color: var(--accent);
-  font-size: 6.4px;
+  font-size: calc(var(--card-w, 124px) * 0.065);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2797,7 +3021,7 @@ a {
 .project-sphere-card h3 {
   margin: 0;
   color: #f1f5f9;
-  font-size: 9.5px;
+  font-size: calc(var(--card-w, 124px) * 0.097);
   font-weight: 700;
   line-height: 1.25;
   display: -webkit-box;
@@ -2809,10 +3033,10 @@ a {
 .project-sphere-card-hint {
   display: inline-flex;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   margin-top: 1px;
   color: #64748b;
-  font-size: 6.4px;
+  font-size: calc(var(--card-w, 124px) * 0.065);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -2821,35 +3045,106 @@ a {
   color: var(--accent);
 }
 
+/* Below 640px, the sphere's fallback stops being a grid of small cards and
+   becomes a plain single-column list — one row per project, a thumbnail
+   (if the project has one) plus category/title on the left and a chevron
+   pinned to the right, divided by hairlines instead of individual card
+   chrome. A 3-column grid of curved mini-cards was legible for maybe the
+   first row; at 25 projects it read as a cramped mosaic to scroll through
+   rather than something actually scannable. A list is the more honest fit
+   for "here are 25 things, skim the titles." */
 @media (max-width: 640px) {
   .project-sphere-canvas-flat {
     min-height: 0;
-    padding: 18px;
+    padding: 4px 0;
   }
 
   .project-sphere-flat-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   .project-sphere-card-flat {
-    height: 102px;
-    border-radius: 38% / 22%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 11px 6px;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
-  .project-sphere-card-image {
-    height: 19px;
-    flex-basis: 19px;
+  .project-sphere-card-flat:active {
+    background: var(--card-hover);
   }
 
-  .project-sphere-card-body {
-    padding: 6px 8px;
-    gap: 3px;
+  /* The barrel-curve top highlight and vignette (.project-sphere-card::before/
+     ::after) exist to sell "sticker on a sphere" — meaningless on a flat
+     list row, and at this size mostly just read as visual noise. */
+  .project-sphere-card-flat::before,
+  .project-sphere-card-flat::after {
+    content: none;
   }
 
-  .project-sphere-card h3 {
-    font-size: 10.5px;
-    -webkit-line-clamp: 2;
+  .project-sphere-card-flat .project-sphere-card-image {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 9px;
+    border-bottom: none;
+  }
+
+  /* Grid, not the sphere-card's usual vertical flex stack, and placed on
+     the three existing children directly (category/h3/hint) rather than
+     wrapping them in a new element — category sits above the title in a
+     shared left column, the chevron spans both rows pinned to the right.
+     Standard list-row shape, no JSX restructuring needed to get it. */
+  .project-sphere-card-flat .project-sphere-card-body {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  .project-sphere-card-flat .project-sphere-card-category {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 9px;
+  }
+
+  .project-sphere-card-flat h3 {
+    grid-column: 1;
+    grid-row: 2;
+    display: block;
+    font-size: 13.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .project-sphere-card-flat .project-sphere-card-hint {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    justify-self: end;
+    margin-top: 0;
+  }
+
+  /* Kept for the sphere's cards (View details + chevron reads fine seen
+     mostly one at a time); redundant spelled out on every one of 25 list
+     rows in a row, where the chevron alone already says "tap to open." */
+  .project-sphere-card-flat .project-sphere-card-hint-label {
+    display: none;
   }
 }
 

@@ -230,6 +230,19 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
 
     let isAnimating = false;
     let rafId: number | null = null;
+    // A single small wheel tick (a light trackpad graze, one notch of a
+    // mouse wheel) used to be enough to fire a full section jump on its
+    // own — there was no way to nudge-scroll a card into view without
+    // instantly being carried past it. These two make a jump require a
+    // *decisive* gesture instead: deltaY keeps accumulating across
+    // consecutive wheel events (so a real flick still fires promptly) but
+    // resets — both on an idle pause and on the gesture reversing
+    // direction — so a few small looks-at-the-card nudges never silently
+    // sum into an unintended jump later.
+    let wheelAccum = 0;
+    let wheelIdleTimer: ReturnType<typeof setTimeout> | null = null;
+    const WHEEL_JUMP_THRESHOLD = 60;
+    const WHEEL_IDLE_RESET_MS = 250;
 
     const getSections = () => Array.from(document.querySelectorAll<HTMLElement>(".chapter-section"));
 
@@ -295,11 +308,30 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
       e.preventDefault();
       if (isAnimating) return; // swallow the rest of a trackpad flick's burst of events
 
+      if (wheelIdleTimer) clearTimeout(wheelIdleTimer);
+      // A reversal mid-gesture means "actually, the other way" — starting
+      // the accumulator over on direction change instead of letting the two
+      // deltas partially cancel out.
+      if (wheelAccum !== 0 && Math.sign(e.deltaY) !== Math.sign(wheelAccum)) {
+        wheelAccum = 0;
+      }
+      wheelAccum += e.deltaY;
+      wheelIdleTimer = setTimeout(() => {
+        wheelAccum = 0;
+      }, WHEEL_IDLE_RESET_MS);
+
+      if (Math.abs(wheelAccum) < WHEEL_JUMP_THRESHOLD) return; // not decisive enough yet — let them keep looking
+
       const sections = getSections();
       if (sections.length === 0) return;
 
       const currentIndex = getCurrentIndex(sections);
-      const direction = e.deltaY > 0 ? 1 : -1;
+      const direction = wheelAccum > 0 ? 1 : -1;
+      wheelAccum = 0;
+      if (wheelIdleTimer) {
+        clearTimeout(wheelIdleTimer);
+        wheelIdleTimer = null;
+      }
       const targetIndex = Math.min(sections.length - 1, Math.max(0, currentIndex + direction));
       if (targetIndex === currentIndex) return; // already at the top/bottom boundary
 
@@ -313,6 +345,7 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
     return () => {
       window.removeEventListener("wheel", handleWheel);
       if (rafId !== null) cancelAnimationFrame(rafId);
+      if (wheelIdleTimer) clearTimeout(wheelIdleTimer);
     };
   }, [prefersReducedMotion]);
 
@@ -665,14 +698,33 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
                 </div>
               ))}
             </div>
+          </motion.div>
+        </section>
+
+        {/* Section 6: GitHub activity (Right) — split out of the old
+            "experience" card, which used to carry the leadership log *and*
+            the activity feed *and* the contribution graph all in one
+            oversized card, well past what a single viewport-height section
+            like every one of its siblings actually fits. Same content,
+            just given its own properly-sized section instead of being
+            stacked onto the bottom of an unrelated one. */}
+        <section className="chapter-section is-right" id="activity">
+          <motion.div
+            {...reveal}
+            style={{ transformStyle: "preserve-3d" }}
+            className="chapter-card"
+          >
+            <div className="kicker">Open Source</div>
+            <h2 className="chapter-title">Building in public.</h2>
+            <p className="chapter-copy">What that leadership/mentorship time looks like in commits, not just titles.</p>
 
             <GitHubActivityFeed />
             <ContributionGraph />
           </motion.div>
         </section>
 
-        {/* Section 6: Contact Form (Right) */}
-        <section className="chapter-section is-right" id="contact">
+        {/* Section 7: Contact Form (Left) */}
+        <section className="chapter-section is-left" id="contact">
           <motion.div
             {...reveal}
             style={{ transformStyle: "preserve-3d" }}
