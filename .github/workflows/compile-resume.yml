@@ -1,0 +1,69 @@
+name: Compile Resume
+
+# Keeps public/Resume.pdf — the file every "View Resume" link on the site
+# points at (ResumeModal, the admin uploader, profile.resume) — in sync
+# with resume/resume.tex automatically. Editing the LaTeX source and
+# pushing is now the whole workflow: no separate "compile locally, then
+# upload the PDF through /admin" step to remember or forget.
+#
+# Deliberately does NOT replace the admin dashboard's manual PDF upload
+# (src/app/api/admin/resume/route.ts) — that path still works exactly as
+# before, for a quick swap without touching LaTeX. Whichever one ran most
+# recently against public/Resume.pdf is "the" live resume; there's no
+# ordering/locking between them beyond that.
+
+"on":
+  push:
+    branches: [main]
+    paths:
+      - "resume/resume.tex"
+  # Lets you re-run a compile on demand (e.g. after a template package
+  # update) without needing a content change to resume.tex to trigger it.
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: compile-resume
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # xu-cheng/latex-action runs latexmk (pdflatex engine, the default —
+      # this template only uses packages that assume pdflatex, nothing
+      # XeLaTeX/LuaLaTeX-specific) in a TeX Live container and writes the
+      # compiled PDF next to the source file, i.e. resume/resume.pdf.
+      - name: Compile LaTeX resume
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: resume/resume.tex
+
+      - name: Copy compiled PDF to the site's resume path
+        run: |
+          if [ ! -f resume/resume.pdf ]; then
+            echo "::error::resume/resume.pdf was not produced by the LaTeX build."
+            exit 1
+          fi
+          cp resume/resume.pdf public/Resume.pdf
+
+      # No-op (exit 0, not a failure) when the compiled PDF is byte-identical
+      # to what's already committed — LaTeX output is deterministic for the
+      # same source, so a push that doesn't change the resume's actual
+      # content produces an empty diff here, not a pointless commit.
+      - name: Commit and push if the PDF changed
+        run: |
+          git config user.name "resume-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add public/Resume.pdf
+          if git diff --cached --quiet; then
+            echo "Compiled PDF is unchanged — nothing to commit."
+            exit 0
+          fi
+          git commit -m "chore: recompile resume PDF from resume/resume.tex [skip ci]"
+          git push

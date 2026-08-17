@@ -1,0 +1,226 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generated pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+% Each of the three heading macros below opens a minipage that stays open
+% until \resumeItemListEnd closes it. That makes one full entry (heading +
+% its bullet list) an atomic block for pagination purposes: LaTeX will never
+% split a page between an entry's title and its own bullets — if the whole
+% block doesn't fit in what's left of the page, it moves entirely to the
+% next one instead of leaving an orphaned heading behind.
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+  \begin{minipage}[t]{0.97\textwidth}
+    \begin{tabular*}{\linewidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{minipage}[t]{0.97\textwidth}
+    \begin{tabular*}{\linewidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{minipage}[t]{0.97\textwidth}
+    \begin{tabular*}{\linewidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+% Closes both the bullet itemize AND the minipage opened by whichever
+% heading macro started this entry -- see the note above.
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}\end{minipage}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\begin{center}
+    \textbf{\Huge \scshape Anas Arfeen} \\ \vspace{1pt}
+    \small
+    \href{mailto:codecrusader07@gmail.com}{codecrusader07@gmail.com}
+    \textbar\
+    \href{https://github.com/Anasarfeen123}{GitHub}
+    \textbar\
+    \href{https://anasarfeen.dev}{Portfolio}
+    \textbar\
+    \href{https://www.linkedin.com/in/anas-arfeen-b94870366/}{LinkedIn}
+\end{center}
+
+%-----------SUMMARY-----------
+\section{Professional Summary}
+\small{Computer Science undergraduate at VIT Chennai focused on artificial intelligence, reinforcement learning, and full-stack systems engineering. Builds production products with real users alongside research-driven AI agents and LLM tooling. Currently serving as AI/ML Co-Lead at the Microsoft Innovations Club.}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Vellore Institute of Technology (VIT)}{Chennai, India}
+      {B.Tech in Computer Science Engineering}{2025 -- 2029}
+      \resumeItemListStart
+        \resumeItem{AISSCE (CBSE) -- 90\% \hfill 2024--25}
+        \resumeItem{AISSE (CBSE) -- 94\% \hfill 2022--23}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+
+%-----------PROGRAMMING SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Python, C++, Java, C, C\#, TypeScript/JavaScript, Go, R, MATLAB, HTML/CSS, Assembly (x86, basic)} \\
+     \textbf{AI/ML}{: PyTorch, Stable-Baselines3, PPO, CNNs, ResNet50, OpenCV, MediaPipe, RAG, LLM Integration (Gemini/Ollama)} \\
+     \textbf{Full-Stack}{: Next.js, FastAPI, PostgreSQL, Supabase, Docker} \\
+     \textbf{Embedded/Hardware}{: Arduino, ESP32, PlatformIO, Sensor/Servo Modules} \\
+     \textbf{Tools}{: Linux (Arch), Git, Neovim, VS Code} \\
+     \textbf{Core Areas}{: Reinforcement Learning, Deep Learning, Computer Vision, Systems Programming, Full-Stack Development, OOP, DSA}
+    }}
+ \end{itemize}
+
+%-----------EXPERIENCE-----------
+\section{Leadership \& Experience}
+  \resumeSubHeadingListStart
+
+    \resumeSubheading
+      {Microsoft Innovations Club (MIC)}{VIT Chennai}
+      {AI/ML Co-Lead}{2026 -- Present}
+      \resumeItemListStart
+        \resumeItem{Orchestrate AI/ML-focused workshops and technical initiatives for the student community.}
+        \resumeItem{Mentor students in modern development workflows, AI tooling, and project-building best practices.}
+        \resumeItem{Direct technical planning and automate tasks to streamline event execution and community engagement.}
+      \resumeItemListEnd
+
+    \resumeSubSubheading
+      {AI/ML Member}{2025 -- 2026}
+      \resumeItemListStart
+         \resumeItem{Contributed to collaborative technical projects and participated in advanced AI learning sessions.}
+      \resumeItemListEnd
+
+    \resumeSubheading
+      {Linux User Group (LUG)}{VIT Chennai}
+      {Technical Member}{2025 -- 2026}
+      \resumeItemListStart
+        \resumeItem{Advocated for open-source ecosystems and optimized terminal-based developer productivity workflows across the club's Linux and dotfiles community.}
+      \resumeItemListEnd
+
+    \resumeSubheading
+      {Hack Club}{VIT Chennai}
+      {AI/ML Member}{2025 -- Present}
+      \resumeItemListStart
+        \resumeItem{Participates in student-led hackathons and rapid-prototyping events, building and shipping projects in collaborative coding sessions.}
+      \resumeItemListEnd
+
+  \resumeSubHeadingListEnd
+
+%-----------PROJECTS-----------
+\section{Projects}
+    \resumeSubHeadingListStart
+      \resumeProjectHeading
+          {\textbf{\href{https://github.com/Vision-based-Rover/Autonomous-Rover}{\underline{Autonomous Warehouse Rover}}}}{\emph{Python, PyTorch, Stable-Baselines3}}
+          \resumeItemListStart
+            \resumeItem{Engineered a PPO-based reinforcement-learning agent using policy-gradient optimization for autonomous navigation, trained in a custom Gymnasium environment with 15-ray lidar observations across 8 vectorized parallel environments.}
+            \resumeItem{Applied curriculum learning with staged promotion across four warehouse-density tiers, progressively increasing obstacle complexity as the agent's success rate improved.}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{\href{https://github.com/micvitc/Club-Expo-AIvsChampions}{\underline{poke-ai -- LLM Pok\'emon Battle AI}}}}{\emph{Python, LLM Integration, Docker}}
+          \resumeItemListStart
+            \resumeItem{Architected a hybrid decision engine fusing a low-latency heuristic move-scoring function with LLM-based strategic reasoning (Gemini/Ollama), balancing real-time constraints against deeper tactical planning.}
+            \resumeItem{Integrated the agent with a self-hosted Pok\'emon Showdown battle server via a custom web client, supporting live-swappable LLM backends and a containerized Docker deployment.}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{\href{https://github.com/Anasarfeen123/reverse-akinator}{\underline{Reverse Akinator}}}}{\emph{React, Express, RAG, LLM Integration}}
+          \resumeItemListStart
+            \resumeItem{Built a retrieval-augmented generation (RAG) pipeline over an offline knowledge base of 35+ footballer profiles, grounding the LLM's dynamically-generated yes/no questions in factual retrieval rather than a static decision tree.}
+            \resumeItem{Designed a provider-agnostic LLM abstraction layer spanning 6 backends (Ollama, Gemini, OpenAI, Claude, Groq, Puter.js), orchestrated by a strict finite-state machine governing game flow.}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{\href{https://github.com/kumar-shaurya/MIC-Spell-Masters}{\underline{Spell Masters -- Gesture-Controlled Game}}}}{\emph{Python, OpenCV, MediaPipe}}
+          \resumeItemListStart
+            \resumeItem{Engineered a 72-dimensional fingertip/wrist gesture-embedding pipeline matched via cosine similarity for tilt-resistant, real-time gesture recognition.}
+            \resumeItem{Decoupled the OpenCV/MediaPipe CV inference pipeline onto a background thread with a thread-safe event queue, keeping the Pygame render loop locked at 60FPS.}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{\href{https://github.com/ivan-george710/SPONSOR-HELP}{\underline{Relay -- Club Sponsorship CRM}}}}{\emph{Next.js, TypeScript, Supabase}}
+          \resumeItemListStart
+            \resumeItem{Designed a multi-tenant CRM schema (PostgreSQL with Row-Level Security policies) isolating per-club data while sharing a global sponsor directory, replacing spreadsheet-based outreach with a Kanban pipeline.}
+            \resumeItem{Integrated Gmail OAuth2 for in-app outreach-thread sync; owned the majority of system architecture and schema design on a 2-person team.}
+          \resumeItemListEnd
+
+      \resumeProjectHeading
+          {\textbf{\href{https://github.com/AmazeContinuityProjects/AmazeCC}{\underline{AmazeCC -- Student Portal Dashboard}}}}{\emph{Next.js, TypeScript, PostgreSQL, FastAPI}}
+          \resumeItemListStart
+            \resumeItem{Built a $\sim$130-route full-stack platform (Next.js/TypeScript frontend, FastAPI backend, PostgreSQL) unifying attendance, grades, hostel, and payments for VIT students -- live in production at amazecc.com with real, active users.}
+            \resumeItem{Shipped an installable PWA with offline caching and push notifications, alongside a separate ops-only admin dashboard for internal data management.}
+          \resumeItemListEnd
+    \resumeSubHeadingListEnd
+%-----------INTERESTS-----------
+\section{Interests}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     Linux Customization, Terminal Ricing, Experimental Coding Projects, Coffee Culture, Music, Story-Driven Games, Online Tech Communities
+    }}
+ \end{itemize}
+\end{document}
