@@ -37,8 +37,10 @@ jobs:
 
       # xu-cheng/latex-action runs latexmk (pdflatex engine, the default —
       # this template only uses packages that assume pdflatex, nothing
-      # XeLaTeX/LuaLaTeX-specific) in a TeX Live container and writes the
-      # compiled PDF next to the source file, i.e. resume/resume.pdf.
+      # XeLaTeX/LuaLaTeX-specific) in a TeX Live container. With
+      # work_in_root_file_dir left at its default (false), latexmk's cwd
+      # stays the repo root, so the compiled PDF lands at ./resume.pdf
+      # (basename of the source file) — NOT next to resume/resume.tex.
       - name: Compile LaTeX resume
         uses: xu-cheng/latex-action@v3
         with:
@@ -46,11 +48,11 @@ jobs:
 
       - name: Copy compiled PDF to the site's resume path
         run: |
-          if [ ! -f resume/resume.pdf ]; then
-            echo "::error::resume/resume.pdf was not produced by the LaTeX build."
+          if [ ! -f resume.pdf ]; then
+            echo "::error::resume.pdf was not produced by the LaTeX build."
             exit 1
           fi
-          cp resume/resume.pdf public/Resume.pdf
+          cp resume.pdf public/Resume.pdf
 
       # No-op (exit 0, not a failure) when the compiled PDF is byte-identical
       # to what's already committed — LaTeX output is deterministic for the
