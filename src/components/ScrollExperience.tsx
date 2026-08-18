@@ -4,12 +4,13 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowDown, ArrowRight, Check, Clock, Code2, FileText, Lightbulb, Mail, Moon, Network, ScrollText, Send, Sun, Terminal, Volume2, VolumeX } from "lucide-react";
+import { ArrowDown, ArrowRight, BrainCircuit, Check, Clock, Code2, FileText, Layers, Lightbulb, Mail, Moon, Network, ScrollText, Send, Sun, Terminal, TerminalSquare, Volume2, VolumeX, Wrench } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { BuildInfo } from "@/data/build-info";
 import { experience, journey, profile, projects, skillClusters, type Project } from "@/data/portfolio";
+import { AiSidebar } from "@/components/AiSidebar";
 import { BuildBadge } from "@/components/BuildBadge";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { GithubIcon } from "@/components/GithubIcon";
@@ -77,6 +78,34 @@ function ClubLogo({ iconKey }: { iconKey: "microsoft" | "linux" | "hackclub" }) 
       className="h-11 w-11 shrink-0 rounded-xl border border-[var(--line-strong)] object-cover bg-white/5 shadow-sm transition-transform hover:scale-105"
     />
   );
+}
+
+/** Keyed by skillClusters' own `label` (src/data/portfolio.ts) rather than
+ * an index/position — a category's icon should stay attached to what it
+ * actually is if the clusters ever get reordered. Falls back to Wrench
+ * (the "general tooling" icon) for a label this map hasn't been taught
+ * yet, so a new cluster degrades to "unlabeled but present" instead of
+ * crashing the skills card. */
+function clusterIcon(label: string) {
+  const iconMap: Record<string, typeof BrainCircuit> = {
+    "AI, LLM Agents & Vision": BrainCircuit,
+    "Full-Stack Platforms": Layers,
+    "Systems & Terminal UIs": TerminalSquare,
+    "Environment & Tooling": Wrench,
+  };
+  const Icon = iconMap[label] ?? Wrench;
+  return <Icon size={14} className="text-[var(--accent)]" />;
+}
+
+/** A small pulsing dot marking an entry as currently ongoing — attached
+ * next to any year/time string containing "Present" (both the journey
+ * timeline and the leadership log use the same "20XX -- Present" shape in
+ * their data, see journey/experience in src/data/portfolio.ts), rather
+ * than a one-off "current role" flag some entries would have and others
+ * wouldn't. Genuinely informational, not just decorative — it's the one
+ * piece of the timeline that's still moving. */
+function LiveDot() {
+  return <span className="live-dot" aria-hidden="true" />;
 }
 
 const SceneCanvas = dynamic(() => import("@/components/SceneCanvas").then((mod) => mod.SceneCanvas), {
@@ -374,6 +403,13 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
         )}
       </AnimatePresence>
 
+      {/* AI Assistant — floating trigger + slide-in chat, grounded on this
+          site's own portfolio data (see AiSidebar.tsx). Self-contained
+          (owns its own open/message state) unlike Terminal/Resume below,
+          which need to be triggered from several places across the page —
+          nothing else on this page needs to open or react to this one. */}
+      <AiSidebar />
+
       {/* Terminal Easter Egg Modal */}
       <TerminalModal
         isOpen={isTerminalOpen}
@@ -586,7 +622,10 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
             <div className="timeline-stream">
               {journey.map((item) => (
                 <div className="timeline-node" key={item.label}>
-                  <div className="node-year">{item.year}</div>
+                  <div className="node-year">
+                    {item.year}
+                    {item.year.includes("Present") && <LiveDot />}
+                  </div>
                   <div>
                     <div className="node-label">{item.label}</div>
                     <div className="node-detail">{item.detail}</div>
@@ -614,7 +653,10 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
             <div className="skill-system">
               {skillClusters.map((cluster) => (
                 <div className="skill-cluster-card" key={cluster.label}>
-                  <div className="cluster-name">{cluster.label}</div>
+                  <div className="cluster-name flex items-center gap-1.5">
+                    {clusterIcon(cluster.label)}
+                    {cluster.label}
+                  </div>
                   <div className="cluster-desc">{cluster.description}</div>
                   <div className="cluster-modules">
                     {cluster.modules.map((mod) => (
@@ -679,7 +721,10 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
             <div className="mission-log">
               {experience.map((item) => (
                 <div className="log-row" key={item.id}>
-                  <div className="log-time">{item.time}</div>
+                  <div className="log-time">
+                    {item.time}
+                    {item.time.includes("Present") && <LiveDot />}
+                  </div>
                   <div>
                     <div className="flex items-center gap-3">
                       <ClubLogo iconKey={item.icon} />
@@ -744,7 +789,7 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
                   placeholder="you@email.com"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
-                  className="w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-4 py-2.5 text-xs text-[var(--heading)] placeholder:text-[var(--muted)] outline-none focus:border-[var(--accent)] transition-all font-mono"
+                  className="hud-input w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-4 py-2.5 text-xs text-[var(--heading)] placeholder:text-[var(--muted)] outline-none focus:border-[var(--accent)] transition-all font-mono"
                 />
               </div>
               <div>
@@ -754,7 +799,7 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
                   placeholder="What's up?"
                   value={contactMsg}
                   onChange={(e) => setContactMsg(e.target.value)}
-                  className="w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-4 py-2.5 text-xs text-[var(--heading)] placeholder:text-[var(--muted)] outline-none focus:border-[var(--accent)] transition-all font-mono resize-none"
+                  className="hud-input w-full rounded-xl border border-[var(--line)] bg-[var(--background)] px-4 py-2.5 text-xs text-[var(--heading)] placeholder:text-[var(--muted)] outline-none focus:border-[var(--accent)] transition-all font-mono resize-none"
                 />
               </div>
               <button
