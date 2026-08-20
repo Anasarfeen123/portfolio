@@ -76,10 +76,15 @@ function getSolarTextures() {
   });
 
   const earthTex = createTexture(1024, 512, (ctx) => {
+    // Proper ocean blue, not near-black navy — brightest at the equator
+    // (y=256, the middle stop) and deepening toward each pole, the way
+    // sunlit open water actually reads from orbit. The previous gradient
+    // (#061224 → #0b2847 → #040b18) was dark enough that the sphere read as
+    // "black with green blobs," not "Earth."
     const oceanGrad = ctx.createLinearGradient(0, 0, 0, 512);
-    oceanGrad.addColorStop(0, "#061224");
-    oceanGrad.addColorStop(0.5, "#0b2847");
-    oceanGrad.addColorStop(1, "#040b18");
+    oceanGrad.addColorStop(0, "#0a3d6b");
+    oceanGrad.addColorStop(0.5, "#1f7fbf");
+    oceanGrad.addColorStop(1, "#0a3d6b");
     ctx.fillStyle = oceanGrad;
     ctx.fillRect(0, 0, 1024, 512);
 
@@ -102,11 +107,31 @@ function getSolarTextures() {
       ctx.fill();
     };
 
-    drawLand([[72, -168], [74, -130], [62, -100], [58, -75], [45, -60], [25, -80], [15, -92], [14, -105], [30, -118], [55, -135], [65, -168]], "#2d6a4f");
-    drawLand([[12, -75], [6, -50], [-10, -36], [-30, -48], [-54, -68], [-46, -75], [-5, -80]], "#1b4332");
-    drawLand([[71, 10], [72, 70], [74, 135], [62, 172], [48, 140], [35, 120], [22, 115], [10, 105], [20, 85], [10, 75], [24, 65], [12, 45], [30, 32], [42, 28], [58, 24], [62, 8]], "#2d6a4f");
-    drawLand([[32, 68], [28, 88], [22, 90], [15, 80], [8, 77], [13, 74], [20, 70]], "#40916c");
-    drawLand([[35, -6], [37, 10], [32, 32], [12, 43], [10, 51], [-12, 40], [-34, 20], [-31, 16], [0, 9], [5, -4], [15, -17]], "#b79455");
+    // Brighter, more saturated greens/tan than before (was #2d6a4f/#1b4332/
+    // #40916c/#b79455 — all read as muddy/desaturated against the old dark
+    // ocean, and stayed muddy even against the brighter one above).
+    drawLand([[72, -168], [74, -130], [62, -100], [58, -75], [45, -60], [25, -80], [15, -92], [14, -105], [30, -118], [55, -135], [65, -168]], "#3fa15c");
+    drawLand([[12, -75], [6, -50], [-10, -36], [-30, -48], [-54, -68], [-46, -75], [-5, -80]], "#2d8049");
+    drawLand([[71, 10], [72, 70], [74, 135], [62, 172], [48, 140], [35, 120], [22, 115], [10, 105], [20, 85], [10, 75], [24, 65], [12, 45], [30, 32], [42, 28], [58, 24], [62, 8]], "#3fa15c");
+    drawLand([[32, 68], [28, 88], [22, 90], [15, 80], [8, 77], [13, 74], [20, 70]], "#5cba71");
+    drawLand([[35, -6], [37, 10], [32, 32], [12, 43], [10, 51], [-12, 40], [-34, 20], [-31, 16], [0, 9], [5, -4], [15, -17]], "#dcae5c");
+
+    // Polar ice caps — painted last, restricted to a thin band at each pole
+    // so the continents drawn above (which already reach into high
+    // latitudes, e.g. northern Canada/Siberia) keep their land color and
+    // only the genuinely polar strip goes white. A planet with visible ice
+    // caps reads as "Earth" at a glance in a way one without them doesn't.
+    const iceCap = (fromY: number, toY: number, flip: boolean) => {
+      const grad = ctx.createLinearGradient(0, fromY, 0, toY);
+      const near = flip ? "rgba(240, 249, 255, 0)" : "rgba(240, 249, 255, 0.95)";
+      const far = flip ? "rgba(240, 249, 255, 0.95)" : "rgba(240, 249, 255, 0)";
+      grad.addColorStop(0, near);
+      grad.addColorStop(1, far);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, fromY, 1024, toY - fromY);
+    };
+    iceCap(0, 46, false);
+    iceCap(466, 512, true);
 
     ctx.shadowColor = "#ffb703";
     ctx.shadowBlur = 6;

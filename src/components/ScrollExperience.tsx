@@ -16,6 +16,7 @@ import { ContributionGraph } from "@/components/ContributionGraph";
 import { GithubIcon } from "@/components/GithubIcon";
 import { GitHubActivityFeed } from "@/components/GitHubActivityFeed";
 import { HudMobileMenu } from "@/components/HudMobileMenu";
+import { ParallaxAvatar } from "@/components/ParallaxAvatar";
 import { ProjectDetailsModal } from "@/components/ProjectDetailsModal";
 import { ResumeModal } from "@/components/ResumeModal";
 import { TerminalModal } from "@/components/TerminalModal";
@@ -150,9 +151,13 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setBooting(false), 1200);
+    // Long enough for the terminal boot log below to finish typing itself
+    // out (~1.4s in) plus a short beat to actually read "ready" before the
+    // panel exits — reduced motion skips the typewriter/scramble entirely,
+    // so it only needs a brief beat to read as intentional, not a flash.
+    const timeout = window.setTimeout(() => setBooting(false), prefersReducedMotion ? 250 : 1650);
     return () => window.clearTimeout(timeout);
-  }, []);
+  }, [prefersReducedMotion]);
 
   const toggleTheme = (origin?: { x: number; y: number }) => {
     playClickSound();
@@ -386,7 +391,7 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
       </div>
 
       {/* Fast Boot Overlay */}
-      <BootSequence visible={booting} />
+      <AnimatePresence>{booting && <BootSequence key="boot" reducedMotion={!!prefersReducedMotion} />}</AnimatePresence>
 
       {/* Animated Toast System Notification */}
       <AnimatePresence>
@@ -551,15 +556,13 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
             className="chapter-card"
           >
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              {/* Profile Avatar Photo - Hero Scaled */}
-              <div className="relative shrink-0 mx-auto md:mx-0">
-                <img
-                  src={profile.avatar}
-                  alt={profile.name}
-                  className="h-32 w-32 sm:h-44 sm:w-44 md:h-52 md:w-52 rounded-2xl border-2 border-[var(--accent)] object-cover shadow-xl"
-                />
-                <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-[var(--background)] bg-[var(--accent)]" />
-              </div>
+              {/* Profile Avatar Photo - Hero Scaled, layered cursor parallax + dynamic shadow */}
+              <ParallaxAvatar
+                src={profile.avatar}
+                bgSrc={profile.avatar === "/Profile.jpg" ? "/Profile-bg.jpg" : undefined}
+                fgSrc={profile.avatar === "/Profile.jpg" ? "/Profile-fg.png" : undefined}
+                alt={profile.name}
+              />
 
               <div className="flex-1">
                 <div className="kicker">AI Engineer & Systems Developer</div>
@@ -854,44 +857,184 @@ export function ScrollExperience({ buildInfo = null }: ScrollExperienceProps) {
   );
 }
 
-function BootSequence({ visible }: { visible: boolean }) {
-  if (!visible) return null;
+const SCRAMBLE_CHARS = "!<>-_\\/[]{}—=+*^?#01";
+const BOOT_LOG = "$ boot anasarfeen.dev\n  scene       [ok]\n  data        [ok]\n  assistant   [ok]\n$ ready";
+
+/** Decodes into `text` from scrambled characters, left to right — a small
+ * nod to the terminal/hacker-shell identity established elsewhere on the
+ * site (ANAS_OS, the CLI easter egg) rather than a generic fade-in. */
+function ScrambleText({ text, startDelay, reducedMotion, className }: { text: string; startDelay: number; reducedMotion: boolean; className?: string }) {
+  const [display, setDisplay] = useState(reducedMotion ? text : "");
+
+  useEffect(() => {
+    // Reduced motion already gets the resolved `text` from the initial
+    // useState above — nothing to synchronize here, so just skip the
+    // scramble timers rather than re-setting state the render already has.
+    if (reducedMotion) return;
+    const frames = 14;
+    let frame = 0;
+    let interval: number | undefined;
+    const startTimer = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        frame++;
+        const revealed = Math.floor((frame / frames) * text.length);
+        setDisplay(
+          text
+            .split("")
+            .map((ch, i) => (ch === " " || i < revealed ? ch : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]))
+            .join(""),
+        );
+        if (frame >= frames) {
+          setDisplay(text);
+          if (interval) window.clearInterval(interval);
+        }
+      }, 32);
+    }, startDelay);
+    return () => {
+      window.clearTimeout(startTimer);
+      if (interval) window.clearInterval(interval);
+    };
+  }, [text, startDelay, reducedMotion]);
+
+  return <span className={className}>{display}</span>;
+}
+
+/** Types `text` out character by character, like a real shell running a
+ * script — used for the boot log instead of a checklist-with-checkmarks,
+ * which reads as generic dashboard chrome rather than an actual terminal. */
+function TypedLines({ text, startDelay, reducedMotion }: { text: string; startDelay: number; reducedMotion: boolean }) {
+  const [count, setCount] = useState(reducedMotion ? text.length : 0);
+  const done = count >= text.length;
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    let i = 0;
+    let interval: number | undefined;
+    const startTimer = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        i++;
+        setCount(i);
+        if (i >= text.length && interval) window.clearInterval(interval);
+      }, 9);
+    }, startDelay);
+    return () => {
+      window.clearTimeout(startTimer);
+      if (interval) window.clearInterval(interval);
+    };
+  }, [text, startDelay, reducedMotion]);
+
+  return (
+    <pre className="whitespace-pre-wrap font-mono text-[11px] sm:text-xs leading-relaxed text-[var(--foreground)]">
+      {text.slice(0, count)}
+      {/* Solid (non-blinking) while actively "typing" — like a real terminal
+          cursor mid-input — then starts blinking once the line is done. */}
+      <span className={`text-[var(--accent)]${done ? " boot-caret" : ""}`} aria-hidden="true">
+        ▍
+      </span>
+    </pre>
+  );
+}
+
+/** Fills left-to-right via requestAnimationFrame rather than a discrete
+ * step-per-item, so it reads as one continuous process completing — an
+ * ASCII bracket-and-block bar to match the terminal log above it, instead
+ * of a rounded gradient pill that could belong to any generic loading UI. */
+function AsciiProgress({ durationMs, reducedMotion }: { durationMs: number; reducedMotion: boolean }) {
+  const totalBlocks = 28;
+  const [filled, setFilled] = useState(reducedMotion ? totalBlocks : 0);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    let raf: number;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / durationMs);
+      setFilled(Math.round(progress * totalBlocks));
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [durationMs, reducedMotion]);
+
+  const pct = Math.round((filled / totalBlocks) * 100);
+  return (
+    <div className="mt-5 flex items-center gap-2 font-mono text-[11px] sm:text-xs text-[var(--accent)]">
+      <span aria-hidden="true">
+        [{"█".repeat(filled)}
+        <span className="text-[var(--line-strong)]">{"░".repeat(totalBlocks - filled)}</span>]
+      </span>
+      <span className="w-9 shrink-0 text-right tabular-nums text-[var(--muted)]">{pct}%</span>
+    </div>
+  );
+}
+
+function BootSequence({ reducedMotion }: { reducedMotion: boolean }) {
+  const bootDuration = reducedMotion ? 200 : 1500;
 
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--background)] text-[var(--foreground)] pointer-events-none p-4 select-none"
-      initial={{ opacity: 1 }}
-      animate={{ opacity: 0 }}
-      transition={{ delay: 0.9, duration: 0.45, ease: "easeInOut" }}
+      initial={{ opacity: reducedMotion ? 1 : 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: reducedMotion ? 0.15 : 0.4, ease: "easeInOut" }}
       aria-hidden="true"
     >
-      <div className="w-[min(500px,88vw)] rounded-2xl border border-[var(--line-strong)] bg-[var(--card-bg)] p-6 sm:p-8 backdrop-blur-md shadow-2xl">
-        {/* Loading Bar */}
-        <motion.div
-          className="mb-4 h-[2px] bg-[var(--accent)]"
-          initial={{ scaleX: 0, transformOrigin: "left" }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 0.7, ease: "easeInOut" }}
-        />
+      {/* Faint scanline texture, matching the terminal/dev-shell aesthetic used elsewhere on the site */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        style={{
+          backgroundImage: "repeating-linear-gradient(0deg, var(--foreground) 0px, var(--foreground) 1px, transparent 1px, transparent 3px)",
+        }}
+      />
 
-        <motion.div
-          className="text-3xl sm:text-5xl font-extrabold text-[var(--heading)] tracking-tight"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-        >
-          Anas <span className="text-[var(--signal)]">Arfeen</span>
-        </motion.div>
+      <motion.div
+        className="relative w-[min(460px,90vw)] overflow-hidden rounded-2xl border border-[var(--line-strong)] bg-[var(--card-bg)] shadow-2xl backdrop-blur-md"
+        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.98 }}
+        transition={{ duration: reducedMotion ? 0.15 : 0.4, ease: "easeOut" }}
+      >
+        {/* A slow light sweep across the chrome, like a device actually powering on */}
+        {!reducedMotion && (
+          <motion.div
+            className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-[var(--accent)]/10 to-transparent"
+            initial={{ x: "-120%" }}
+            animate={{ x: "420%" }}
+            transition={{ duration: 1.6, ease: "easeInOut" }}
+          />
+        )}
 
-        <motion.p
-          className="mt-2 text-xs sm:text-sm font-medium text-[var(--muted)]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          Robots, models, and a bit too much time in the terminal.
-        </motion.p>
-      </div>
+        {/* Terminal chrome, matching the developer-shell header elsewhere on the site */}
+        <div className="relative flex items-center gap-1.5 border-b border-[var(--line)] bg-[var(--card-hover)] px-4 py-2.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+          <span className="ml-2 font-mono text-[10px] tracking-wider text-[var(--muted)]">ANAS_OS // BOOT</span>
+        </div>
+
+        <div className="p-6 sm:p-8">
+          <div className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[var(--heading)]">
+            <ScrambleText text="Anas" startDelay={reducedMotion ? 0 : 60} reducedMotion={reducedMotion} />{" "}
+            <ScrambleText text="Arfeen" startDelay={reducedMotion ? 0 : 160} reducedMotion={reducedMotion} className="text-[var(--signal)]" />
+          </div>
+
+          <motion.p
+            className="mt-2 font-mono text-xs sm:text-sm text-[var(--muted)]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: reducedMotion ? 0 : 0.4, duration: 0.3 }}
+          >
+            Robots, models, and a bit too much time in the terminal.
+          </motion.p>
+
+          <div className="mt-5 rounded-lg border border-[var(--line)] bg-[var(--background)]/60 px-3 py-2.5">
+            <TypedLines text={BOOT_LOG} startDelay={reducedMotion ? 0 : 620} reducedMotion={reducedMotion} />
+          </div>
+
+          <AsciiProgress durationMs={bootDuration} reducedMotion={reducedMotion} />
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

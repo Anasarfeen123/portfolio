@@ -1,9 +1,10 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, ExternalLink, FileText, Layers, Printer, Sparkles, X } from "lucide-react";
+import { Download, ExternalLink, FileText, Printer, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { GithubIcon } from "@/components/GithubIcon";
 import { experience, profile, projects, skillClusters } from "@/data/portfolio";
 
 interface ResumeModalProps {
@@ -154,12 +155,35 @@ export function ResumeModal({ isOpen, onClose }: ResumeModalProps) {
 
           {/* Modal Content Body */}
           {activeTab === "pdf" ? (
-            <div className="flex-1 w-full h-full bg-[var(--background)]/30">
+            <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-[var(--background)]/30">
+              {/* Automated Resume Section — this PDF isn't hand-exported and
+                  re-uploaded; resume/resume.tex is the actual source of
+                  truth, and a GitHub Action (.github/workflows/compile-resume.yml)
+                  recompiles it to this exact file on every push that touches
+                  it. What's embedded below is always that latest compile,
+                  not a stale manual export. */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-[var(--line)] bg-[var(--card-hover)] px-4 py-2">
+                <Sparkles size={12} className="text-[var(--accent)] shrink-0" />
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--accent)]">
+                  Automated Resume Section
+                </span>
+                <span className="font-mono text-[10px] text-[var(--muted)]">
+                  — compiled from LaTeX on every push, not hand-uploaded
+                </span>
+                <a
+                  href="https://github.com/Anasarfeen123/portfolio/blob/main/resume/resume.tex"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] font-medium text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
+                >
+                  <GithubIcon size={11} /> resume/resume.tex
+                </a>
+              </div>
               <iframe
                 ref={iframeRef}
                 src={`${profile.resume}#toolbar=0`}
                 title={`${profile.name} Resume PDF`}
-                className="w-full h-full border-none"
+                className="w-full flex-1 min-h-0 border-none"
               />
             </div>
           ) : (

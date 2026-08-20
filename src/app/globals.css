@@ -60,6 +60,16 @@ html {
   html {
     scroll-snap-type: y proximity;
   }
+
+  /* `.chapter-section` below sets scroll-snap-stop: always, which forces a
+     mandatory halt at every single section regardless of velocity — that
+     directly fights the "proximity" relaxation above (a confident flick
+     should be able to sail past a few cards, not get arrested at the very
+     next one) and is the main reason a fast mobile scroll can feel like
+     it's fighting your finger. "normal" lets a fast flick skip through. */
+  .chapter-section {
+    scroll-snap-stop: normal;
+  }
 }
 
 [data-theme="dark"] html {
@@ -3230,6 +3240,15 @@ a {
   perspective: none;
   overflow: visible;
   min-height: 0;
+  /* The base .project-sphere-canvas sets touch-action: none (plus grab
+     cursor/no text-select) for the sphere's own drag-to-rotate gesture —
+     this flat grid has no drag gesture at all, so inheriting that blocked
+     every touch scroll that happened to start over this section instead of
+     its outer edges. Undo all three; this is a plain static grid. */
+  touch-action: auto;
+  cursor: auto;
+  user-select: auto;
+  -webkit-user-select: auto;
 }
 
 .project-sphere-flat-grid {
@@ -3833,6 +3852,10 @@ a {
 
 .ai-sidebar-error {
   align-self: flex-start;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 8px;
   max-width: 88%;
   padding: 9px 12px;
   border-radius: 12px;
@@ -3841,6 +3864,38 @@ a {
   color: var(--foreground);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.ai-sidebar-error-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #dc2626;
+}
+
+.ai-sidebar-error-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-sidebar-retry-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #dc2626 35%, var(--line));
+  background: transparent;
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.ai-sidebar-retry-btn:hover {
+  border-color: #dc2626;
+  background: color-mix(in srgb, #dc2626 14%, transparent);
 }
 
 .ai-sidebar-starters {
@@ -3944,5 +3999,31 @@ a {
 @media (max-width: 520px) {
   .ai-sidebar-panel {
     width: 100vw;
+  }
+}
+
+/* Blinking block caret at the end of the boot log (BootSequence in
+   ScrollExperience.tsx) — sits hidden while a line is still typing (its
+   own opacity-0 class handles that) and only starts blinking once typing
+   finishes, so it reads as "the cursor is now waiting here" rather than
+   flickering the whole time text is being written. */
+.boot-caret {
+  animation: boot-caret-blink 1s step-end infinite;
+}
+
+@keyframes boot-caret-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-caret {
+    animation: none;
   }
 }
