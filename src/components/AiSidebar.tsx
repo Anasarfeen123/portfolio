@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Bot, Check, Copy, RotateCcw, Send, Sparkles, User, X } from "lucide-react";
+import { AlertCircle, Bot, Check, Copy, RotateCcw, Send, Sparkles, User, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type ChatMessage = { role: "user" | "assistant"; content: string; time: string };
@@ -108,16 +108,13 @@ export function AiSidebar() {
     }
   }
 
-  async function send(text: string) {
-    const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
-
-    const nextHistory: ChatMessage[] = [...messages, { role: "user", content: trimmed, time: timeLabel() }];
-    setMessages(nextHistory);
-    setInput("");
+  // Shared by `send` (new message, appends to history first) and `retry`
+  // (re-runs the request against history exactly as it already stands
+  // after a failed attempt — the user's message is already in there, so
+  // retrying shouldn't push a second copy of it).
+  async function dispatch(history: ChatMessage[]) {
     setError(null);
     setIsLoading(true);
-
     try {
       // The system prompt (grounding data + rules) is built and prepended
       // server-side (src/lib/ai-context.ts, used by src/app/api/ai-chat) —
@@ -126,7 +123,7 @@ export function AiSidebar() {
       const res = await fetch("/api/ai-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextHistory.map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify({ messages: history.map(({ role, content }) => ({ role, content })) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || typeof data.reply !== "string") {
@@ -151,6 +148,21 @@ export function AiSidebar() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function send(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed || isLoading) return;
+
+    const nextHistory: ChatMessage[] = [...messages, { role: "user", content: trimmed, time: timeLabel() }];
+    setMessages(nextHistory);
+    setInput("");
+    await dispatch(nextHistory);
+  }
+
+  function retry() {
+    if (isLoading || messages.length === 0) return;
+    void dispatch(messages);
   }
 
   const lastMessage = messages[messages.length - 1];
@@ -228,13 +240,12 @@ export function AiSidebar() {
                 </div>
               </header>
 
-              <div className="ai-sidebar-messages" ref={scrollRef}>
+              <div className="ai-sidebar-messages" ref={scrollRef} aria-live="polite" aria-relevant="additions">
                 {messages.length === 0 && (
                   <div className="ai-sidebar-starters">
                     <p className="ai-sidebar-starters-copy">
                       Grounded on this portfolio&apos;s real project/experience data, running on{" "}
-                      <span className="text-[var(--accent)]">Groq</span> — the same fast-inference provider{" "}
-                      <span className="text-[var(--accent)]">Reverse Akinator</span> can call. Pick a question, or ask your own.
+                      <span className="text-[var(--accent)]">Groq</span> for fast inference. Pick a question, or ask your own.
                     </p>
                     {STARTER_PROMPTS.map((prompt) => (
                       <button key={prompt} type="button" className="ai-sidebar-starter-chip" onClick={() => send(prompt)}>
@@ -266,7 +277,21 @@ export function AiSidebar() {
                 ))}
 
                 {isLoading && <TypingIndicator />}
-                {error && <div className="ai-sidebar-error">{error}</div>}
+                {error && (
+                  <motion.div
+                    className="ai-sidebar-error"
+                    role="alert"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <AlertCircle size={13} className="ai-sidebar-error-icon" />
+                    <span className="ai-sidebar-error-text">{error}</span>
+                    <button type="button" className="ai-sidebar-retry-btn" onClick={retry}>
+                      <RotateCcw size={11} /> Retry
+                    </button>
+                  </motion.div>
+                )}
 
                 {showFollowUps && (
                   <div className="ai-sidebar-followups">
