@@ -46,7 +46,20 @@ export function ContributionGraph() {
 
   return (
     <div className="mt-4 viz">
-      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} role="img" aria-label="GitHub contribution graph">
+      {/* height is intentionally omitted (not a fixed pixel value) — the
+          viewBox's aspect ratio (~7.5:1, weeks × days) is much wider than a
+          narrow mobile card, so a fixed height here would force
+          preserveAspectRatio's default "meet" scaling to shrink the graph
+          to fit that width, leaving dead vertical space above/below rather
+          than actually filling the box. aspectRatio keeps width and height
+          scaling together at every viewport size. */}
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        style={{ aspectRatio: `${width} / ${height}` }}
+        role="img"
+        aria-label="GitHub contribution graph"
+      >
         {weeks.map((week, wi) =>
           week.contributionDays.map((day, di) => {
             const level = levelFor(day.contributionCount);

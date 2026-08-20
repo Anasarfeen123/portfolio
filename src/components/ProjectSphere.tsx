@@ -60,9 +60,19 @@ const CARD_HEIGHT_REFERENCE = 101;
 // shrink from CARD_WIDTH_REFERENCE compounded with the viewport shrink on
 // top of it, pushing text down toward illegible before either one alone
 // would have.
-const CANVAS_HEIGHT_FLOOR = 700;
-const CANVAS_HEIGHT_VIEWPORT_RATIO = 0.86;
-const CANVAS_HEIGHT_CEILING = 820;
+//
+// A second pass (0.86/700/820) sized the canvas alone against the
+// viewport, ignoring that it's not the only thing in this chapter-card —
+// title, copy, and the "See all N projects" footer add ~280px on top of
+// it. At a typical 900-1000px laptop viewport that meant the *card* ran
+// 150-200px past the bottom of the screen even though the canvas math
+// itself looked "full." These three came down together (ratio, floor, and
+// ceiling all reduced by roughly the same ~30%) specifically to leave that
+// ~280px of headroom, so the whole card — not just the sphere — fits one
+// viewport the way every sibling section's card already does.
+const CANVAS_HEIGHT_FLOOR = 480;
+const CANVAS_HEIGHT_VIEWPORT_RATIO = 0.6;
+const CANVAS_HEIGHT_CEILING = 600;
 const CANVAS_PADDING = 24;
 // Leaves a little headroom below the canvas's own height beyond the pure
 // geometric footprint (radius + half a card's height, doubled) — pitch
