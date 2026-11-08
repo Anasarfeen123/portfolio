@@ -23,14 +23,14 @@ export function SiteHeader({ active, buildInfo = null }: SiteHeaderProps) {
   return (
     <header className="hud">
       <div className="hud-mark-group">
-        <Link className="hud-mark" href="/" aria-label="Anas Arfeen portfolio home">
+        <Link className="hud-mark" href="/classic" aria-label="Anas Arfeen classic portfolio home">
           <span className="hud-status-dot" />
           Anas Arfeen
         </Link>
         <BuildBadge buildInfo={buildInfo} />
       </div>
       <nav className="hud-actions" aria-label="Primary links">
-        <Link href="/" className="hud-link hud-hide-mobile">
+        <Link href="/classic" className="hud-link hud-hide-mobile">
           Home
         </Link>
         <Link href="/projects" className={`hud-link hud-hide-mobile ${active === "projects" ? "hud-link-active" : ""}`}>
@@ -57,7 +57,7 @@ export function SiteHeader({ active, buildInfo = null }: SiteHeaderProps) {
         </a>
         <HudMobileMenu
           items={[
-            { key: "home", label: "Home", href: "/", icon: <Home size={15} /> },
+            { key: "home", label: "Classic home", href: "/classic", icon: <Home size={15} /> },
             { key: "projects", label: "Projects", href: "/projects", icon: <Code2 size={15} />, active: active === "projects" },
             { key: "blog", label: "Blog", href: "/blog", icon: <ScrollText size={15} />, active: active === "blog" },
             { key: "til", label: "TIL", href: "/til", icon: <Lightbulb size={15} />, active: active === "til" },
