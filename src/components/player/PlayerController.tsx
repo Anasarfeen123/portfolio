@@ -16,7 +16,7 @@ const JUMP_BUFFER = 0.14;
 export function PlayerController({ bodyRef, angles, active, onNearExhibit, onGlideChange }: Props) {
   const { world, rapier } = useRapier();
   const [gliding, setGliding] = useState(false);
-  const facing = useRef(0); const lastGrounded = useRef(-Infinity); const jumpBufferedAt = useRef(-Infinity); const glideRef = useRef(false);
+  const facing = useRef(0); const lastGrounded = useRef(-Infinity); const jumpBufferedAt = useRef(-Infinity); const glideRef = useRef(false); const nearExhibit = useRef(false);
 
   useEffect(() => {
     const keyDown = (event: KeyboardEvent) => { held[event.code] = true; if (event.code === "Space" && !event.repeat) jumpBufferedAt.current = performance.now() / 1000; if (["Space", "KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code) && document.pointerLockElement) event.preventDefault(); };
@@ -50,7 +50,8 @@ export function PlayerController({ bodyRef, angles, active, onNearExhibit, onGli
     const sprint = held.ShiftLeft || held.ShiftRight; const speed = sprint ? 7.2 : 4.5; const control = grounded ? 16 : wantsGlide ? 6 : 2.4;
     const horizontal = Math.min(1, control * delta); body.setLinvel({ x: THREE.MathUtils.lerp(velocity.x, direction.x * speed, horizontal), y: vertical, z: THREE.MathUtils.lerp(velocity.z, direction.z * speed, horizontal) }, true);
     if (direction.lengthSq()) facing.current = Math.atan2(direction.x, direction.z);
-    onNearExhibit(position.x > 1.4 && position.x < 4.8 && position.z > -2 && position.z < 2.4);
+    const near = position.x > 1.4 && position.x < 4.8 && position.z > -2 && position.z < 2.4;
+    if (near !== nearExhibit.current) { nearExhibit.current = near; onNearExhibit(near); }
   });
   return <RigidBody ref={bodyRef} colliders={false} position={[0, 1.3, 8]} enabledRotations={[false, false, false]} linearDamping={0.8} angularDamping={1} ccd friction={2}><CapsuleCollider args={[0.65, 0.35]} friction={2} restitution={0} /><WandererAvatar gliding={gliding} facing={facing} /></RigidBody>;
 }
