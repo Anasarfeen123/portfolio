@@ -26,7 +26,7 @@ export function PlayerController({ bodyRef, angles, active, onNearExhibit, onGli
   }, []);
 
   useEffect(() => {
-    const mouseMove = (event: MouseEvent) => { if (document.pointerLockElement && active) { angles.current.yaw -= event.movementX * 0.0024; angles.current.pitch = THREE.MathUtils.clamp(angles.current.pitch - event.movementY * 0.0018, -0.42, 0.3); } };
+    const mouseMove = (event: MouseEvent) => { if (document.pointerLockElement && active) { angles.current.yaw += event.movementX * 0.0024; angles.current.pitch = THREE.MathUtils.clamp(angles.current.pitch - event.movementY * 0.0018, -0.42, 0.3); } };
     document.addEventListener("mousemove", mouseMove); return () => document.removeEventListener("mousemove", mouseMove);
   }, [active, angles]);
 
