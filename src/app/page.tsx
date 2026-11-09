@@ -1,5 +1,6 @@
-import { Arrival } from "@/components/world/Arrival";
+import { buildInfo } from "@/data/build-info";
+import { ScrollExperience } from "@/components/ScrollExperience";
 
 export default function Home() {
-  return <Arrival />;
+  return <ScrollExperience buildInfo={buildInfo} />;
 }

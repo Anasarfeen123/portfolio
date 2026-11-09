@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s | Anas Arfeen",
   },
   description:
-    "An explorable portfolio and classic archive for Anas Arfeen, an explorer, builder and engineer.",
+    "A scroll-driven digital world tracing Anas Arfeen's evolution across AI, systems, research, and developer tooling.",
   openGraph: {
     type: "website",
     siteName: "Anas Arfeen",

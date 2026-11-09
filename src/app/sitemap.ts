@@ -6,8 +6,6 @@ const BASE_URL = "https://anasarfeen.dev";
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: "monthly", priority: 1 },
-    { url: `${BASE_URL}/explore`, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${BASE_URL}/classic`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${BASE_URL}/projects`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/blog`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/til`, changeFrequency: "weekly", priority: 0.6 },
